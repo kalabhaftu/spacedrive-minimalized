@@ -13,8 +13,6 @@ import clsx from 'clsx';
 import {useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useCreateLibraryDialog} from '../../components/modals/CreateLibraryModal';
-import {PairingModal} from '../../components/modals/PairingModal';
-import {useSyncSetupDialog} from '../../components/modals/SyncSetupModal';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {useSpacedriveClient} from '../../contexts/SpacedriveContext';
 import {useLibraries} from '../../hooks/useLibraries';
@@ -26,7 +24,6 @@ interface OverviewTopBarProps {
 }
 
 export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
-	const [isPairingOpen, setIsPairingOpen] = useState(false);
 	const navigate = useNavigate();
 	const client = useSpacedriveClient();
 	const platform = usePlatform();
@@ -93,9 +90,6 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 		});
 	};
 
-	const handleSyncSetup = () => {
-		useSyncSetupDialog();
-	};
 
 	// Mutation for refreshing volume statistics
 	const volumeRefreshMutation = useLibraryMutation('volumes.refresh');
@@ -206,31 +200,7 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 		[]
 	);
 
-	const pairButton = useMemo(
-		() => (
-			<CircleButton
-				icon={DeviceMobile}
-				title="Pair Device"
-				onClick={() => setIsPairingOpen(true)}
-			>
-				Pair
-			</CircleButton>
-		),
-		[]
-	);
 
-	const syncButton = useMemo(
-		() => (
-			<CircleButton
-				icon={CloudArrowUp}
-				title="Setup Sync"
-				onClick={handleSyncSetup}
-			>
-				Setup Sync
-			</CircleButton>
-		),
-		[handleSyncSetup]
-	);
 
 	const refreshButton = useMemo(
 		() => (

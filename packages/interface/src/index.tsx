@@ -16,7 +16,6 @@ export { JobsScreen } from "./components/JobManager";
 export { JobsProvider, useJobsContext } from "./components/JobManager/hooks/JobsContext";
 export { Settings } from "./routes/settings";
 export { Spacedrop } from "./windows/Spacedrop";
-export { PairingModal } from "./components/modals/PairingModal";
 export { TopBarProvider, TopBarPortal, useTopBar } from "./TopBar";
 export { Overview } from "./routes/overview";
 
