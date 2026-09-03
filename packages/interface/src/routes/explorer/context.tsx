@@ -347,10 +347,31 @@ function urlToTarget(search: string): NavigationTarget | null {
 	const pathParam = params.get("path");
 	if (pathParam) {
 		try {
-			const path = JSON.parse(decodeURIComponent(pathParam)) as SdPath;
-			return { type: "path", path };
+			const decoded = decodeURIComponent(pathParam);
+			if (decoded.trim().startsWith("{")) {
+				const path = JSON.parse(decoded) as SdPath;
+				return { type: "path", path };
+			}
+			return {
+				type: "path",
+				path: {
+					Physical: {
+						device_slug: "local",
+						path: decoded,
+					},
+				},
+			};
 		} catch {
-			return null;
+			const decoded = decodeURIComponent(pathParam);
+			return {
+				type: "path",
+				path: {
+					Physical: {
+						device_slug: "local",
+						path: decoded,
+					},
+				},
+			};
 		}
 	}
 

@@ -82,6 +82,10 @@ impl LibraryQuery for SpaceLayoutQuery {
 			let item_type: ItemType = serde_json::from_str(&item_model.item_type)
 				.map_err(|e| QueryError::Internal(format!("Failed to parse item_type: {}", e)))?;
 
+			if matches!(item_type, ItemType::Redundancy | ItemType::Sources) {
+				continue;
+			}
+
 			// Resolve entry if entry_uuid is set
 			let resolved_file = if let Some(entry_uuid) = item_model.entry_uuid {
 				tracing::debug!(
@@ -160,6 +164,10 @@ impl LibraryQuery for SpaceLayoutQuery {
 					serde_json::from_str(&item_model.item_type).map_err(|e| {
 						QueryError::Internal(format!("Failed to parse item_type: {}", e))
 					})?;
+
+				if matches!(item_type, ItemType::Redundancy | ItemType::Sources) {
+					continue;
+				}
 
 				// Resolve entry if entry_uuid is set
 				let resolved_file = if let Some(entry_uuid) = item_model.entry_uuid {

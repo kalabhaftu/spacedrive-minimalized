@@ -36,6 +36,7 @@ import {PeerList} from '../SyncMonitor/components/PeerList';
 import {useSyncCount} from '../SyncMonitor/hooks/useSyncCount';
 import {useSyncMonitor} from '../SyncMonitor/hooks/useSyncMonitor';
 import {AddGroupButton} from './AddGroupButton';
+import {isRedundancyItem, isSourcesItem, isSourceItem} from './hooks/spaceItemUtils';
 import {useSpaceLayout, useSpaces} from './hooks/useSpaces';
 import {SpaceCustomizationPanel} from './SpaceCustomizationPanel';
 import {SpaceGroup} from './SpaceGroup';
@@ -487,25 +488,27 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 					{/* Scrollable Content */}
 					<div className="no-scrollbar mask-fade-out mt-3 flex grow flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10">
 						{/* Space-level items (pinned shortcuts) */}
-						{layout?.space_items &&
-							layout.space_items.length > 0 && (
+						{(() => {
+							const visibleItems = (layout?.space_items || []).filter(
+								(item) => !isRedundancyItem(item.item_type) && !isSourcesItem(item.item_type) && !isSourceItem(item.item_type)
+							);
+							if (visibleItems.length === 0) return null;
+							return (
 								<SortableContext
-									items={layout.space_items.map(
+									items={visibleItems.map(
 										(item) => item.id
 									)}
 									strategy={verticalListSortingStrategy}
 								>
 									<div className="space-y-0.5">
-										{layout.space_items.map(
+										{visibleItems.map(
 											(item, index) => (
 												<SpaceItem
 													key={item.id}
 													item={item}
 													isLastItem={
 														index ===
-														layout.space_items
-															.length -
-															1
+														visibleItems.length - 1
 													}
 													allowInsertion={true}
 													spaceId={currentSpace?.id}
@@ -516,7 +519,8 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 										)}
 									</div>
 								</SortableContext>
-							)}
+							);
+						})()}
 
 						{/* Groups with space-level drop zones between them */}
 						{layout?.groups && (

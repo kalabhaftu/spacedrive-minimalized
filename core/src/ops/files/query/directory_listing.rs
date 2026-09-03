@@ -134,14 +134,28 @@ impl LibraryQuery for DirectoryListingQuery {
 
 		match &self.input.path {
 			SdPath::Physical { device_slug, path } => {
+				let resolved_path: std::path::PathBuf = if path.starts_with("~") {
+					if let Some(home) = dirs::home_dir() {
+						if let Ok(stripped) = path.strip_prefix("~") {
+							home.join(stripped)
+						} else {
+							path.clone()
+						}
+					} else {
+						path.clone()
+					}
+				} else {
+					path.clone()
+				};
+
 				// Live filesystem is authoritative for online/accessible browsing
-				if tokio::fs::metadata(path)
+				if tokio::fs::metadata(&resolved_path)
 					.await
 					.map(|m| m.is_dir())
 					.unwrap_or(false)
 				{
 					return self
-						.query_live_directory(path, device_slug, context, library_id, db.conn())
+						.query_live_directory(&resolved_path, device_slug, context, library_id, db.conn())
 						.await;
 				}
 
@@ -153,7 +167,7 @@ impl LibraryQuery for DirectoryListingQuery {
 					}
 					Err(_) => Err(QueryError::Internal(format!(
 						"Directory '{}' not found on filesystem or catalog",
-						path.display()
+						resolved_path.display()
 					))),
 				}
 			}

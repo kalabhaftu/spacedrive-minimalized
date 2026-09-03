@@ -103,6 +103,9 @@ export type Platform = {
 	/** Listen for selected file changes across all windows (Tauri only) */
 	onSelectedFilesChanged?(callback: (fileIds: string[]) => void): Promise<() => void>;
 
+	/** Get primary system shortcuts/directories (Desktop, Documents, Downloads, etc.) */
+	getSystemDirectories?(): Promise<Record<string, string>>;
+
 	/** Get app version (Tauri only) */
 	getAppVersion?(): Promise<string>;
 

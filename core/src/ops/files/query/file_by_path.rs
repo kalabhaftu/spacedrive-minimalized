@@ -57,8 +57,22 @@ impl LibraryQuery for FileByPathQuery {
 
 		let db = library.db();
 
-		// Convert the local path to SdPath internally
-		let sd_path = SdPath::local(self.path.clone());
+		// Convert the local path to SdPath internally with tilde expansion
+		let resolved_path = if self.path.starts_with("~") {
+			if let Some(home) = dirs::home_dir() {
+				if let Ok(stripped) = self.path.strip_prefix("~") {
+					home.join(stripped)
+				} else {
+					self.path.clone()
+				}
+			} else {
+				self.path.clone()
+			}
+		} else {
+			self.path.clone()
+		};
+
+		let sd_path = SdPath::local(resolved_path.clone());
 
 		// Find the entry by SdPath
 		let entry_result = self.find_entry_by_sd_path(&sd_path, db.conn()).await;
@@ -203,10 +217,10 @@ impl LibraryQuery for FileByPathQuery {
 		let index = ephemeral_cache.get_global_index();
 		{
 			let index_read = index.read().await;
-			if let Some(entry_uuid) = index_read.get_entry_uuid(&self.path) {
-				if let Some(metadata) = index_read.get_entry_ref(&self.path) {
-					let content_kind = index_read.get_content_kind(&self.path);
-					let sd_path = SdPath::local(self.path.clone());
+			if let Some(entry_uuid) = index_read.get_entry_uuid(&resolved_path) {
+				if let Some(metadata) = index_read.get_entry_ref(&resolved_path) {
+					let content_kind = index_read.get_content_kind(&resolved_path);
+					let sd_path = SdPath::local(resolved_path.clone());
 
 					let mut file = File::from_ephemeral(entry_uuid, &metadata, sd_path);
 					file.content_kind = content_kind;
@@ -217,7 +231,7 @@ impl LibraryQuery for FileByPathQuery {
 		}
 
 		// If physically present on disk, construct live file directly
-		if let Ok(symlink_meta) = tokio::fs::symlink_metadata(&self.path).await {
+		if let Ok(symlink_meta) = tokio::fs::symlink_metadata(&resolved_path).await {
 			use crate::ops::indexing::database_storage::{is_hidden_path, EntryMetadata};
 			use crate::ops::indexing::state::EntryKind as StateEntryKind;
 
@@ -232,10 +246,10 @@ impl LibraryQuery for FileByPathQuery {
 			};
 
 			let size = if is_dir { 0 } else { symlink_meta.len() };
-			let is_hidden = is_hidden_path(&self.path);
+			let is_hidden = is_hidden_path(&resolved_path);
 
 			let entry_meta = EntryMetadata {
-				path: self.path.clone(),
+				path: resolved_path.clone(),
 				kind,
 				size,
 				modified: symlink_meta.modified().ok(),
@@ -257,18 +271,18 @@ impl LibraryQuery for FileByPathQuery {
 			};
 
 			let mut index_write = index.write().await;
-			let entry_uuid = if let Some(uuid) = index_write.get_entry_uuid(&self.path) {
+			let entry_uuid = if let Some(uuid) = index_write.get_entry_uuid(&resolved_path) {
 				uuid
 			} else {
 				let new_uuid = Uuid::new_v4();
-				let _ = index_write.add_entry(self.path.clone(), new_uuid, entry_meta.clone());
+				let _ = index_write.add_entry(resolved_path.clone(), new_uuid, entry_meta.clone());
 				new_uuid
 			};
 
-			let content_kind = index_write.get_content_kind(&self.path);
+			let content_kind = index_write.get_content_kind(&resolved_path);
 			drop(index_write);
 
-			let sd_path = SdPath::local(self.path.clone());
+			let sd_path = SdPath::local(resolved_path.clone());
 			let mut file = File::from_ephemeral(entry_uuid, &entry_meta, sd_path);
 			file.content_kind = content_kind;
 

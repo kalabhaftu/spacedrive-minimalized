@@ -51,10 +51,23 @@ impl LocationManager {
 		// Only for local device — remote paths can't be resolved locally.
 		let sd_path = if sd_path.is_local() {
 			if let crate::domain::addressing::SdPath::Physical { device_slug, path } = sd_path {
-				let canonical = tokio::fs::canonicalize(&path).await.map_err(|e| {
+				let resolved_path = if path.starts_with("~") {
+					if let Some(home) = dirs::home_dir() {
+						if let Ok(stripped) = path.strip_prefix("~") {
+							home.join(stripped)
+						} else {
+							path
+						}
+					} else {
+						path
+					}
+				} else {
+					path
+				};
+				let canonical = tokio::fs::canonicalize(&resolved_path).await.map_err(|e| {
 					LocationError::InvalidPath(format!(
 						"Failed to resolve path {}: {}",
-						path.display(),
+						resolved_path.display(),
 						e
 					))
 				})?;

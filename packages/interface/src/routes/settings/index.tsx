@@ -84,8 +84,12 @@ function SettingsContent({ page }: SettingsContentProps) {
 }
 
 function SettingsContentWrapper() {
+  const platform = usePlatform();
+  const windowLabel = platform.getCurrentWindowLabel?.() || "";
+  const labelPage = windowLabel.startsWith("settings-") ? windowLabel.replace("settings-", "") : "";
   const pathname = window.location.pathname;
-  const initialPage = pathname.split("/").filter(Boolean)[1] || "general";
+  const pathPage = pathname.split("/").filter(Boolean)[1];
+  const initialPage = labelPage || pathPage || "general";
   const [currentPage, setCurrentPage] = useState(initialPage);
 
   return (

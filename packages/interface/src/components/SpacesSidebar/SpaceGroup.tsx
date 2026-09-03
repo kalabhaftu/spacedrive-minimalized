@@ -8,8 +8,8 @@ import { DevicesGroup } from "./DevicesGroup";
 import { LocationsGroup } from "./LocationsGroup";
 import { VolumesGroup } from "./VolumesGroup";
 import { TagsGroup } from "./TagsGroup";
-import { SourcesGroup } from "./SourcesGroup";
 import { GroupHeader } from "./GroupHeader";
+import { isRedundancyItem, isSourcesItem, isSourceItem } from "./hooks/spaceItemUtils";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 
 interface SpaceGroupProps {
@@ -28,23 +28,20 @@ export function SpaceGroup({
 	sortableListeners,
 }: SpaceGroupProps) {
 	const { collapsedGroups, toggleGroup: toggleGroupLocal } = useSidebarStore();
+	const updateGroupCollapse = useLibraryMutation("spaces.update_group_collapse");
 	const { active } = useDndContext();
-	const updateGroup = useLibraryMutation("spaces.update_group");
-	
-	// Use backend's is_collapsed value as the source of truth, fallback to local state
-	const isCollapsed = group.is_collapsed ?? collapsedGroups.has(group.id);
-	
-	// Toggle handler that updates both local and backend state
+
+	const isCollapsed = collapsedGroups.has(group.id);
+
 	const handleToggle = async () => {
-		// Optimistically update local state for immediate UI feedback
+		// Optimistically toggle in local store for instant UI response
 		toggleGroupLocal(group.id);
-		
-		// Update backend
+
+		// Persist to database in background
 		try {
-			await updateGroup.mutateAsync({
+			await updateGroupCollapse.mutateAsync({
 				group_id: group.id,
-				name: null,
-				is_collapsed: !isCollapsed,
+				collapsed: !isCollapsed,
 			});
 		} catch (error) {
 			console.error("Failed to update group collapse state:", error);
@@ -124,6 +121,13 @@ export function SpaceGroup({
 		},
 	});
 
+	const visibleItems = items.filter(
+		(item) =>
+			!isRedundancyItem(item.item_type) &&
+			!isSourcesItem(item.item_type) &&
+			!isSourceItem(item.item_type)
+	);
+
 	// QuickAccess and Custom groups render stored items
 	return (
 		<div className="rounded-lg" data-group-id={group.id}>
@@ -140,12 +144,12 @@ export function SpaceGroup({
 			{/* Items */}
 			{!isCollapsed && (
 				<div className="space-y-0.5 relative min-h-[20px]">
-					{items.length > 0 ? (
-						items.map((item, index) => (
+					{visibleItems.length > 0 ? (
+						visibleItems.map((item, index) => (
 							<SpaceItem
 								key={item.id}
 								item={item}
-								isLastItem={index === items.length - 1}
+								isLastItem={index === visibleItems.length - 1}
 								allowInsertion={allowInsertion}
 								spaceId={spaceId}
 								groupId={group.id}

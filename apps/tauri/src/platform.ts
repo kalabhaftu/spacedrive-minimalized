@@ -3,6 +3,15 @@ import {
 	invoke,
 	convertFileSrc as tauriConvertFileSrc
 } from '@tauri-apps/api/core';
+import {
+	audioDir,
+	desktopDir,
+	documentDir,
+	downloadDir,
+	homeDir,
+	pictureDir,
+	videoDir
+} from '@tauri-apps/api/path';
 import {listen} from '@tauri-apps/api/event';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {ask, open, save} from '@tauri-apps/plugin-dialog';
@@ -340,6 +349,34 @@ export const platform: Platform = {
 		// Use the global handler if available (initialized in keybinds.ts)
 		if (window.__SPACEDRIVE__?.unregisterKeybind) {
 			await window.__SPACEDRIVE__.unregisterKeybind(id);
+		}
+	},
+
+	async getSystemDirectories() {
+		try {
+			const [home, desktop, documents, downloads, pictures, music, movies] =
+				await Promise.all([
+					homeDir().catch(() => null),
+					desktopDir().catch(() => null),
+					documentDir().catch(() => null),
+					downloadDir().catch(() => null),
+					pictureDir().catch(() => null),
+					audioDir().catch(() => null),
+					videoDir().catch(() => null)
+				]);
+
+			const result: Record<string, string> = {};
+			if (home) result.Home = home;
+			if (desktop) result.Desktop = desktop;
+			if (documents) result.Documents = documents;
+			if (downloads) result.Downloads = downloads;
+			if (pictures) result.Pictures = pictures;
+			if (music) result.Music = music;
+			if (movies) result.Movies = movies;
+			return result;
+		} catch (e) {
+			console.error('Failed to get system directories:', e);
+			return {};
 		}
 	}
 };

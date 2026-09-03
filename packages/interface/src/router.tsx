@@ -8,6 +8,7 @@ import { TagView } from "./routes/tag";
 import { FileKindsView } from "./routes/file-kinds";
 import { RecentsView } from "./routes/explorer/views/RecentsView";
 import { FavoritesView } from "./routes/favorites/FavoritesView";
+import { Settings } from "./routes/settings";
 
 /**
  * Router routes configuration (without router instance)
@@ -56,6 +57,14 @@ export const explorerRoutes = [
 			{
 				path: "daemon",
 				element: <DaemonManager />,
+			},
+			{
+				path: "settings",
+				element: <Settings />,
+			},
+			{
+				path: "settings/:page",
+				element: <Settings />,
 			},
 		],
 	},

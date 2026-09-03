@@ -140,12 +140,25 @@ impl LibraryQuery for MediaListingQuery {
 			Ok(p) => p,
 			Err(e) => {
 				if let SdPath::Physical { device_slug, path } = &self.input.path {
-					if tokio::fs::metadata(path)
+					let resolved_path: std::path::PathBuf = if path.starts_with("~") {
+						if let Some(home) = dirs::home_dir() {
+							if let Ok(stripped) = path.strip_prefix("~") {
+								home.join(stripped)
+							} else {
+								path.clone()
+							}
+						} else {
+							path.clone()
+						}
+					} else {
+						path.clone()
+					};
+					if tokio::fs::metadata(&resolved_path)
 						.await
 						.map(|m| m.is_dir())
 						.unwrap_or(false)
 					{
-						return self.query_live_media(path, device_slug, context).await;
+						return self.query_live_media(&resolved_path, device_slug, context).await;
 					}
 				}
 				return Err(e);

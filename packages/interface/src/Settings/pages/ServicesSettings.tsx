@@ -49,18 +49,6 @@ export function ServicesSettings() {
         <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
           <label className="flex items-center justify-between">
             <div>
-              <span className="text-sm text-ink">Networking</span>
-              <p className="text-xs text-ink-dull">Enable P2P networking and device pairing</p>
-            </div>
-            <input
-              type="checkbox"
-              {...form.register("networking_enabled")}
-              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
-            />
-          </label>
-
-          <label className="flex items-center justify-between">
-            <div>
               <span className="text-sm text-ink">Volume Monitoring</span>
               <p className="text-xs text-ink-dull">Monitor for connected and disconnected volumes</p>
             </div>

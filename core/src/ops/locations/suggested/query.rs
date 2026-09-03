@@ -115,6 +115,7 @@ fn get_suggested_locations_for_os() -> Vec<(String, PathBuf)> {
 	};
 
 	if cfg!(target_os = "macos") {
+		suggestions.push(("Home".to_string(), home.clone()));
 		suggestions.push(("Desktop".to_string(), home.join("Desktop")));
 		suggestions.push(("Documents".to_string(), home.join("Documents")));
 		suggestions.push(("Downloads".to_string(), home.join("Downloads")));
@@ -122,6 +123,7 @@ fn get_suggested_locations_for_os() -> Vec<(String, PathBuf)> {
 		suggestions.push(("Music".to_string(), home.join("Music")));
 		suggestions.push(("Movies".to_string(), home.join("Movies")));
 	} else if cfg!(target_os = "linux") {
+		suggestions.push(("Home".to_string(), home.clone()));
 		suggestions.push(("Desktop".to_string(), home.join("Desktop")));
 		suggestions.push(("Documents".to_string(), home.join("Documents")));
 		suggestions.push(("Downloads".to_string(), home.join("Downloads")));
@@ -129,6 +131,7 @@ fn get_suggested_locations_for_os() -> Vec<(String, PathBuf)> {
 		suggestions.push(("Music".to_string(), home.join("Music")));
 		suggestions.push(("Videos".to_string(), home.join("Videos")));
 	} else if cfg!(target_os = "windows") {
+		suggestions.push(("Home".to_string(), home.clone()));
 		suggestions.push(("Desktop".to_string(), home.join("Desktop")));
 		suggestions.push(("Documents".to_string(), home.join("Documents")));
 		suggestions.push(("Downloads".to_string(), home.join("Downloads")));

@@ -384,7 +384,12 @@ fn create_window(
 	always_on_top: bool,
 	transparent: bool,
 ) -> Result<WebviewWindow, String> {
-	let mut builder = WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
+	let webview_url = if url.starts_with("http://") || url.starts_with("https://") {
+		WebviewUrl::External(url.parse().map_err(|e| format!("Invalid URL: {}", e))?)
+	} else {
+		WebviewUrl::App("index.html".into())
+	};
+	let mut builder = WebviewWindowBuilder::new(app, label, webview_url)
 		.title(title)
 		.inner_size(size.0, size.1)
 		.min_inner_size(min_size.0, min_size.1)
