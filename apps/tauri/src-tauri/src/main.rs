@@ -351,18 +351,6 @@ struct MenuState {
 async fn app_ready(window: tauri::Window) {
 	window.show().ok();
 	window.set_focus().ok();
-
-	// #[cfg(debug_assertions)]
-	// if window.label() == "main" && window.app_handle().get_webview_window("spacebot").is_none() {
-	// 	if let Err(error) = windows::show_window(
-	// 		window.app_handle().clone(),
-	// 		windows::SpacedriveWindow::Spacebot,
-	// 	)
-	// 	.await
-	// 	{
-	// 		tracing::warn!(?error, "Failed to auto-open Spacebot window");
-	// 	}
-	// }
 }
 
 /// Get the daemon socket address for the frontend to connect

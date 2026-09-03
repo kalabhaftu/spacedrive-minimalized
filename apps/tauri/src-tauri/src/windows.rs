@@ -22,8 +22,6 @@ pub enum SpacedriveWindow {
 		page: Option<String>,
 	},
 	JobManager,
-	DeviceDiscovery,
-	Spacebot,
 
 	/// Floating panels (always on top)
 	Inspector {
@@ -69,8 +67,6 @@ impl SpacedriveWindow {
 			Self::MediaViewer { file_id } => format!("media-viewer-{}", file_id),
 			Self::Settings { page } => format!("settings-{}", page.as_deref().unwrap_or("general")),
 			Self::JobManager => "job-manager".to_string(),
-			Self::DeviceDiscovery => "device-discovery".to_string(),
-			Self::Spacebot => "spacebot".to_string(),
 			Self::Inspector { item_id } => {
 				format!("inspector-{}", item_id.as_deref().unwrap_or("floating"))
 			}
@@ -205,30 +201,6 @@ impl SpacedriveWindow {
 					false,
 				)
 			}
-
-			Self::DeviceDiscovery => create_window(
-				app,
-				&label,
-				"/devices",
-				"Devices",
-				(800.0, 600.0),
-				(600.0, 400.0),
-				true,
-				false,
-				false,
-			),
-
-			Self::Spacebot => create_window(
-				app,
-				&label,
-				"/spacebot",
-				"Spacebot",
-				(1200.0, 800.0),
-				(800.0, 600.0),
-				true,
-				false,
-				false,
-			),
 
 			Self::QuickPreview { file_id } => {
 				let url = format!("/quick-preview/{}", file_id);
