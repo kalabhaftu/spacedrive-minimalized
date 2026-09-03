@@ -31,14 +31,6 @@ const PALETTE_ITEMS: PaletteItem[] = [
 		type: "FileKinds",
 		label: "File Kinds",
 	},
-	{
-		type: "Sources",
-		label: "Sources",
-	},
-	{
-		type: "Redundancy",
-		label: "Redundancy",
-	},
 ];
 
 function DraggablePaletteItem({ item }: { item: PaletteItem }) {

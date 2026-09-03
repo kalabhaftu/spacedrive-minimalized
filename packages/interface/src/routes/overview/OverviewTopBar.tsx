@@ -280,22 +280,6 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 							{searchButton}
 						</TopBarItem>
 						<TopBarItem
-							id="pair-device"
-							label="Pair Device"
-							priority="normal"
-							onClick={() => setIsPairingOpen(true)}
-						>
-							{pairButton}
-						</TopBarItem>
-						<TopBarItem
-							id="setup-sync"
-							label="Setup Sync"
-							priority="low"
-							onClick={handleSyncSetup}
-						>
-							{syncButton}
-						</TopBarItem>
-						<TopBarItem
 							id="refresh"
 							label="Refresh Statistics"
 							priority="low"
@@ -313,11 +297,6 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 						</TopBarItem>
 					</>
 				}
-			/>
-
-			<PairingModal
-				isOpen={isPairingOpen}
-				onClose={() => setIsPairingOpen(false)}
 			/>
 		</>
 	);

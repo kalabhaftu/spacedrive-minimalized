@@ -167,49 +167,6 @@ export function HeroStats({
 					color="from-purple-500 to-pink-500"
 				/>
 
-				{/* Devices */}
-				<StatCard
-					icon={
-						<img
-							src={MobileIcon}
-							alt="Devices"
-							className="size-10 opacity-80"
-						/>
-					}
-					label="Connected Devices"
-					value={deviceCount}
-					subtitle={`registered in library`}
-					color="from-green-500 to-emerald-500"
-				/>
-
-				{/* AI Compute Power */}
-				<StatCard
-					icon={
-						<img
-							src={ComputeIcon}
-							alt="Compute"
-							className="size-10 opacity-80"
-						/>
-					}
-					label="AI Compute Power"
-					value={
-						<>
-							{topsValue}{' '}
-							<span className="text-ink-faint text-xl">TOPS</span>
-						</>
-					}
-					subtitle={
-						<span className="flex items-center gap-1">
-							<Lightning
-								size={12}
-								weight="bold"
-								className="text-ink-faint"
-							/>
-							{topsRank.label}
-						</span>
-					}
-					color="from-purple-500 to-pink-500"
-				/>
 
 				{/* Library Size (Database) */}
 				<StatCard

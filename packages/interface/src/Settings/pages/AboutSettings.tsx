@@ -42,23 +42,26 @@ export function AboutSettings() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
-        className="text-center mb-6"
+        className="text-center mb-4"
       >
-        <h3 className="text-2xl font-bold text-white mb-2">Spacedrive</h3>
-        <p className="text-sm text-white/60">
-          A file explorer from the future.
+        <h3 className="text-2xl font-bold text-white mb-1">Spacedrive Minimalized</h3>
+        <p className="text-sm text-accent-bright font-medium">
+          v2.0.0-alpha.2 &bull; 99ebd26
+        </p>
+        <p className="text-xs text-white/50 mt-1">
+          Fast, minimalized, and optimized file manager
         </p>
       </motion.div>
 
-      {/* Manifesto */}
+      {/* Description & Attribution */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.35 }}
-        className="max-w-md text-center mb-8 px-4"
+        className="max-w-md text-center mb-6 px-4"
       >
-        <p className="text-sm text-white/70 leading-relaxed">
-          Infrastructure for the next era of computing. An architecture designed for multi-device environments from the ground up—not cloud services retrofitted with offline support, but local-first sync that scales to the cloud when you want it.
+        <p className="text-xs text-white/60 leading-relaxed">
+          Re-architected for instant live filesystem browsing without background catalog dependencies. Forked from Spacedrive with gratitude to Jamie Pine and the open-source community for the foundational work.
         </p>
       </motion.div>
 
@@ -70,74 +73,26 @@ export function AboutSettings() {
         className="flex gap-3 mb-6"
       >
         <a
-          href="https://spacedrive.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <CircleButton icon={GlobeHemisphereWest}>
-            Website
-          </CircleButton>
-        </a>
-        <a
-          href="https://github.com/spacedriveapp/spacedrive"
+          href="https://github.com/kalabhaftu/spacedrive-minimalized"
           target="_blank"
           rel="noopener noreferrer"
         >
           <CircleButton icon={GithubLogo}>
-            GitHub
+            Source Code
           </CircleButton>
         </a>
-        <a
-          href="https://discord.gg/spacedrive"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <CircleButton icon={DiscordLogo}>
-            Discord
-          </CircleButton>
-        </a>
-      </motion.div>
-
-      {/* Contributors */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.45 }}
-        className="max-w-lg text-center mb-8 px-4"
-      >
-        <p className="text-[11px] leading-relaxed text-white/30">
-          {contributors.map((c: { name: string; github: string }, i) => (
-            <span key={c.github}>
-              {i > 0 && " · "}
-              <a
-                href={`https://github.com/${c.github}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`@${c.github}`}
-                className="hover:text-white/50 transition-colors"
-              >
-                {c.name}
-              </a>
-            </span>
-          ))}
-        </p>
       </motion.div>
 
       {/* License */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.55 }}
+        transition={{ duration: 0.5, delay: 0.45 }}
         className="text-center"
       >
-        <a
-          href="https://github.com/spacedriveapp/spacedrive/blob/main/LICENSE"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-white/40 hover:text-white/60 transition-colors"
-        >
-          FSL-1.1-ALv2
-        </a>
+        <span className="text-xs text-white/30">
+          FSL-1.1-ALv2 License
+        </span>
       </motion.div>
     </div>
   );

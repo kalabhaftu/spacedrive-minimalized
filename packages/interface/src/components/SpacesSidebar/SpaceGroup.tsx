@@ -61,18 +61,9 @@ export function SpaceGroup({
 	const allowInsertion =
 		group.group_type === "QuickAccess" || group.group_type === "Custom";
 
-	// Devices group - fetches all devices (library + paired)
+	// Devices group - disabled for minimal local mode
 	if (group.group_type === "Devices") {
-		return (
-			<div data-group-id={group.id}>
-				<DevicesGroup
-					isCollapsed={isCollapsed}
-					onToggle={handleToggle}
-					sortableAttributes={sortableAttributes}
-					sortableListeners={sortableListeners}
-				/>
-			</div>
-		);
+		return null;
 	}
 
 	// Locations group - fetches all locations
@@ -117,18 +108,9 @@ export function SpaceGroup({
 		);
 	}
 
-	// Sources group - fetches archive data sources
+	// Sources group - disabled for minimal local mode
 	if (group.group_type === "Sources") {
-		return (
-			<div data-group-id={group.id}>
-				<SourcesGroup
-					isCollapsed={isCollapsed}
-					onToggle={handleToggle}
-					sortableAttributes={sortableAttributes}
-					sortableListeners={sortableListeners}
-				/>
-			</div>
-		);
+		return null;
 	}
 
 	// Empty drop zone for groups with no items

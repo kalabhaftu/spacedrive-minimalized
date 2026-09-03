@@ -542,10 +542,9 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 						)}
 					</div>
 
-					{/* Sync Monitor, Job Manager, Customize & Settings (pinned to bottom) */}
+					{/* Job Manager, Customize & Settings (pinned to bottom) */}
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
-							<SyncButton />
 							<JobsButton
 								activeJobCount={activeJobCount}
 								hasRunningJobs={hasRunningJobs}

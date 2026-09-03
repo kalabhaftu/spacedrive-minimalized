@@ -14,18 +14,6 @@ import {
 	JobsProvider,
 } from "@sd/interface";
 import {
-	SpacebotProvider,
-	SpacebotLayout,
-	ChatRoute,
-	ConversationRoute,
-	TasksRoute,
-	MemoriesRoute,
-	AutonomyRoute,
-	ScheduleRoute,
-} from "@sd/interface/Spacebot";
-import { VoiceOverlay } from "@sd/interface/windows/VoiceOverlay";
-import {createMemoryRouter, Navigate, Outlet, RouterProvider} from "react-router-dom";
-import {
 	SpacedriveClient,
 	TauriTransport,
 	useSyncPreferencesStore,
@@ -35,7 +23,6 @@ import { useEffect, useState } from "react";
 import { DragOverlay } from "./routes/DragOverlay";
 import { ContextMenuWindow } from "./routes/ContextMenuWindow";
 import { DragDemo } from "./components/DragDemo";
-import { SpacedropWindow } from "./routes/Spacedrop";
 import { platform } from "./platform";
 import { initializeContextMenuHandler } from "./contextMenu";
 import { initializeKeybindGlobal } from "./keybinds";
@@ -47,13 +34,10 @@ function getInitialRoute() {
 	if (label.startsWith("drag-overlay")) return "/drag-overlay";
 	if (label.startsWith("context-menu")) return "/contextmenu";
 	if (label.startsWith("drag-demo")) return "/drag-demo";
-	if (label.startsWith("spacedrop")) return "/spacedrop";
 	if (label.startsWith("settings")) return "/settings";
 	if (label.startsWith("inspector")) return "/inspector";
 	if (label.startsWith("quick-preview")) return "/quick-preview";
 	if (label.startsWith("job-manager")) return "/job-manager";
-	if (label.startsWith("spacebot")) return "/spacebot";
-	if (label.startsWith("voice-overlay")) return "/voice-overlay";
 
 	return "/";
 }
@@ -301,67 +285,6 @@ function App() {
 						</div>
 					</ServerProvider>
 				</SpacedriveProvider>
-			</PlatformProvider>
-		);
-	}
-
-	if (route === "/spacebot") {
-		const spacebotRouter = createMemoryRouter(
-			[
-				{
-					path: "/spacebot",
-					element: (
-						<SpacebotProvider>
-							<Outlet />
-						</SpacebotProvider>
-					),
-					children: [
-						{
-							index: true,
-							element: <Navigate to="/spacebot/chat" replace />,
-						},
-						{
-							element: <SpacebotLayout />,
-							children: [
-								{
-									path: "chat",
-									children: [
-										{index: true, element: <ChatRoute />},
-										{path: "new", element: <ChatRoute />},
-										{path: "conversation/*", element: <ConversationRoute />},
-									],
-								},
-								{path: "tasks", element: <TasksRoute />},
-								{path: "memories", element: <MemoriesRoute />},
-								{path: "autonomy", element: <AutonomyRoute />},
-								{path: "schedule", element: <ScheduleRoute />},
-							],
-						},
-					],
-				},
-			],
-			{
-				initialEntries: ["/spacebot"],
-			}
-		);
-
-		return (
-			<PlatformProvider platform={platform}>
-				<SpacedriveProvider client={client}>
-					<ServerProvider>
-						<div className="h-screen overflow-hidden bg-app rounded-[10px] border border-transparent frame">
-							<RouterProvider router={spacebotRouter} />
-						</div>
-					</ServerProvider>
-				</SpacedriveProvider>
-			</PlatformProvider>
-		);
-	}
-
-	if (route === "/voice-overlay") {
-		return (
-			<PlatformProvider platform={platform}>
-				<VoiceOverlay />
 			</PlatformProvider>
 		);
 	}

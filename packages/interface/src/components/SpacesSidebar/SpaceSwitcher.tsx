@@ -25,8 +25,8 @@ export function SpaceSwitcher({
 						className="size-2 rounded-full"
 						style={{backgroundColor: currentSpace?.color || '#666'}}
 					/>
-					<span className="flex-1 truncate text-left">
-						{currentSpace?.name || 'Select Space'}
+					<span className="flex-1 truncate text-left font-medium">
+						{currentSpace?.name === 'All Devices' ? 'Local Library' : currentSpace?.name || 'Local Library'}
 					</span>
 				</SelectPill>
 			</DropdownMenu.Trigger>
