@@ -36,7 +36,7 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["$HOME/**", "/Volumes/**"]
+        "scope": ["$HOME/**", "/Volumes/**", "/System/Volumes/**", "/Users/**"]
       }
     }
   },
