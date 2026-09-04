@@ -260,8 +260,7 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 	);
 	const [customizePanelOpen, setCustomizePanelOpen] = useState(false);
 
-	// Get sync and job status for icons
-	useSyncCount();
+	// Get job status for icons
 	const {
 		activeJobCount,
 		hasRunningJobs,
