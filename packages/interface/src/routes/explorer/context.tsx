@@ -35,8 +35,7 @@ export type ViewMode =
 	| "list"
 	| "media"
 	| "column"
-	| "size"
-	| "knowledge";
+	| "size";
 
 export interface ViewSettings {
 	gridSize: number;
@@ -842,7 +841,7 @@ export function ExplorerProvider({
 			if (prefs) {
 				uiDispatch({
 					type: "LOAD_PREFERENCES",
-					viewMode: prefs.viewMode,
+					viewMode: prefs.viewMode === "knowledge" ? "grid" : (prefs.viewMode as ViewMode),
 					viewSettings: prefs.viewSettings,
 				});
 			}

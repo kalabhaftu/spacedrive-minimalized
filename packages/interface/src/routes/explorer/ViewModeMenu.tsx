@@ -5,7 +5,6 @@ import {
 	Columns,
 	GridFour,
 	Rows,
-	Sparkle,
 	SquaresFour
 } from '@phosphor-icons/react';
 import {CircleButton} from '@spacedrive/primitives';

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import { Folder, FolderOpen } from "@phosphor-icons/react";
 import {
   Button,
@@ -103,9 +102,12 @@ const jobOptions: JobOption[] = [
 export function useAddLocationDialog(
   onLocationAdded?: (locationId: string) => void,
 ) {
-  return dialogManager.create((props) => (
-    <AddLocationDialog {...props} onLocationAdded={onLocationAdded} />
-  ));
+  return {
+    open: () =>
+      dialogManager.create((props) => (
+        <AddLocationDialog {...props} onLocationAdded={onLocationAdded} />
+      )),
+  };
 }
 
 function AddLocationDialog(props: {

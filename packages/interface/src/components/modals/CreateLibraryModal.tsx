@@ -47,9 +47,12 @@ type DialogStep = "form" | "creating" | "success" | "error";
 export function useCreateLibraryDialog(
 	onLibraryCreated?: (libraryId: string) => void,
 ) {
-	return dialogManager.create((props: CreateLibraryDialogProps) => (
-		<CreateLibraryDialog {...props} onLibraryCreated={onLibraryCreated} />
-	));
+	return {
+		open: () =>
+			dialogManager.create((props: CreateLibraryDialogProps) => (
+				<CreateLibraryDialog {...props} onLibraryCreated={onLibraryCreated} />
+			)),
+	};
 }
 
 function CreateLibraryDialog(props: CreateLibraryDialogProps) {

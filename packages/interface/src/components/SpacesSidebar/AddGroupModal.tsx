@@ -9,7 +9,9 @@ interface FormData {
 }
 
 export function useAddGroupDialog(spaceId: string) {
-	return dialogManager.create((props) => <AddGroupDialog {...props} spaceId={spaceId} />);
+	return {
+		open: () => dialogManager.create((props) => <AddGroupDialog {...props} spaceId={spaceId} />),
+	};
 }
 
 function AddGroupDialog(props: { id: number; spaceId: string }) {

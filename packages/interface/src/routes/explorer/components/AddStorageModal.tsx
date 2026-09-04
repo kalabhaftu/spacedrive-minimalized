@@ -363,13 +363,16 @@ export function useAddStorageDialog(
 	onStorageAdded?: (sdPath: any) => void,
 	initialPath?: string,
 ) {
-	return dialogManager.create((props) => (
-		<AddStorageDialog
-			{...props}
-			onStorageAdded={onStorageAdded}
-			initialPath={initialPath}
-		/>
-	));
+	return {
+		open: () =>
+			dialogManager.create((props) => (
+				<AddStorageDialog
+					{...props}
+					onStorageAdded={onStorageAdded}
+					initialPath={initialPath}
+				/>
+			)),
+	};
 }
 
 function AddStorageDialog(props: {

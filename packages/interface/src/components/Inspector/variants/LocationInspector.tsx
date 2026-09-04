@@ -616,11 +616,9 @@ interface DeleteLocationDialogProps extends UseDialogProps {
 
 function useDeleteLocationDialog() {
 	return (locationId: string, locationName: string) => {
-		const controller = dialogManager.create((props: UseDialogProps) => (
+		return dialogManager.create((props: UseDialogProps) => (
 			<DeleteLocationDialog {...props} locationId={locationId} locationName={locationName} />
 		));
-		controller.open();
-		return controller;
 	};
 }
 

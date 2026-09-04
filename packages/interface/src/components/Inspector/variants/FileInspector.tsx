@@ -1,7 +1,6 @@
 import {
 	ArrowsClockwise,
 	Calendar,
-	ClockCounterClockwise,
 	Cube,
 	DotsThree,
 	Eye,
@@ -28,7 +27,7 @@ import type {File, SdPath} from '@sd/ts-client';
 import {toast} from '@spacedrive/primitives';
 import clsx from 'clsx';
 import {LocationMap} from '../LocationMap';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useJobsContext} from '../../../components/JobManager/hooks/JobsContext';
 import {TagSelectorButton} from '../../../components/Tags';
 import {usePlatform} from '../../../contexts/PlatformContext';
@@ -52,7 +51,6 @@ interface FileInspectorProps {
 
 export function FileInspector({file}: FileInspectorProps) {
 	const [activeTab, setActiveTab] = useState('overview');
-	const isDev = import.meta.env.DEV;
 
 	// Extract parent directory for pathScope to enable reactive sidecar updates
 	const getParentPath = (): SdPath | undefined => {

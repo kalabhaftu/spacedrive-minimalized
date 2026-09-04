@@ -6,6 +6,7 @@ import {
 } from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
 import {
+	ArrowsOut,
 	CircleNotch,
 	FunnelSimple,
 	GearSix,
