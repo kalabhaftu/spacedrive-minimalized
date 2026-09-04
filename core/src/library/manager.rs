@@ -555,6 +555,13 @@ impl LibraryManager {
 			}
 		}
 
+		// Ensure default locations exist if library has none
+		if let Ok(count) = entities::location::Entity::find().count(library.db().conn()).await {
+			if count == 0 {
+				self.create_default_locations(context.clone(), library.clone()).await;
+			}
+		}
+
 		// Register library
 		{
 			let mut libraries = self.libraries.write().await;
@@ -1565,27 +1572,36 @@ impl LibraryManager {
 	fn get_default_locations_for_os(home: &PathBuf) -> Vec<(String, PathBuf)> {
 		let mut locations = Vec::new();
 
+		let user_name = home
+			.file_name()
+			.and_then(|s| s.to_str())
+			.unwrap_or("Home")
+			.to_string();
+
 		if cfg!(target_os = "macos") {
-			locations.push(("Desktop".to_string(), home.join("Desktop")));
-			locations.push(("Documents".to_string(), home.join("Documents")));
-			locations.push(("Downloads".to_string(), home.join("Downloads")));
-			locations.push(("Pictures".to_string(), home.join("Pictures")));
+			locations.push((user_name, home.clone()));
 			locations.push(("Music".to_string(), home.join("Music")));
+			locations.push(("Downloads".to_string(), home.join("Downloads")));
+			locations.push(("Documents".to_string(), home.join("Documents")));
 			locations.push(("Movies".to_string(), home.join("Movies")));
+			locations.push(("Desktop".to_string(), home.join("Desktop")));
+			locations.push(("Pictures".to_string(), home.join("Pictures")));
 		} else if cfg!(target_os = "linux") {
-			locations.push(("Desktop".to_string(), home.join("Desktop")));
-			locations.push(("Documents".to_string(), home.join("Documents")));
-			locations.push(("Downloads".to_string(), home.join("Downloads")));
-			locations.push(("Pictures".to_string(), home.join("Pictures")));
+			locations.push((user_name, home.clone()));
 			locations.push(("Music".to_string(), home.join("Music")));
+			locations.push(("Downloads".to_string(), home.join("Downloads")));
+			locations.push(("Documents".to_string(), home.join("Documents")));
 			locations.push(("Videos".to_string(), home.join("Videos")));
+			locations.push(("Desktop".to_string(), home.join("Desktop")));
+			locations.push(("Pictures".to_string(), home.join("Pictures")));
 		} else if cfg!(target_os = "windows") {
-			locations.push(("Desktop".to_string(), home.join("Desktop")));
-			locations.push(("Documents".to_string(), home.join("Documents")));
-			locations.push(("Downloads".to_string(), home.join("Downloads")));
-			locations.push(("Pictures".to_string(), home.join("Pictures")));
+			locations.push((user_name, home.clone()));
 			locations.push(("Music".to_string(), home.join("Music")));
+			locations.push(("Downloads".to_string(), home.join("Downloads")));
+			locations.push(("Documents".to_string(), home.join("Documents")));
 			locations.push(("Videos".to_string(), home.join("Videos")));
+			locations.push(("Desktop".to_string(), home.join("Desktop")));
+			locations.push(("Pictures".to_string(), home.join("Pictures")));
 		}
 
 		locations

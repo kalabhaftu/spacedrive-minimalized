@@ -35,6 +35,10 @@ function deriveTitleFromPath(pathname: string, search: string): string {
 	if (pathname === "/explorer" && search) {
 		const params = new URLSearchParams(search);
 
+		if (params.get("home") === "true") {
+			return "Home";
+		}
+
 		const view = params.get("view");
 		if (view === "device") {
 			return "This Device";
@@ -129,7 +133,21 @@ interface PersistedState {
 	defaultNewTabPath: string;
 }
 
+export const REMEMBER_LAST_TAB_KEY = "sd_remember_last_tab";
+
+export function shouldRememberLastTab(): boolean {
+	try {
+		const val = localStorage.getItem(REMEMBER_LAST_TAB_KEY);
+		return val === null ? true : val === "true";
+	} catch {
+		return true;
+	}
+}
+
 function loadPersistedState(): PersistedState | null {
+	if (!shouldRememberLastTab()) {
+		return null;
+	}
 	try {
 		const stored = localStorage.getItem(STORAGE_KEY);
 		if (!stored) return null;
@@ -218,11 +236,11 @@ export function TabManagerProvider({
 		return [
 			{
 				id: initialTabId,
-				title: "Overview",
+				title: "Home",
 				icon: null,
 				isPinned: false,
 				lastActive: Date.now(),
-				savedPath: "/",
+				savedPath: "/explorer?home=true",
 			},
 		];
 	});

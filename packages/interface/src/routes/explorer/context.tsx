@@ -344,6 +344,18 @@ function targetToUrl(target: NavigationTarget): string {
 function urlToTarget(search: string): NavigationTarget | null {
 	const params = new URLSearchParams(search);
 
+	if (params.get("home") === "true") {
+		return {
+			type: "path",
+			path: {
+				Physical: {
+					device_slug: "local",
+					path: "~",
+				},
+			},
+		};
+	}
+
 	const pathParam = params.get("path");
 	if (pathParam) {
 		try {

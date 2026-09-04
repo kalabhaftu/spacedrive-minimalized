@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
 
@@ -7,6 +8,11 @@ interface DeviceSettingsForm {
 }
 
 export function GeneralSettings() {
+  const [rememberLastTab, setRememberLastTab] = useState(() => {
+    const val = localStorage.getItem("sd_remember_last_tab");
+    return val === null ? true : val === "true";
+  });
+
   const statusQuery = useCoreQuery({ type: "core.status", input: null as any });
   const configQuery = useCoreQuery({ type: "config.app.get", input: null as any });
   const updateDevice = useCoreMutation("device.update");
@@ -62,6 +68,32 @@ export function GeneralSettings() {
       </div>
 
       <div className="space-y-4">
+        {/* Startup & Navigation */}
+        <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
+          <h3 className="text-sm font-medium text-ink">Startup & Navigation</h3>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5 max-w-[80%]">
+              <span className="text-sm font-medium text-ink block">
+                Remember last opened tab
+              </span>
+              <p className="text-xs text-ink-dull">
+                Automatically reopen your last visited directory or tab on startup. When disabled, Spacedrive always opens at Home.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={rememberLastTab}
+              onChange={(e) => {
+                const newVal = e.target.checked;
+                setRememberLastTab(newVal);
+                localStorage.setItem("sd_remember_last_tab", String(newVal));
+              }}
+              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent accent-accent cursor-pointer"
+            />
+          </div>
+        </div>
+
         {/* Device Configuration */}
         <form onSubmit={onDeviceSubmit} className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
           <h3 className="text-sm font-medium text-ink">Device</h3>

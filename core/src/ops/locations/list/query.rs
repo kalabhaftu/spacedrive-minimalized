@@ -39,8 +39,10 @@ impl LibraryQuery for LocationsListQuery {
 
 		let db = library.db().conn();
 
+		use sea_orm::QueryOrder;
 		let rows = crate::infra::db::entities::location::Entity::find()
 			.find_also_related(crate::infra::db::entities::entry::Entity)
+			.order_by_asc(crate::infra::db::entities::location::Column::Id)
 			.all(db)
 			.await?;
 
