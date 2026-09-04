@@ -4,7 +4,6 @@ import { ListView } from '../ListView';
 import { MediaView } from '../MediaView';
 import { ColumnView } from '../ColumnView';
 import { SizeView } from '../SizeView';
-import { KnowledgeView } from '../KnowledgeView';
 
 /**
  * SearchView is a router that delegates to the appropriate view component.
@@ -53,8 +52,6 @@ export function SearchView() {
 			return <ColumnView />;
 		case 'size':
 			return <SizeView />;
-		case 'knowledge':
-			return <KnowledgeView />;
 		default:
 			return (
 				<div className="flex h-full flex-col items-center justify-center p-8 text-center">

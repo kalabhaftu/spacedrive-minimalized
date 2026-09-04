@@ -6,8 +6,6 @@ import {
 } from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';
 import {
-	ArrowsClockwise,
-	ArrowsOut,
 	CircleNotch,
 	FunnelSimple,
 	GearSix,
@@ -31,10 +29,6 @@ import {useLibraries} from '../../hooks/useLibraries';
 import {JobList} from '../JobManager/components/JobList';
 import {useJobsContext} from '../JobManager/hooks/JobsContext';
 import {CARD_HEIGHT} from '../JobManager/types';
-import {ActivityFeed} from '../SyncMonitor/components/ActivityFeed';
-import {PeerList} from '../SyncMonitor/components/PeerList';
-import {useSyncCount} from '../SyncMonitor/hooks/useSyncCount';
-import {useSyncMonitor} from '../SyncMonitor/hooks/useSyncMonitor';
 import {AddGroupButton} from './AddGroupButton';
 import {isRedundancyItem, isSourcesItem, isSourceItem} from './hooks/spaceItemUtils';
 import {useSpaceLayout, useSpaces} from './hooks/useSpaces';
@@ -117,142 +111,6 @@ function SpaceGroupWithDropZone({
 		</div>
 	);
 }
-
-// Sync Monitor Button with Popover
-const SyncButton = memo(function SyncButton() {
-	const popover = usePopover();
-	const navigate = useNavigate();
-	const [showActivityFeed, setShowActivityFeed] = useState(false);
-	const {onlinePeerCount, isSyncing} = useSyncCount();
-	const sync = useSyncMonitor();
-
-	useEffect(() => {
-		if (popover.open) {
-			setShowActivityFeed(false);
-		}
-	}, [popover.open]);
-
-	const getStateColor = (state: string) => {
-		switch (state) {
-			case 'Ready':
-				return 'bg-green-500';
-			case 'Backfilling':
-				return 'bg-yellow-500';
-			case 'CatchingUp':
-				return 'bg-accent';
-			case 'Uninitialized':
-				return 'bg-ink-faint';
-			case 'Paused':
-				return 'bg-ink-dull';
-			default:
-				return 'bg-ink-faint';
-		}
-	};
-
-	return (
-		<Popover.Root open={popover.open} onOpenChange={popover.setOpen}>
-			<Popover.Trigger asChild>
-				<CircleButton
-					icon={({className, ...props}) =>
-						isSyncing ? (
-							<CircleNotch
-								className={clsx(className, 'animate-spin')}
-								{...props}
-							/>
-						) : (
-							<ArrowsClockwise className={className} {...props} />
-						)
-					}
-					title="Sync Monitor"
-				/>
-			</Popover.Trigger>
-			<Popover.Content
-				side="top"
-				align="start"
-				sideOffset={8}
-				className="!bg-app z-50 max-h-[520px] w-[380px] !rounded-xl !p-0"
-			>
-				<div className="border-app-line flex items-center justify-between border-b px-4 py-3">
-					<h3 className="text-ink text-sm font-semibold">
-						Sync Monitor
-					</h3>
-
-					<div className="flex items-center gap-2">
-						{onlinePeerCount > 0 && (
-							<span className="text-ink-dull text-xs">
-								{onlinePeerCount}{' '}
-								{onlinePeerCount === 1 ? 'peer' : 'peers'}{' '}
-								online
-							</span>
-						)}
-
-						<CircleButton
-							icon={ArrowsOut}
-							onClick={() => navigate('/sync')}
-							title="Open full sync monitor"
-						/>
-
-						<CircleButton
-							icon={FunnelSimple}
-							active={showActivityFeed}
-							onClick={() =>
-								setShowActivityFeed(!showActivityFeed)
-							}
-							title={
-								showActivityFeed
-									? 'Show peers'
-									: 'Show activity feed'
-							}
-						/>
-					</div>
-				</div>
-
-				{popover.open && (
-					<>
-						<div className="border-app-line bg-app-box/50 border-b px-4 py-2">
-							<div className="flex items-center gap-2">
-								<div
-									className={`size-2 rounded-full ${getStateColor(sync.currentState)}`}
-								/>
-								<span className="text-ink-dull text-xs font-medium">
-									{sync.currentState}
-								</span>
-							</div>
-						</div>
-						<motion.div
-							className="no-scrollbar overflow-y-auto"
-							initial={false}
-							animate={{
-								height: showActivityFeed
-									? Math.min(
-											sync.recentActivity.length * 40 +
-												16,
-											400
-										)
-									: Math.min(sync.peers.length * 80 + 16, 400)
-							}}
-							transition={{
-								duration: 0.2,
-								ease: [0.25, 1, 0.5, 1]
-							}}
-						>
-							{showActivityFeed ? (
-								<ActivityFeed
-									activities={sync.recentActivity}
-								/>
-							) : (
-								<PeerList
-									peers={sync.peers}
-									currentState={sync.currentState}
-								/>
-							)}
-						</motion.div>
-					</>
-				)}
-			</Popover.Content>
-		</Popover.Root>
-	);
-});
 
 // Jobs Button with Popover
 const JobsButton = memo(

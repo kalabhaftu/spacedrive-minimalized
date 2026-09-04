@@ -345,6 +345,21 @@ impl LocationManager {
 				.device_id()
 				.unwrap_or_else(|_| uuid::Uuid::nil());
 
+			let action_context = action_context.or_else(|| {
+				Some(crate::infra::action::context::ActionContext {
+					action_type: "locations.add".to_string(),
+					initiated_at: chrono::Utc::now(),
+					initiated_by: None,
+					action_input: serde_json::json!({
+						"path": path_str,
+						"name": display_name,
+					}),
+					context: serde_json::json!({
+						"location_id": location_id.to_string(),
+					}),
+				})
+			});
+
 			match self
 				.start_indexing_with_context_and_path(
 					library,

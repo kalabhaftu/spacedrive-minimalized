@@ -173,7 +173,7 @@ export function SpaceCustomizationPanel({
 									<h2 className="text-sm font-semibold text-sidebar-ink">
 										Customize
 									</h2>
-									<p className="text-xs text-sidebar-inkDull mt-0.5">
+									<p className="text-xs text-sidebar-ink-dull mt-0.5">
 										Drag to sidebar
 									</p>
 								</div>
@@ -181,7 +181,7 @@ export function SpaceCustomizationPanel({
 									onClick={onClose}
 									className="p-1 rounded-md hover:bg-sidebar-selected/30 transition-colors"
 								>
-									<X size={14} className="text-sidebar-inkDull" />
+									<X size={14} className="text-sidebar-ink-dull" />
 								</button>
 							</div>
 
@@ -286,7 +286,7 @@ export function SpaceCustomizationPanel({
 
 							{/* Footer */}
 							<div className="px-2 py-2 mt-2 border-t border-sidebar-line/50">
-								<p className="text-xs text-sidebar-inkFaint text-center">
+								<p className="text-xs text-sidebar-ink-faint text-center">
 									Drag items to your space
 								</p>
 							</div>

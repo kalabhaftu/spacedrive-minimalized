@@ -20,6 +20,7 @@ import {useExplorer} from '../context';
 import {useSelection} from '../SelectionContext';
 import {sdPathToUri} from '../utils';
 import {useAddStorageDialog} from './AddStorageModal';
+import {useJobsContext} from '../../../components/JobManager/hooks/JobsContext';
 
 interface PathBarProps {
 	path: SdPath;
@@ -152,18 +153,50 @@ function IndexIndicator({path}: {path: SdPath}) {
 		return undefined;
 	})();
 
+	const { jobs } = useJobsContext();
+
+	const activeJob = matchingLocation ? jobs.find((j: any) => {
+		if (j.status !== "running" && j.status !== "queued" && j.status !== "paused") return false;
+		if (j.location_id === matchingLocation.id) return true;
+		const inputPath = j.action_context?.action_input?.path || j.action_context?.context?.path;
+		const locPath = 'Physical' in (matchingLocation.sd_path || {}) ? (matchingLocation.sd_path as any).Physical?.path : null;
+		if (inputPath && locPath && inputPath === locPath) return true;
+		return false;
+	}) : undefined;
+
+	const isScanning = Boolean(
+		activeJob ||
+		matchingLocation?.scan_state === "scanning" ||
+		matchingLocation?.scan_state === "pending" ||
+		(typeof matchingLocation?.scan_state === "object" && (matchingLocation?.scan_state as any)?.Scanning)
+	);
+
 	const isIndexed =
+		!isScanning &&
 		matchingLocation?.index_mode !== undefined &&
 		matchingLocation.index_mode !== 'none';
+
+	const statusText = (() => {
+		if (!matchingLocation) return 'Not indexed';
+		if (isScanning) {
+			const progress = activeJob ? Math.round((activeJob.progress || 0) * 100) : 0;
+			const mode = matchingLocation.index_mode ? ` (${matchingLocation.index_mode})` : '';
+			return progress > 0 ? `Indexing${mode} ${progress}%...` : `Indexing${mode}...`;
+		}
+		if (isIndexed) {
+			return `Indexed (${matchingLocation.index_mode})`;
+		}
+		return 'Not indexed';
+	})();
 
 	return (
 		<Popover.Root open={popover.open} onOpenChange={popover.setOpen}>
 			<Popover.Trigger asChild>
 				<CircleButton
-					icon={isIndexed ? CircleIcon : CircleDashedIcon}
-					active={!isIndexed}
-					className={isIndexed ? '!text-accent' : undefined}
-					title={isIndexed ? 'Location is indexed' : 'Not indexed'}
+					icon={isScanning ? CircleDashedIcon : isIndexed ? CircleIcon : CircleDashedIcon}
+					active={!isIndexed && !isScanning}
+					className={isScanning ? '!text-accent animate-spin' : isIndexed ? '!text-accent' : undefined}
+					title={isScanning ? 'Location is indexing...' : isIndexed ? 'Location is indexed' : 'Not indexed'}
 				/>
 			</Popover.Trigger>
 			<Popover.Content>
@@ -176,9 +209,7 @@ function IndexIndicator({path}: {path: SdPath}) {
 										{matchingLocation.name}
 									</div>
 									<div className="text-ink-dull mt-0.5 text-xs">
-										{isIndexed
-											? `Indexed (${matchingLocation.index_mode})`
-											: 'Not indexed'}
+										{statusText}
 									</div>
 								</div>
 							</div>

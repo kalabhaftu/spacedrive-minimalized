@@ -673,6 +673,47 @@ impl JobHandler for IndexerJob {
 
 		let result = self.run_job_phases(&ctx).await;
 
+		// Update scan state and stats for managed location
+		if let Some(location_id) = self.config.location_id {
+			use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+			let db = ctx.library().db().conn();
+			match entities::location::Entity::find()
+				.filter(entities::location::Column::Uuid.eq(location_id))
+				.one(db)
+				.await
+			{
+				Ok(Some(loc)) => {
+					let mut active_loc: entities::location::ActiveModel = loc.into();
+					match &result {
+						Ok(output) => {
+							active_loc.scan_state = Set("completed".to_string());
+							active_loc.error_message = Set(None);
+							active_loc.total_file_count = Set(output.stats.files as i64);
+							active_loc.total_byte_size = Set(output.stats.bytes as i64);
+							active_loc.last_scan_at = Set(Some(chrono::Utc::now()));
+							active_loc.updated_at = Set(chrono::Utc::now());
+						}
+						Err(e) => {
+							active_loc.scan_state = Set("error".to_string());
+							active_loc.error_message = Set(Some(e.to_string()));
+							active_loc.updated_at = Set(chrono::Utc::now());
+						}
+					}
+					if let Err(e) = active_loc.update(db).await {
+						ctx.log(format!("Failed to update location scan_state: {}", e));
+					} else {
+						ctx.log(format!("Updated location {} scan_state", location_id));
+					}
+				}
+				Ok(None) => {
+					ctx.log(format!("Location {} not found when updating scan state", location_id));
+				}
+				Err(e) => {
+					ctx.log(format!("Failed to query location {} for scan state update: {}", location_id, e));
+				}
+			}
+		}
+
 		// Mark ephemeral indexing complete even on failure to prevent the indexing
 		// flag from being stuck forever. Without this, a failed ephemeral job would
 		// block all future indexing attempts for that path until app restart.

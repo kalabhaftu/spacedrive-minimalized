@@ -21,7 +21,6 @@ import {ViewModeMenu, ViewModeMenuPanel} from './ViewModeMenu';
 import {ColumnView} from './views/ColumnView';
 import {EmptyView} from './views/EmptyView';
 import {GridView} from './views/GridView';
-import {KnowledgeView} from './views/KnowledgeView';
 import {ListView} from './views/ListView';
 import {MediaView} from './views/MediaView';
 import {SearchView} from './views/SearchView';
@@ -333,8 +332,6 @@ export function ExplorerView() {
 							<ColumnView />
 						) : viewMode === 'size' ? (
 							<SizeView />
-						) : viewMode === 'knowledge' ? (
-							<KnowledgeView />
 						) : (
 							<MediaView />
 						)}

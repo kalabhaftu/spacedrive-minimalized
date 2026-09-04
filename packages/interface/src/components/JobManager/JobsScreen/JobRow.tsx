@@ -2,7 +2,7 @@ import { Pause, Play, X } from "@phosphor-icons/react";
 import { useState } from "react";
 import clsx from "clsx";
 import type { JobListItem } from "../types";
-import { getJobDisplayName, formatDuration, timeAgo } from "../types";
+import { getJobDisplayName, getJobSubtext, formatDuration, timeAgo } from "../types";
 import { JobStatusIndicator } from "../components/JobStatusIndicator";
 
 interface JobRowProps {
@@ -16,6 +16,7 @@ export function JobRow({ job, onPause, onResume, onCancel }: JobRowProps) {
 	const [isHovered, setIsHovered] = useState(false);
 
 	const displayName = getJobDisplayName(job);
+	const subtext = getJobSubtext(job);
 	const showActionButton =
 		job.status === "running" || job.status === "paused";
 	const canPause = job.status === "running" && onPause;
@@ -82,9 +83,9 @@ export function JobRow({ job, onPause, onResume, onCancel }: JobRowProps) {
 							</span>
 						)}
 					</div>
-					{message && (
+					{(message || subtext) && (
 						<p className="text-xs text-ink-dull truncate">
-							{message}
+							{message || subtext}
 						</p>
 					)}
 				</div>

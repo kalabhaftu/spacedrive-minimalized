@@ -21,114 +21,123 @@ export const PROGRESS_BAR_HEIGHT = 12; // px
  * Extracts a meaningful display name from the job's action context
  */
 export function getJobDisplayName(job: JobListItem): string {
-  if (!job.action_context?.action_type) {
-    // Fallback to capitalizing job name
-    if (job.name === "indexer") {
-      return "Indexing";
+  const actionType = job.action_context?.action_type || job.action_type;
+  const actionInput = job.action_context?.action_input;
+
+  // Handle location indexing specifically
+  if (
+    actionType === "locations.add" ||
+    actionType === "locations.rescan" ||
+    actionType === "indexing.start" ||
+    job.name === "indexer"
+  ) {
+    const context = job.action_context?.context as JsonValue;
+    const locationName = extractLocationName(actionInput) || extractLocationName(context);
+    if (locationName) {
+      return `Indexing "${locationName}"`;
     }
-    if (job.name === "thumbnail_generation") {
-      return "Generating Thumbnails";
+    const path = extractPath(actionInput) || extractPath(context);
+    if (path) {
+      const folderName = path.split("/").filter(Boolean).pop() || path;
+      return `Indexing "${folderName}"`;
     }
-    return job.name.split("_").map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(" ");
+    return "Indexing";
   }
 
-  const { action_type, action_input } = job.action_context;
-
-  try {
-    switch (action_type) {
-      case "locations.add": {
-        const path = extractPath(action_input);
-        if (path) {
-          // Show full path with ~ for home directory
-          const homePath = path.replace(/^\/Users\/[^/]+/, "~");
-          return `Added location ${homePath}`;
-        }
-        break;
-      }
-      case "files.copy": {
-        const source = extractSourcePath(action_input);
-        if (source) {
-          const fileName = source.split("/").pop() || source;
-          return `Copying '${fileName}'`;
-        }
-        break;
-      }
-      case "files.move": {
-        const source = extractSourcePath(action_input);
-        if (source) {
-          const fileName = source.split("/").pop() || source;
-          return `Moving '${fileName}'`;
-        }
-        break;
-      }
-      case "files.delete": {
-        const target = extractTargetPath(action_input);
-        if (target) {
-          const fileName = target.split("/").pop() || target;
-          return `Deleting '${fileName}'`;
-        }
-        break;
-      }
-      case "media.thumbnail":
-        return "Generating Thumbnails";
-      case "media.extract":
-        return "Extracting Media";
-      case "indexing.start":
-        return "Indexing Location";
-      case "volumes.index": {
-        const context = job.action_context?.context as Record<string, unknown> | null;
-        const volumeName = context?.volume_name;
-        if (volumeName && typeof volumeName === 'string') {
-          return `Indexing ${volumeName}`;
-        }
-        return "Indexing Volume";
-      }
-      default: {
-        // Capitalize and format action type
-        return action_type
-          .split(".")
-          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-          .join(" ");
-      }
-    }
-  } catch (error) {
-    console.warn("Failed to extract display name from action context:", error);
+  if (job.name === "thumbnail_generation") {
+    return "Generating Thumbnails";
   }
 
-  return job.name;
+  if (actionType) {
+    try {
+      switch (actionType) {
+        case "files.copy": {
+          const source = extractSourcePath(actionInput);
+          if (source) {
+            const fileName = source.split("/").pop() || source;
+            return `Copying '${fileName}'`;
+          }
+          break;
+        }
+        case "files.move": {
+          const source = extractSourcePath(actionInput);
+          if (source) {
+            const fileName = source.split("/").pop() || source;
+            return `Moving '${fileName}'`;
+          }
+          break;
+        }
+        case "files.delete": {
+          const target = extractTargetPath(actionInput);
+          if (target) {
+            const fileName = target.split("/").pop() || target;
+            return `Deleting '${fileName}'`;
+          }
+          break;
+        }
+        case "media.thumbnail":
+          return "Generating Thumbnails";
+        case "media.extract":
+          return "Extracting Media";
+        case "volumes.index": {
+          const context = job.action_context?.context as Record<string, unknown> | null;
+          const volumeName = context?.volume_name;
+          if (volumeName && typeof volumeName === "string") {
+            return `Indexing ${volumeName}`;
+          }
+          return "Indexing Volume";
+        }
+        default: {
+          return actionType
+            .split(".")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ");
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to extract display name from action context:", error);
+    }
+  }
+
+  return job.name.split("_").map(word =>
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(" ");
 }
 
 /**
  * Gets the subtext to display below the job title
  */
 export function getJobSubtext(job: JobListItem): string {
+  const actionInput = job.action_context?.action_input;
+  const context = job.action_context?.context as JsonValue;
+  const path = extractPath(actionInput) || extractPath(context);
+  const formattedPath = path ? path.replace(/^\/Users\/[^/]+/, "~") : null;
+
   switch (job.status) {
     case "running": {
-      // Use rich metadata from JobProgress events if available
+      if (formattedPath) return formattedPath;
       if (job.status_message) return job.status_message;
-      if (job.current_phase) return job.current_phase;
       if (job.current_path) {
-        const pathStr = typeof job.current_path === 'string'
+        const pathStr = typeof job.current_path === "string"
           ? job.current_path
           : JSON.stringify(job.current_path);
-        return pathStr;
+        return pathStr.replace(/^\/Users\/[^/]+/, "~");
       }
+      if (job.current_phase) return job.current_phase;
       return job.progress > 0 ? `${Math.round(job.progress * 100)}%` : "Processing...";
     }
     case "completed":
-      return "Completed";
+      return formattedPath ? `Completed • ${formattedPath}` : "Completed";
     case "failed":
-      return "Job failed";
+      return formattedPath ? `Failed • ${formattedPath}` : "Job failed";
     case "queued":
-      return "Waiting to start";
+      return formattedPath || "Waiting to start";
     case "paused":
-      return "Paused";
+      return formattedPath ? `Paused • ${formattedPath}` : "Paused";
     case "cancelled":
-      return "Cancelled";
+      return formattedPath ? `Cancelled • ${formattedPath}` : "Cancelled";
     default:
-      return "";
+      return formattedPath || "";
   }
 }
 
@@ -195,7 +204,16 @@ export function timeAgo(date: string | Date | undefined): string {
   return "just now";
 }
 
-// Helper functions to extract paths from JsonValue
+// Helper functions to extract metadata from JsonValue
+function extractLocationName(input: JsonValue): string | null {
+  if (typeof input === "object" && input !== null) {
+    if ("name" in input && typeof input.name === "string" && input.name.trim().length > 0) {
+      return input.name;
+    }
+  }
+  return null;
+}
+
 function extractPath(input: JsonValue): string | null {
   if (typeof input === "object" && input !== null && "path" in input) {
     const path = input.path;

@@ -14,7 +14,7 @@ import {AnimatePresence, motion} from 'framer-motion';
 import {useEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 
-type ViewMode = 'list' | 'grid' | 'column' | 'media' | 'size' | 'knowledge';
+type ViewMode = 'list' | 'grid' | 'column' | 'media' | 'size';
 
 interface ViewOption {
 	id: ViewMode | 'timeline';
@@ -59,13 +59,6 @@ const viewOptions: ViewOption[] = [
 		icon: ChartPieSlice,
 		color: 'bg-green-500',
 		keybind: '⌘5'
-	},
-	{
-		id: 'knowledge',
-		label: 'Knowledge',
-		icon: Sparkle,
-		color: 'bg-purple-500',
-		keybind: '⌘6'
 	}
 	// {
 	// 	id: "timeline",
@@ -87,9 +80,7 @@ export function ViewModeMenuPanel({
 	onViewModeChange,
 	onClose
 }: ViewModeMenuPanelProps) {
-	const availableViews = viewOptions.filter(
-		(option) => option.id !== 'knowledge' || import.meta.env.DEV
-	);
+	const availableViews = viewOptions;
 
 	return (
 		<div className="bg-app border-app-line w-[240px] rounded-lg border p-2 shadow-2xl">

@@ -24,12 +24,36 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root,
+body {
+	--color-sidebar-ink: hsl(235, 15%, 92%);
+	--color-sidebar-ink-dull: hsl(235, 10%, 70%);
+	--color-sidebar-ink-faint: hsl(235, 10%, 55%);
+	--color-sidebar-inkDull: var(--color-sidebar-ink-dull, hsl(235, 10%, 70%));
+	--color-sidebar-inkFaint: var(--color-sidebar-ink-faint, hsl(235, 10%, 55%));
+	--color-ink: hsl(235, 35%, 92%);
+	--color-ink-dull: hsl(235, 10%, 70%);
+	--color-ink-faint: hsl(235, 10%, 55%);
+	--color-inkDull: var(--color-ink-dull, hsl(235, 10%, 70%));
+	--color-inkFaint: var(--color-ink-faint, hsl(235, 10%, 55%));
+}
+
 @theme {
 	--color-sidebar-inkDull: var(--color-sidebar-ink-dull, hsl(235, 10%, 70%));
 	--color-sidebar-inkFaint: var(--color-sidebar-ink-faint, hsl(235, 10%, 55%));
 	--color-inkDull: var(--color-ink-dull, hsl(235, 10%, 70%));
 	--color-inkFaint: var(--color-ink-faint, hsl(235, 10%, 55%));
 }
+
+/* Ensure dialogs, modals, and Radix portals always render above sidebars (z-[65]) and panels (z-[70]) */
+[role="dialog"],
+div[data-radix-portal] > div,
+div[data-radix-portal] div[role="dialog"],
+div[data-radix-portal] > div[class*="fixed"],
+div[data-radix-portal] .z-50 {
+	z-index: 1000 !important;
+}
+
 
 @utility top-bar-blur {
 	@apply border-app-line/50;

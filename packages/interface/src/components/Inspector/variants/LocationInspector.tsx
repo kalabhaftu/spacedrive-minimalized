@@ -139,15 +139,31 @@ function OverviewTab({ location }: { location: Location }) {
 		});
 	};
 
+	const { jobs } = useJobsContext();
+	const activeJob = jobs.find((j: any) => {
+		if (j.status !== "running" && j.status !== "queued" && j.status !== "paused") return false;
+		if (j.location_id === location.id) return true;
+		const inputPath = j.action_context?.action_input?.path || j.action_context?.context?.path;
+		const locPath = 'Physical' in (location.sd_path || {}) ? (location.sd_path as any).Physical?.path : null;
+		if (inputPath && locPath && inputPath === locPath) return true;
+		return false;
+	});
+
 	const formatScanState = (scanState: any) => {
+		if (activeJob) {
+			const progressPercent = Math.round((activeJob.progress || 0) * 100);
+			if (activeJob.status === "paused") return `Paused (${progressPercent}%)`;
+			if (activeJob.status === "queued") return "Queued";
+			return progressPercent > 0 ? `Scanning (${progressPercent}%)` : "Scanning...";
+		}
 		if (!scanState) return "Idle";
 		if (typeof scanState === "string") {
 			const s = scanState.toLowerCase();
 			if (s === "pending") return "Pending";
-			if (s === "running") return "Scanning";
+			if (s === "running" || s === "scanning") return "Scanning";
 			if (s === "completed") return "Completed";
-			if (s === "failed") return "Failed";
-			if (s === "idle") return "Idle";
+			if (s === "failed" || s === "error") return "Failed";
+			if (s === "idle" || s === "unknown") return "Idle";
 			return scanState.charAt(0).toUpperCase() + scanState.slice(1);
 		}
 		if (scanState.Idle) return "Idle";

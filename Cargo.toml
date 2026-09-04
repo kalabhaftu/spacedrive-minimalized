@@ -1,5 +1,12 @@
 [workspace]
-exclude = ["crates/json-sample-derive", "extensions/*", "crates/archive"]
+exclude = [
+	"crates/actors",
+	"crates/crypto",
+	"crates/fda",
+	"crates/sdk",
+	"crates/sdk-macros",
+	"extensions/*"
+]
 members = [
 	"apps/cli",
 	"apps/tauri/sd-tauri-core",
@@ -15,15 +22,10 @@ default-members = [
 	"apps/cli",
 	"core",
 	"core/benchmarks",
-	"crates/actors",
-	"crates/crypto",
-	"crates/fda",
 	"crates/fs-watcher",
 	"crates/images",
 	"crates/job-derive",
 	"crates/sd-client",
-	"crates/sdk",
-	"crates/sdk-macros",
 	"crates/task-system",
 	"crates/utils",
 	"xtask"

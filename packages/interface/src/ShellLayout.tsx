@@ -40,9 +40,8 @@ function ShellLayoutContent() {
 		currentPath
 	} = useExplorer();
 
-	// Check if we're on Overview (hide inspector) or in Knowledge view (has its own inspector)
+	// Check if we're on Overview (hide inspector)
 	const isOverview = location.pathname === '/';
-	const isKnowledgeView = viewMode === 'knowledge';
 
 	// Fetch locations to get current location info
 	const locationsQuery = useNormalizedQuery<null, {locations: Location[]}>({
@@ -160,7 +159,7 @@ function ShellLayoutContent() {
 			<TopBar
 				sidebarWidth={sidebarVisible ? 224 : 0}
 				inspectorWidth={
-					inspectorVisible && !isOverview && !isKnowledgeView
+					inspectorVisible && !isOverview
 						? 284
 						: 0
 				}
@@ -175,7 +174,7 @@ function ShellLayoutContent() {
 						top: 48, // TopBar height
 						paddingLeft: sidebarVisible ? 220 : 0,
 						paddingRight:
-							inspectorVisible && !isOverview && !isKnowledgeView
+							inspectorVisible && !isOverview
 								? 280
 								: 0,
 						transition: 'padding 0.3s ease-out'
@@ -237,8 +236,8 @@ function ShellLayoutContent() {
 				<QuickPreviewSyncer />
 
 				<AnimatePresence initial={false}>
-					{/* Hide inspector on Overview screen and Knowledge view (has its own) */}
-					{inspectorVisible && !isOverview && !isKnowledgeView && (
+					{/* Hide inspector on Overview screen */}
+					{inspectorVisible && !isOverview && (
 						<motion.div
 							initial={{width: 0}}
 							animate={{width: 280}}
@@ -267,7 +266,7 @@ function ShellLayoutContent() {
 			<QuickPreviewController
 				sidebarWidth={sidebarVisible ? 220 : 0}
 				inspectorWidth={
-					inspectorVisible && !isOverview && !isKnowledgeView
+					inspectorVisible && !isOverview
 						? 280
 						: 0
 				}

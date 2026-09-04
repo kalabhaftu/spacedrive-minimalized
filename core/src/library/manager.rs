@@ -1603,12 +1603,26 @@ impl LibraryManager {
 			if let Some(entry_id) = loc.entry_id {
 				if let Ok(Some(dir_path)) = entities::directory_paths::Entity::find_by_id(entry_id).one(db).await {
 					if let Ok(Some(device)) = entities::device::Entity::find_by_id(loc.device_id).one(db).await {
+						let raw_path = dir_path.path.clone();
 						let sd_path = crate::domain::addressing::SdPath::Physical {
 							device_slug: device.slug,
 							path: dir_path.path.into(),
 						};
 						let job = IndexerJob::from_location(loc.uuid, sd_path, IndexMode::Deep);
-						match library.jobs().dispatch(job).await {
+						let action_ctx = crate::infra::action::context::ActionContext {
+							action_type: "locations.rescan".to_string(),
+							initiated_at: chrono::Utc::now(),
+							initiated_by: None,
+							action_input: serde_json::json!({
+								"location_id": loc.uuid.to_string(),
+								"name": loc.name,
+								"path": raw_path,
+							}),
+							context: serde_json::json!({
+								"location_id": loc.uuid.to_string(),
+							}),
+						};
+						match library.jobs().dispatch_with_priority(job, crate::infra::job::types::JobPriority::NORMAL, Some(action_ctx)).await {
 							Ok(handle) => {
 								info!("Dispatched background indexer job {} for location '{}'", handle.id(), loc.uuid);
 							}

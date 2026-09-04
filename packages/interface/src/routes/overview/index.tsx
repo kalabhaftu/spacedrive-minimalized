@@ -101,8 +101,6 @@ export function Overview() {
 								setSelectedLocationId(location?.id || null)
 							}
 						/>
-
-						{/* <ContentBreakdown totalFiles={Number(stats.total_files)} /> */}
 					</div>
 
 					{/* Inspector Sidebar */}

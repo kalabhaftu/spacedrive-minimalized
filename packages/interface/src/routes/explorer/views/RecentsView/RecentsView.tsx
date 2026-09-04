@@ -5,7 +5,6 @@ import { ListView } from '../ListView';
 import { MediaView } from '../MediaView';
 import { ColumnView } from '../ColumnView';
 import { SizeView } from '../SizeView';
-import { KnowledgeView } from '../KnowledgeView';
 
 /**
  * RecentsView displays recently indexed files sorted by indexed_at timestamp.
@@ -37,8 +36,6 @@ export function RecentsView() {
 			return <ColumnView />;
 		case 'size':
 			return <SizeView />;
-		case 'knowledge':
-			return <KnowledgeView />;
 		default:
 			return <GridView />;
 	}

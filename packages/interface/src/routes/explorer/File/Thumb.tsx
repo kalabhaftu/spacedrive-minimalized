@@ -115,12 +115,21 @@ export const Thumb = memo(function Thumb({
     }
 
     // 2. Direct preview fallback for local images
-    if (contentKind === "image" && platform.convertFileSrc) {
+    const isImage =
+      contentKind === "image" ||
+      (Boolean(file.extension) &&
+        /^(jpe?g|png|gif|webp|svg|bmp|ico|avif|heic|tiff)$/i.test(file.extension!)) ||
+      (Boolean(file.name) &&
+        /\.(jpe?g|png|gif|webp|svg|bmp|ico|avif|heic|tiff)$/i.test(file.name));
+
+    if (isImage && platform.convertFileSrc) {
       const rawFile = file as any;
       const physicalPath =
         rawFile.physical_path ||
         rawFile.path ||
-        (typeof rawFile.sd_path?.Physical?.path === "string" ? rawFile.sd_path.Physical.path : null);
+        (typeof rawFile.sd_path === "string" ? rawFile.sd_path : null) ||
+        (rawFile.sd_path && 'Physical' in rawFile.sd_path ? rawFile.sd_path.Physical.path : null) ||
+        (rawFile.sd_path && 'Local' in rawFile.sd_path ? rawFile.sd_path.Local.path : null);
       if (physicalPath) {
         return platform.convertFileSrc(physicalPath);
       }
