@@ -36,9 +36,11 @@ type DialogPhase =
 
 export function useFileOperationDialog() {
 	return (options: Omit<FileOperationDialogProps, "id">) => {
-		return dialogManager.create((props: UseDialogProps) => (
+		const controller = dialogManager.create((props: UseDialogProps) => (
 			<FileOperationDialog {...(props as FileOperationDialogProps)} {...options} />
 		));
+		controller.open();
+		return controller;
 	};
 }
 

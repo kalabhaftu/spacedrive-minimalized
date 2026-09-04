@@ -32,6 +32,10 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 		() => client.getCurrentLibraryId() // Initialize from client
 	);
 	const librarySwitcher = usePopover();
+	const createLibraryDialog = useCreateLibraryDialog();
+	const addStorageDialog = useAddStorageDialog((sdPath) => {
+		navigate(`/explorer?path=${encodeURIComponent(JSON.stringify(sdPath))}`);
+	});
 
 	// Listen for library changes from client and update local state
 	useEffect(() => {
@@ -85,9 +89,7 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 	);
 
 	const handleAddStorage = () => {
-		useAddStorageDialog((sdPath) => {
-			navigate(`/explorer?path=${encodeURIComponent(JSON.stringify(sdPath))}`);
-		});
+		addStorageDialog.open();
 	};
 
 
@@ -166,7 +168,7 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 							<button
 								onClick={() => {
 									librarySwitcher.setOpen(false);
-									useCreateLibraryDialog();
+									createLibraryDialog.open();
 								}}
 								className="hover:bg-app-selected text-ink flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
 							>

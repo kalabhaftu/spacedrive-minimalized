@@ -41,13 +41,13 @@ function AddGroupDialog(props: { id: number; spaceId: string }) {
 					<select
 						value={typeof groupType === 'string' ? groupType : 'Custom'}
 						onChange={(e) => setGroupType(e.target.value as GroupType)}
-						className="w-full rounded-lg border border-app-line bg-app-input px-3 py-2 text-sm text-ink"
+						className="w-full rounded-lg border border-app-line bg-app-input px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-accent"
 					>
-						<option value="Devices">All Devices</option>
-						<option value="Locations">All Locations</option>
-						<option value="Tags">Tags</option>
-						<option value="Cloud">Cloud Storage</option>
-						<option value="Custom">Custom</option>
+						<option value="Devices" className="bg-app-box text-ink">All Devices</option>
+						<option value="Locations" className="bg-app-box text-ink">All Locations</option>
+						<option value="Tags" className="bg-app-box text-ink">Tags</option>
+						<option value="Cloud" className="bg-app-box text-ink">Cloud Storage</option>
+						<option value="Custom" className="bg-app-box text-ink">Custom</option>
 					</select>
 				</div>
 

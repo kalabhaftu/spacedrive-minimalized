@@ -21,12 +21,10 @@ default-members = [
 	"crates/fs-watcher",
 	"crates/images",
 	"crates/job-derive",
-	"crates/log-analyzer",
 	"crates/sd-client",
 	"crates/sdk",
 	"crates/sdk-macros",
 	"crates/task-system",
-	"crates/task-validator",
 	"crates/utils",
 	"xtask"
 ]

@@ -559,6 +559,8 @@ impl LibraryManager {
 		if let Ok(count) = entities::location::Entity::find().count(library.db().conn()).await {
 			if count == 0 {
 				self.create_default_locations(context.clone(), library.clone()).await;
+			} else {
+				self.upgrade_and_index_unindexed_locations(context.clone(), library.clone()).await;
 			}
 		}
 
@@ -1548,7 +1550,7 @@ impl LibraryManager {
 					sd_path,
 					Some(name.clone()),
 					device_id,
-					IndexMode::None,
+					IndexMode::Deep,
 					None, // No action context
 					None, // No job policies
 					&context.volume_manager,
@@ -1563,6 +1565,58 @@ impl LibraryManager {
 				}
 				Err(e) => {
 					warn!("Failed to create default location '{}': {}", name, e);
+				}
+			}
+		}
+	}
+
+	/// Upgrade existing locations that have index_mode == "none" to "deep" and start indexing them
+	async fn upgrade_and_index_unindexed_locations(&self, _context: Arc<CoreContext>, library: Arc<Library>) {
+		use crate::domain::location::IndexMode;
+		use crate::ops::indexing::job::IndexerJob;
+		use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+
+		let db = library.db().conn();
+		let unindexed = match entities::location::Entity::find()
+			.filter(entities::location::Column::IndexMode.eq("none"))
+			.all(db)
+			.await
+		{
+			Ok(locs) => locs,
+			Err(e) => {
+				warn!("Failed to query unindexed locations: {}", e);
+				return;
+			}
+		};
+
+		for loc in unindexed {
+			info!("Upgrading unindexed location '{}' to Deep indexing", loc.uuid);
+			let mut active: entities::location::ActiveModel = loc.clone().into();
+			active.index_mode = Set("deep".to_string());
+			active.updated_at = Set(chrono::Utc::now());
+			if let Err(e) = active.update(db).await {
+				warn!("Failed to update location index mode for {}: {}", loc.uuid, e);
+				continue;
+			}
+
+			// Get location path and dispatch background indexing
+			if let Some(entry_id) = loc.entry_id {
+				if let Ok(Some(dir_path)) = entities::directory_paths::Entity::find_by_id(entry_id).one(db).await {
+					if let Ok(Some(device)) = entities::device::Entity::find_by_id(loc.device_id).one(db).await {
+						let sd_path = crate::domain::addressing::SdPath::Physical {
+							device_slug: device.slug,
+							path: dir_path.path.into(),
+						};
+						let job = IndexerJob::from_location(loc.uuid, sd_path, IndexMode::Deep);
+						match library.jobs().dispatch(job).await {
+							Ok(handle) => {
+								info!("Dispatched background indexer job {} for location '{}'", handle.id(), loc.uuid);
+							}
+							Err(e) => {
+								warn!("Failed to dispatch indexer job for {}: {}", loc.uuid, e);
+							}
+						}
+					}
 				}
 			}
 		}

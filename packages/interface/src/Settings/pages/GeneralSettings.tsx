@@ -8,8 +8,13 @@ interface DeviceSettingsForm {
 }
 
 export function GeneralSettings() {
-  const [rememberLastTab, setRememberLastTab] = useState(() => {
+  const [rememberLastTab, setRememberLastTab] = useState<boolean>(() => {
     const val = localStorage.getItem("sd_remember_last_tab");
+    return val === null ? true : val === "true";
+  });
+
+  const [showImageThumbnails, setShowImageThumbnails] = useState<boolean>(() => {
+    const val = localStorage.getItem("sd_show_image_thumbnails");
     return val === null ? true : val === "true";
   });
 
@@ -88,6 +93,33 @@ export function GeneralSettings() {
                 const newVal = e.target.checked;
                 setRememberLastTab(newVal);
                 localStorage.setItem("sd_remember_last_tab", String(newVal));
+              }}
+              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent accent-accent cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Media & Previews */}
+        <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
+          <h3 className="text-sm font-medium text-ink">Media & Previews</h3>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5 max-w-[80%]">
+              <span className="text-sm font-medium text-ink block">
+                Show image thumbnails
+              </span>
+              <p className="text-xs text-ink-dull">
+                Display image previews in file listings and explorer views instead of generic file icons.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={showImageThumbnails}
+              onChange={(e) => {
+                const newVal = e.target.checked;
+                setShowImageThumbnails(newVal);
+                localStorage.setItem("sd_show_image_thumbnails", String(newVal));
+                window.dispatchEvent(new Event("sd_thumbnails_setting_changed"));
               }}
               className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent accent-accent cursor-pointer"
             />

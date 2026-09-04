@@ -65,6 +65,7 @@ function DraggablePaletteItem({ item }: { item: PaletteItem }) {
 			<SpaceItem
 				item={mockSpaceItem}
 				allowInsertion={false}
+				className="text-sidebar-ink hover:text-white"
 				onClick={(e) => {
 					e?.preventDefault();
 					e?.stopPropagation();
@@ -199,7 +200,7 @@ export function SpaceCustomizationPanel({
 								{/* Add Group Section */}
 								<div className="space-y-2 pt-2 border-t border-sidebar-line/50">
 									<div className="flex items-center justify-between px-2">
-										<span className="text-xs font-semibold text-sidebar-inkDull uppercase tracking-wider">
+										<span className="text-xs font-semibold text-sidebar-ink uppercase tracking-wider">
 											Groups
 										</span>
 									</div>
@@ -207,7 +208,7 @@ export function SpaceCustomizationPanel({
 									{!isAddingGroup ? (
 										<button
 											onClick={() => setIsAddingGroup(true)}
-											className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-inkDull hover:text-sidebar-ink hover:bg-sidebar-selected/30 transition-colors"
+											className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-ink hover:text-white hover:bg-sidebar-selected/30 transition-colors"
 										>
 											<Plus size={16} weight="bold" />
 											<span>Add Group</span>
@@ -225,19 +226,19 @@ export function SpaceCustomizationPanel({
 														e.target.value as GroupType,
 													)
 												}
-												className="w-full rounded-md border border-sidebar-line bg-sidebar-box px-2 py-1.5 text-xs text-sidebar-ink focus:outline-none focus:ring-1 focus:ring-accent"
+												className="w-full rounded-md border border-sidebar-line/60 bg-sidebar-box px-2 py-1.5 text-xs text-sidebar-ink focus:outline-none focus:ring-1 focus:ring-accent"
 											>
-												<option value="Devices">
+												<option value="Devices" className="bg-sidebar-box text-sidebar-ink">
 													All Devices
 												</option>
-												<option value="Locations">
+												<option value="Locations" className="bg-sidebar-box text-sidebar-ink">
 													All Locations
 												</option>
-												<option value="Tags">Tags</option>
-												<option value="Cloud">
+												<option value="Tags" className="bg-sidebar-box text-sidebar-ink">Tags</option>
+												<option value="Cloud" className="bg-sidebar-box text-sidebar-ink">
 													Cloud Storage
 												</option>
-												<option value="Custom">Custom</option>
+												<option value="Custom" className="bg-sidebar-box text-sidebar-ink">Custom</option>
 											</select>
 
 											{groupType === "Custom" && (
@@ -247,7 +248,7 @@ export function SpaceCustomizationPanel({
 														setGroupName(e.target.value)
 													}
 													placeholder="Group name"
-													className="text-xs"
+													className="text-xs text-sidebar-ink bg-sidebar-box border-sidebar-line/60 placeholder:text-sidebar-inkFaint"
 													onKeyDown={(e) => {
 														if (e.key === "Enter") {
 															handleAddGroup();
@@ -273,7 +274,7 @@ export function SpaceCustomizationPanel({
 														setGroupName("");
 														setGroupType("Custom");
 													}}
-													className="px-2 py-1 rounded-md text-xs font-medium text-sidebar-inkDull hover:bg-sidebar-selected/30 transition-colors"
+													className="px-2 py-1 rounded-md text-xs font-medium text-sidebar-ink hover:text-white hover:bg-sidebar-selected/30 transition-colors"
 												>
 													Cancel
 												</button>

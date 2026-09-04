@@ -15,7 +15,7 @@ export function SpaceSwitcher({
 	currentSpace,
 	onSwitch
 }: SpaceSwitcherProps) {
-	const createSpaceDialog = useCreateSpaceDialog;
+	const createSpaceDialog = useCreateSpaceDialog();
 
 	return (
 		<DropdownMenu.Root>
@@ -57,7 +57,7 @@ export function SpaceSwitcher({
 					<DropdownMenu.Separator className="border-sidebar-line my-1" />
 				)}
 				<DropdownMenu.Item
-					onClick={() => createSpaceDialog()}
+					onClick={() => createSpaceDialog.open()}
 					className="hover:bg-sidebar-selected text-sidebar-ink rounded-md px-2 py-1 text-sm font-medium"
 				>
 					<Plus className="mr-2 size-4" weight="bold" />

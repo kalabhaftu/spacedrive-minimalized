@@ -9,6 +9,7 @@ import { FileKindsView } from "./routes/file-kinds";
 import { RecentsView } from "./routes/explorer/views/RecentsView";
 import { FavoritesView } from "./routes/favorites/FavoritesView";
 import { Settings } from "./routes/settings";
+import { NotFound } from "./routes/NotFound";
 
 /**
  * Router routes configuration (without router instance)
@@ -65,6 +66,22 @@ export const explorerRoutes = [
 			{
 				path: "settings/:page",
 				element: <Settings />,
+			},
+			{
+				path: "sync",
+				element: <Navigate to="/" replace />,
+			},
+			{
+				path: "sources",
+				element: <Navigate to="/" replace />,
+			},
+			{
+				path: "sources/:sourceId",
+				element: <Navigate to="/" replace />,
+			},
+			{
+				path: "*",
+				element: <NotFound />,
 			},
 		],
 	},

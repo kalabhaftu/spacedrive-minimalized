@@ -33,7 +33,8 @@ import {
 import clsx from "clsx";
 import type { Location } from "@sd/ts-client";
 import { Button, Dialog, dialogManager, useDialog, CircleButton, type UseDialogProps } from "@spacedrive/primitives";
-import { useLibraryMutation } from "../../../contexts/SpacedriveContext";
+import { useLibraryMutation, useNormalizedQuery } from "../../../contexts/SpacedriveContext";
+import { useJobsContext } from "../../../components/JobManager/hooks/JobsContext";
 import { useContextMenu } from "../../../hooks/useContextMenu";
 import LocationIcon from "@sd/assets/icons/Location.png";
 
@@ -139,12 +140,21 @@ function OverviewTab({ location }: { location: Location }) {
 	};
 
 	const formatScanState = (scanState: any) => {
-		if (!scanState) return "Unknown";
+		if (!scanState) return "Idle";
+		if (typeof scanState === "string") {
+			const s = scanState.toLowerCase();
+			if (s === "pending") return "Pending";
+			if (s === "running") return "Scanning";
+			if (s === "completed") return "Completed";
+			if (s === "failed") return "Failed";
+			if (s === "idle") return "Idle";
+			return scanState.charAt(0).toUpperCase() + scanState.slice(1);
+		}
 		if (scanState.Idle) return "Idle";
 		if (scanState.Scanning) return `Scanning ${scanState.Scanning.progress}%`;
 		if (scanState.Completed) return "Completed";
 		if (scanState.Failed) return "Failed";
-		return "Unknown";
+		return "Idle";
 	};
 
 	return (
@@ -226,8 +236,22 @@ function OverviewTab({ location }: { location: Location }) {
 
 function IndexingTab({ location }: { location: Location }) {
 	const [indexMode, setIndexMode] = useState<"shallow" | "content" | "deep">(
-		location.index_mode as "shallow" | "content" | "deep",
+		(location.index_mode as "shallow" | "content" | "deep") || "deep",
 	);
+	const enableIndexing = useLibraryMutation("locations.enable_indexing");
+
+	const handleModeChange = async (mode: "shallow" | "content" | "deep") => {
+		setIndexMode(mode);
+		try {
+			await enableIndexing.mutateAsync({
+				id: location.id,
+				index_mode: mode,
+			});
+		} catch (error) {
+			console.error("Failed to update index mode:", error);
+		}
+	};
+
 	const [ignoreRules, setIgnoreRules] = useState([
 		".git",
 		"node_modules",
@@ -238,7 +262,7 @@ function IndexingTab({ location }: { location: Location }) {
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
 			<Section title="Index Mode" icon={Gear}>
-				<p className="text-xs text-sidebar-inkDull mb-3">
+				<p className="text-xs text-sidebar-ink mb-3">
 					Controls how deeply this location is indexed
 				</p>
 
@@ -248,21 +272,21 @@ function IndexingTab({ location }: { location: Location }) {
 						label="Shallow"
 						description="Just filesystem metadata (fastest)"
 						checked={indexMode === "shallow"}
-						onChange={() => setIndexMode("shallow")}
+						onChange={() => handleModeChange("shallow")}
 					/>
 					<RadioOption
 						value="content"
 						label="Content"
 						description="Generate content identities"
 						checked={indexMode === "content"}
-						onChange={() => setIndexMode("content")}
+						onChange={() => handleModeChange("content")}
 					/>
 					<RadioOption
 						value="deep"
 						label="Deep"
 						description="Full indexing with thumbnails and text extraction"
 						checked={indexMode === "deep"}
-						onChange={() => setIndexMode("deep")}
+						onChange={() => handleModeChange("deep")}
 					/>
 				</div>
 			</Section>
@@ -455,14 +479,9 @@ function JobsTab({ location }: { location: Location }) {
 	);
 }
 
-function ActivityTab({ location: _location }: { location: Location }) {
-	const activity = [
-		{ action: "Full Scan Completed", time: "10 min ago", files: 12456 },
-		{ action: "Thumbnails Generated", time: "1 hour ago", files: 234 },
-		{ action: "Content Hashes Updated", time: "3 hours ago", files: 5678 },
-		{ action: "Metadata Extracted", time: "5 hours ago", files: 890 },
-		{ action: "Location Added", time: "Jan 15, 2025", files: 0 },
-	];
+function ActivityTab({ location }: { location: Location }) {
+	const { jobs } = useJobsContext();
+	const locationJobs = jobs.filter((j: any) => j.location_id === location.id || !j.location_id);
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
@@ -470,51 +489,55 @@ function ActivityTab({ location: _location }: { location: Location }) {
 				Recent indexing activity and job history
 			</p>
 
-			<div className="space-y-0.5">
-				{activity.map((item, i) => (
-					<div
-						key={i}
-						className="flex items-start gap-3 p-2 hover:bg-app-box/40 rounded-lg transition-colors"
-					>
-						<ClockCounterClockwise
-							className="size-4 text-sidebar-inkDull shrink-0 mt-0.5"
-							weight="bold"
-						/>
-						<div className="flex-1 min-w-0">
-							<div className="text-xs text-sidebar-ink">
-								{item.action}
-							</div>
-							<div className="text-[11px] text-sidebar-inkDull mt-0.5">
-								{item.time}
-								{item.files > 0 &&
-									` · ${item.files.toLocaleString()} files`}
+			{locationJobs.length > 0 ? (
+				<div className="space-y-1">
+					{locationJobs.map((job: any, i: number) => (
+						<div
+							key={job.id || i}
+							className="flex items-start gap-3 p-2 hover:bg-app-box/40 rounded-lg transition-colors"
+						>
+							<ClockCounterClockwise
+								className={clsx(
+									"size-4 shrink-0 mt-0.5",
+									job.status === "running" ? "text-accent animate-spin" : "text-sidebar-inkDull"
+								)}
+								weight="bold"
+							/>
+							<div className="flex-1 min-w-0">
+								<div className="text-xs font-medium text-sidebar-ink capitalize">
+									{job.name?.replace(/_/g, " ") || "Background Job"}
+								</div>
+								<div className="text-[11px] text-sidebar-inkDull mt-0.5">
+									{job.status} {job.progress ? `· ${Math.round(job.progress * 100)}%` : ""}
+								</div>
 							</div>
 						</div>
-					</div>
-				))}
-			</div>
+					))}
+				</div>
+			) : (
+				<div className="py-6 text-center text-xs text-sidebar-inkDull space-y-1">
+					<p>No active background jobs</p>
+					{location.last_scan_at && (
+						<p className="text-[11px]">Last scan: {new Date(location.last_scan_at).toLocaleString()}</p>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }
 
 function DevicesTab({ location: _location }: { location: Location }) {
-	const devices = [
-		{
-			name: "MacBook Pro",
-			status: "online" as const,
-			lastSeen: "2 min ago",
-		},
-		{
-			name: "Desktop PC",
-			status: "offline" as const,
-			lastSeen: "2 days ago",
-		},
-		{
-			name: "Home Server",
-			status: "online" as const,
-			lastSeen: "5 min ago",
-		},
-	];
+	const { data: devicesData } = useNormalizedQuery({
+		query: "devices.list",
+		input: { include_offline: true, include_details: false },
+		resourceType: "device",
+	});
+
+	const devices = ((devicesData as any) ?? []).map((d: any) => ({
+		name: d.name || "Local Device",
+		status: (d.is_online !== false ? "online" : "offline") as "online" | "offline",
+		isCurrent: d.is_current,
+	}));
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
@@ -523,40 +546,48 @@ function DevicesTab({ location: _location }: { location: Location }) {
 			</p>
 
 			<div className="space-y-2">
-				{devices.map((device, i) => (
-					<div
-						key={i}
-						className="p-2.5 bg-app-box/40 rounded-lg border border-app-line/50"
-					>
-						<div className="flex items-center gap-2">
-							<HardDrive
-								className="size-4 text-accent"
-								weight="bold"
-							/>
-							<div className="flex-1 min-w-0">
-								<div className="text-xs font-medium text-sidebar-ink">
-									{device.name}
-								</div>
-								<div className="text-[11px] text-sidebar-inkDull flex items-center gap-1">
-									<div
-										className={clsx(
-											"size-1.5 rounded-full",
-											device.status === "online"
-												? "bg-green-500"
-												: "bg-sidebar-inkDull",
+				{devices.length === 0 ? (
+					<div className="py-6 text-center text-xs text-sidebar-inkDull">
+						No devices found
+					</div>
+				) : (
+					devices.map((device: any, i: number) => (
+						<div
+							key={i}
+							className="p-2.5 bg-app-box/40 rounded-lg border border-app-line/50"
+						>
+							<div className="flex items-center gap-2">
+								<HardDrive
+									className="size-4 text-accent"
+									weight="bold"
+								/>
+								<div className="flex-1 min-w-0">
+									<div className="text-xs font-medium text-sidebar-ink flex items-center gap-1.5">
+										<span>{device.name}</span>
+										{device.isCurrent && (
+											<span className="text-[10px] bg-accent/15 text-accent px-1.5 py-0.2 rounded font-normal">This Device</span>
 										)}
-									/>
-									<span>
-										{device.status === "online"
-											? "Online"
-											: "Offline"}{" "}
-										· {device.lastSeen}
-									</span>
+									</div>
+									<div className="text-[11px] text-sidebar-inkDull flex items-center gap-1 mt-0.5">
+										<div
+											className={clsx(
+												"size-1.5 rounded-full",
+												device.status === "online"
+													? "bg-green-500"
+													: "bg-sidebar-inkDull",
+											)}
+										/>
+										<span>
+											{device.status === "online"
+												? "Online"
+												: "Offline"}
+										</span>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-				))}
+					))
+				)}
 			</div>
 		</div>
 	);
@@ -568,10 +599,13 @@ interface DeleteLocationDialogProps extends UseDialogProps {
 }
 
 function useDeleteLocationDialog() {
-	return (locationId: string, locationName: string) =>
-		dialogManager.create((props: UseDialogProps) => (
+	return (locationId: string, locationName: string) => {
+		const controller = dialogManager.create((props: UseDialogProps) => (
 			<DeleteLocationDialog {...props} locationId={locationId} locationName={locationName} />
 		));
+		controller.open();
+		return controller;
+	};
 }
 
 function DeleteLocationDialog({ locationId, locationName, ...props }: DeleteLocationDialogProps) {

@@ -1,7 +1,6 @@
 import {
 	ArrowsClockwise,
 	Calendar,
-	ChatCircle,
 	ClockCounterClockwise,
 	Cube,
 	DotsThree,
@@ -16,8 +15,6 @@ import {
 	MagnifyingGlass,
 	MapPin,
 	Microphone,
-	Paperclip,
-	PaperPlaneRight,
 	ShareNetwork,
 	Sparkle,
 	Tag as TagIcon,
@@ -106,12 +103,6 @@ export function FileInspector({file}: FileInspectorProps) {
 		{id: 'overview', label: 'Overview', icon: Info},
 		{id: 'sidecars', label: 'Sidecars', icon: Image},
 		{id: 'instances', label: 'Instances', icon: MapPin},
-		...(isDev
-			? [{id: 'chat', label: 'Chat', icon: ChatCircle, badge: 3}]
-			: []),
-		...(isDev
-			? [{id: 'activity', label: 'Activity', icon: ClockCounterClockwise}]
-			: []),
 		{id: 'details', label: 'More', icon: DotsThree}
 	];
 
@@ -134,18 +125,6 @@ export function FileInspector({file}: FileInspectorProps) {
 					<InstancesTab file={fileData} />
 				</TabContent>
 
-				{isDev && (
-					<TabContent id="chat" activeTab={activeTab}>
-						<ChatTab />
-					</TabContent>
-				)}
-
-				{isDev && (
-					<TabContent id="activity" activeTab={activeTab}>
-						<ActivityTab />
-					</TabContent>
-				)}
-
 				<TabContent id="details" activeTab={activeTab}>
 					<DetailsTab file={fileData} />
 				</TabContent>
@@ -159,7 +138,27 @@ function FileQuickActions({file}: {file: File}) {
 	const platform = usePlatform();
 	// Null in the pop-out inspector window, which has no explorer to overlay.
 	const explorer = useOptionalExplorer();
-	const [isFavorite, setIsFavorite] = useState(false); // TODO: Get from file metadata
+	const isTaggedFavorite = file.tags?.some(
+		(t) => t.canonical_name?.toLowerCase() === 'favorite'
+	);
+	const [isFavorite, setIsFavorite] = useState(() => {
+		try {
+			const stored = localStorage.getItem(`sd_fav_${file.id}`);
+			if (stored !== null) return stored === 'true';
+		} catch {}
+		return isTaggedFavorite || false;
+	});
+
+	useEffect(() => {
+		try {
+			const stored = localStorage.getItem(`sd_fav_${file.id}`);
+			if (stored !== null) {
+				setIsFavorite(stored === 'true');
+				return;
+			}
+		} catch {}
+		setIsFavorite(isTaggedFavorite || false);
+	}, [file.id, isTaggedFavorite]);
 
 	// AI Processing mutations
 	const extractText = useLibraryMutation('media.ocr.extract');
@@ -187,8 +186,11 @@ function FileQuickActions({file}: {file: File}) {
 	const canShare = !!physicalPath && !!platform.shareFiles;
 
 	const handleFavorite = async () => {
-		setIsFavorite(!isFavorite);
-		// TODO: Wire up to metadata.set_favorite mutation when available
+		const nextState = !isFavorite;
+		setIsFavorite(nextState);
+		try {
+			localStorage.setItem(`sd_fav_${file.id}`, String(nextState));
+		} catch {}
 	};
 
 	const handleShare = async () => {
@@ -1797,213 +1799,6 @@ function InstanceRow({instance}: {instance: File}) {
 					)}
 					title={instance.is_local ? 'Available locally' : 'Remote'}
 				/>
-			</div>
-		</div>
-	);
-}
-
-function ChatTab() {
-	const [message, setMessage] = useState('');
-
-	const messages = [
-		{
-			id: 1,
-			sender: 'Sarah',
-			avatar: 'S',
-			content: 'Can you check if this photo is also on the NAS?',
-			time: '2:34 PM',
-			isUser: false
-		},
-		{
-			id: 2,
-			sender: 'You',
-			avatar: 'J',
-			content: "Yeah, it's synced. Shows 3 instances across devices.",
-			time: '2:35 PM',
-			isUser: true
-		},
-		{
-			id: 3,
-			sender: 'AI Assistant',
-			avatar: '',
-			content:
-				'I found 2 similar photos in your library from the same location. Would you like me to create a collection?',
-			time: '2:36 PM',
-			isUser: false,
-			isAI: true,
-			unread: true
-		},
-		{
-			id: 4,
-			sender: 'Sarah',
-			avatar: 'S',
-			content: 'Perfect, thanks! Can you share the collection with me?',
-			time: '2:37 PM',
-			isUser: false,
-			unread: true
-		},
-		{
-			id: 5,
-			sender: 'Alex',
-			avatar: 'A',
-			content: 'I just tagged this as Summer 2025 btw',
-			time: '2:38 PM',
-			isUser: false,
-			unread: true
-		}
-	];
-
-	return (
-		<div className="flex h-full flex-col">
-			{/* Messages */}
-			<div className="flex-1 space-y-3 overflow-y-auto px-2 pt-2">
-				{messages.map((msg) => (
-					<div
-						key={msg.id}
-						className={clsx(
-							'flex gap-2',
-							msg.isUser ? 'flex-row-reverse' : 'flex-row'
-						)}
-					>
-						{/* Avatar */}
-						<div
-							className={clsx(
-								'flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
-								msg.isAI
-									? 'bg-accent/20 text-accent'
-									: msg.isUser
-										? 'bg-sidebar-selected text-sidebar-ink'
-										: 'bg-app-box text-sidebar-inkDull'
-							)}
-						>
-							{msg.avatar}
-						</div>
-
-						{/* Message bubble */}
-						<div
-							className={clsx(
-								'flex max-w-[75%] flex-col',
-								msg.isUser ? 'items-end' : 'items-start'
-							)}
-						>
-							<div
-								className={clsx(
-									'rounded-lg px-2.5 py-1.5',
-									msg.isAI
-										? 'bg-accent/10 border-accent/20 border'
-										: msg.isUser
-											? 'bg-sidebar-selected/60'
-											: 'bg-app-box/60',
-									msg.unread && 'ring-accent/50 ring-1'
-								)}
-							>
-								{!msg.isUser && (
-									<div
-										className={clsx(
-											'mb-0.5 text-[10px] font-semibold',
-											msg.isAI
-												? 'text-accent'
-												: 'text-sidebar-inkDull'
-										)}
-									>
-										{msg.sender}
-									</div>
-								)}
-								<p className="text-sidebar-ink text-xs leading-relaxed">
-									{msg.content}
-								</p>
-							</div>
-							<span className="text-sidebar-inkDull mt-0.5 px-1 text-[10px]">
-								{msg.time}
-							</span>
-						</div>
-					</div>
-				))}
-			</div>
-
-			{/* Input */}
-			<div className="border-sidebar-line space-y-2 border-t p-2">
-				<div className="flex items-end gap-1.5">
-					<button
-						className="hover:bg-sidebar-selected text-sidebar-inkDull hover:text-sidebar-ink rounded-lg p-1.5 transition-colors"
-						title="Attach file"
-					>
-						<Paperclip size={4} weight="bold" />
-					</button>
-
-					<div className="bg-app-box border-app-line flex flex-1 items-center gap-1.5 rounded-lg border px-2 py-1.5">
-						<input
-							type="text"
-							value={message}
-							onChange={(e) => setMessage(e.target.value)}
-							placeholder="Type a message..."
-							className="text-sidebar-ink placeholder:text-sidebar-inkDull flex-1 bg-transparent text-xs outline-none"
-						/>
-					</div>
-
-					<button
-						className="bg-accent hover:bg-accent/90 rounded-lg p-1.5 text-white transition-colors"
-						title="Send message"
-					>
-						<PaperPlaneRight size={4} weight="bold" />
-					</button>
-				</div>
-
-				<div className="flex gap-1">
-					<button className="text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
-						<Sparkle size={3} weight="bold" />
-						Ask AI
-					</button>
-					<button className="text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
-						Share File
-					</button>
-					<button className="text-sidebar-inkDull hover:text-sidebar-ink bg-app-box/40 hover:bg-app-box/60 rounded-md px-2 py-1 text-[10px] font-medium transition-colors">
-						Create Task
-					</button>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-function ActivityTab() {
-	const activity = [
-		{action: 'Synced to NAS', time: '2 min ago', device: 'MacBook Pro'},
-		{action: 'Uploaded to S3', time: '1 hour ago', device: 'MacBook Pro'},
-		{
-			action: 'Thumbnail generated',
-			time: '2 hours ago',
-			device: 'MacBook Pro'
-		},
-		{action: "Tagged as 'Travel'", time: '3 hours ago', device: 'iPhone'},
-		{action: 'Created', time: 'Jan 15, 2025', device: 'iPhone'}
-	];
-
-	return (
-		<div className="no-scrollbar mask-fade-out flex flex-col space-y-4 overflow-x-hidden overflow-y-scroll px-2 pb-10 pt-2">
-			<p className="text-sidebar-inkDull text-xs">
-				History of changes and sync operations
-			</p>
-
-			<div className="space-y-0.5">
-				{activity.map((item, i) => (
-					<div
-						key={i}
-						className="hover:bg-app-box/40 flex items-start gap-3 rounded-lg p-2 transition-colors"
-					>
-						<span className="text-sidebar-inkDull mt-0.5 shrink-0">
-							<ClockCounterClockwise size={16} weight="bold" />
-						</span>
-						<div className="min-w-0 flex-1">
-							<div className="text-sidebar-ink text-xs">
-								{item.action}
-							</div>
-							<div className="text-sidebar-inkDull mt-0.5 text-[11px]">
-								{item.time} · {item.device}
-							</div>
-						</div>
-					</div>
-				))}
 			</div>
 		</div>
 	);

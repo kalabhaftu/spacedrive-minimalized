@@ -28,7 +28,7 @@ export function SpaceGroup({
 	sortableListeners,
 }: SpaceGroupProps) {
 	const { collapsedGroups, toggleGroup: toggleGroupLocal } = useSidebarStore();
-	const updateGroupCollapse = useLibraryMutation("spaces.update_group_collapse");
+	const updateGroup = useLibraryMutation("spaces.update_group");
 	const { active } = useDndContext();
 
 	const isCollapsed = collapsedGroups.has(group.id);
@@ -39,14 +39,12 @@ export function SpaceGroup({
 
 		// Persist to database in background
 		try {
-			await updateGroupCollapse.mutateAsync({
+			await updateGroup.mutateAsync({
 				group_id: group.id,
-				collapsed: !isCollapsed,
+				is_collapsed: !isCollapsed,
 			});
 		} catch (error) {
-			console.error("Failed to update group collapse state:", error);
-			// Revert local state on error
-			toggleGroupLocal(group.id);
+			console.warn("Failed to persist group collapse state to DB:", error);
 		}
 	};
 

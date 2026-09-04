@@ -113,6 +113,8 @@ function IndexIndicator({path}: {path: SdPath}) {
 	const enableIndexing = useLibraryMutation('locations.enable_indexing');
 	const {clearSelection} = useSelection();
 	const {setInspectorVisible} = useExplorer();
+	const initialPath = 'Physical' in path ? path.Physical.path : undefined;
+	const addStorageDialog = useAddStorageDialog(undefined, initialPath);
 
 	// Fetch all locations
 	const {data: locationsData} = useNormalizedQuery({
@@ -222,14 +224,7 @@ function IndexIndicator({path}: {path: SdPath}) {
 									size="sm"
 									variant="accent"
 									onClick={() => {
-										const initialPath =
-											'Physical' in path
-												? path.Physical.path
-												: undefined;
-										useAddStorageDialog(
-											undefined,
-											initialPath
-										);
+										addStorageDialog.open();
 										popover.setOpen(false);
 									}}
 								>

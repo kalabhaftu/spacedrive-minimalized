@@ -17,7 +17,7 @@ import Orb from "../components/Orb";
 import { usePlatform } from "../contexts/PlatformContext";
 import { useAudioRecorder } from "../hooks/useAudioRecorder";
 import { useTtsPlayback } from "../hooks/useTtsPlayback";
-import { useSpacebotEventSource } from "../Spacebot/useSpacebotEventSource";
+import { useSpacebotEventSource } from "../hooks/useSpacebotEventSource";
 
 type VoiceState = "idle" | "recording" | "processing" | "speaking";
 

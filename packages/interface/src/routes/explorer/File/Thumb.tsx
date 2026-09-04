@@ -7,6 +7,7 @@ import type { File } from "@sd/ts-client";
 import { ThumbstripScrubber } from "./ThumbstripScrubber";
 import { getFileKindForIcon, getVirtualMetadata, getContentKind } from "@sd/ts-client";
 import { useServer } from "../../../contexts/ServerContext";
+import { usePlatform } from "../../../contexts/PlatformContext";
 
 interface ThumbProps {
   file: File;
@@ -15,6 +16,15 @@ interface ThumbProps {
   frameClassName?: string; // Custom frame styling (border, radius, bg)
   iconScale?: number; // Scale factor for fallback icon (0-1, default 1)
   squareMode?: boolean; // Whether thumbnail is cropped to square (media view) or maintains aspect ratio
+}
+
+function areThumbnailsEnabled(): boolean {
+  try {
+    const val = localStorage.getItem("sd_show_image_thumbnails");
+    return val === null ? true : val === "true";
+  } catch {
+    return true;
+  }
 }
 
 // Global cache for thumbnail loaded states (survives component unmount/remount)
@@ -31,6 +41,14 @@ export const Thumb = memo(function Thumb({
 }: ThumbProps) {
   const cacheKey = `${file.id}-${size}`;
   const { buildSidecarUrl } = useServer();
+  const platform = usePlatform();
+  const [enabled, setEnabled] = useState(areThumbnailsEnabled);
+
+  useEffect(() => {
+    const onSettingChange = () => setEnabled(areThumbnailsEnabled());
+    window.addEventListener("sd_thumbnails_setting_changed", onSettingChange);
+    return () => window.removeEventListener("sd_thumbnails_setting_changed", onSettingChange);
+  }, []);
 
   const [thumbLoaded, setThumbLoaded] = useState(
     () => thumbLoadedCache.get(cacheKey) || false,
@@ -54,68 +72,64 @@ export const Thumb = memo(function Thumb({
   const virtualMetadata = getVirtualMetadata(file);
   const iconOverride = virtualMetadata?.iconUrl;
 
+  // Get content kind for icon resolution
+  const contentKind = getContentKind(file);
+  const kindCapitalized = getFileKindForIcon(file);
+
   // Check if this is a video with thumbstrip sidecar
-  const isVideo = getContentKind(file) === "video";
+  const isVideo = contentKind === "video";
   const hasThumbstrip = file.sidecars?.some((s) => s.kind === "thumbstrip");
 
   // Get appropriate thumbnail URL from sidecars based on size
   const getThumbnailUrl = (targetSize: number) => {
-    // Need content_identity to build sidecar URL
-    if (!file.content_identity?.uuid) {
+    if (!enabled) {
       return null;
     }
 
-    // Find thumbnail sidecar closest to requested size
-    const thumbnails = file.sidecars.filter((s) => s.kind === "thumb");
+    // 1. Try sidecar thumbnail if available
+    if (file.content_identity?.uuid && file.sidecars && file.sidecars.length > 0) {
+      const thumbnails = file.sidecars.filter((s) => s.kind === "thumb");
+      if (thumbnails.length > 0) {
+        const preferredSize = targetSize <= 400 ? targetSize * 0.6 : targetSize;
 
-    if (thumbnails.length === 0) {
-      return null;
+        const thumbnail = thumbnails.sort((a, b) => {
+          const aSize = parseInt(a.variant.split("x")[0]?.replace(/\D/g, "") || "0");
+          const bSize = parseInt(b.variant.split("x")[0]?.replace(/\D/g, "") || "0");
+          const aScaleMatch = a.variant.match(/@(\d+)x/);
+          const bScaleMatch = b.variant.match(/@(\d+)x/);
+          const aScale = aScaleMatch ? parseInt(aScaleMatch[1]) : 1;
+          const bScale = bScaleMatch ? parseInt(bScaleMatch[1]) : 1;
+          const aPenalty = (aScale - 1) * 100;
+          const bPenalty = (bScale - 1) * 100;
+          return Math.abs(aSize - preferredSize) + aPenalty - (Math.abs(bSize - preferredSize) + bPenalty);
+        })[0];
+
+        const sidecarUrl = buildSidecarUrl(
+          file.content_identity.uuid,
+          thumbnail.kind,
+          thumbnail.variant,
+          thumbnail.format,
+        );
+        if (sidecarUrl) return sidecarUrl;
+      }
     }
 
-    // Prefer 1x (lower resolution) variants for better performance
-    // Only use higher resolution for very large sizes (>400px)
-    const preferredSize = targetSize <= 400 ? targetSize * 0.6 : targetSize;
+    // 2. Direct preview fallback for local images
+    if (contentKind === "image" && platform.convertFileSrc) {
+      const rawFile = file as any;
+      const physicalPath =
+        rawFile.physical_path ||
+        rawFile.path ||
+        (typeof rawFile.sd_path?.Physical?.path === "string" ? rawFile.sd_path.Physical.path : null);
+      if (physicalPath) {
+        return platform.convertFileSrc(physicalPath);
+      }
+    }
 
-    const thumbnail = thumbnails.sort((a, b) => {
-      // Parse variant (e.g., "grid@1x", "detail@1x") to get size and scale
-      const aSize = parseInt(
-        a.variant.split("x")[0]?.replace(/\D/g, "") || "0",
-      );
-      const bSize = parseInt(
-        b.variant.split("x")[0]?.replace(/\D/g, "") || "0",
-      );
-
-      // Extract scale factor (1x, 2x, 3x) from variants like "grid@1x" or "detail@2x"
-      const aScaleMatch = a.variant.match(/@(\d+)x/);
-      const bScaleMatch = b.variant.match(/@(\d+)x/);
-      const aScale = aScaleMatch ? parseInt(aScaleMatch[1]) : 1;
-      const bScale = bScaleMatch ? parseInt(bScaleMatch[1]) : 1;
-
-      // Strongly prefer 1x variants (add penalty for higher scales)
-      const aPenalty = (aScale - 1) * 100;
-      const bPenalty = (bScale - 1) * 100;
-
-      // Find closest match to preferred size, with scale penalty
-      return (
-        Math.abs(aSize - preferredSize) +
-        aPenalty -
-        (Math.abs(bSize - preferredSize) + bPenalty)
-      );
-    })[0];
-
-    return buildSidecarUrl(
-      file.content_identity.uuid,
-      thumbnail.kind,
-      thumbnail.variant,
-      thumbnail.format,
-    );
+    return null;
   };
 
   const thumbnailSrc = getThumbnailUrl(size);
-
-  // Get content kind for icon resolution
-  const contentKind = getContentKind(file);
-  const kindCapitalized = getFileKindForIcon(file);
 
   // Use icon override from virtual files (devices, volumes), otherwise use default icon logic
   const icon =
