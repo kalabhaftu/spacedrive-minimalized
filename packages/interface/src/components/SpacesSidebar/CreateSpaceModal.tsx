@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { Input, Label, dialogManager, useDialog, Dialog } from '@spacedrive/primitives';
 import { useLibraryMutation } from '@sd/ts-client';
 import { useForm } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface FormData {
 	name: string;
@@ -38,27 +39,42 @@ export function useCreateSpaceDialog() {
 
 function CreateSpaceDialog(props: { id: number }) {
 	const dialog = useDialog(props);
+	const queryClient = useQueryClient();
 	const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
 	const [selectedIcon, setSelectedIcon] = useState(PRESET_ICONS[0]);
 
 	const form = useForm<FormData>({
+		mode: 'onChange',
 		defaultValues: { name: '' },
 	});
 
-	const createSpace = useLibraryMutation('spaces.create');
+	const createSpace = useLibraryMutation('spaces.create', {
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				predicate: (query) => {
+					const key = query.queryKey;
+					return Array.isArray(key) && key[0] === 'query:spaces.list';
+				},
+			});
+		},
+	});
 
 	const onSubmit = form.handleSubmit(async (data) => {
 		if (!data.name?.trim()) return;
 
-		await createSpace.mutateAsync({
-			name: data.name,
-			icon: selectedIcon,
-			color: selectedColor,
-		});
-		form.reset();
-		setSelectedColor(PRESET_COLORS[0]);
-		setSelectedIcon(PRESET_ICONS[0]);
-		dialog.state.open = false;
+		try {
+			await createSpace.mutateAsync({
+				name: data.name.trim(),
+				icon: selectedIcon,
+				color: selectedColor,
+			});
+			form.reset();
+			setSelectedColor(PRESET_COLORS[0]);
+			setSelectedIcon(PRESET_ICONS[0]);
+			dialogManager.setState(dialog.id, { open: false });
+		} catch (error) {
+			console.error('Failed to create space:', error);
+		}
 	});
 
 	return (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Input, Label, dialogManager, useDialog, Dialog } from '@spacedrive/primitives';
 import { useLibraryMutation } from '@sd/ts-client';
 import { useForm } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query';
 import type { GroupType } from '@sd/ts-client';
 
 interface FormData {
@@ -16,23 +17,38 @@ export function useAddGroupDialog(spaceId: string) {
 
 function AddGroupDialog(props: { id: number; spaceId: string }) {
 	const dialog = useDialog(props);
+	const queryClient = useQueryClient();
 	const [groupType, setGroupType] = useState<GroupType>('Custom');
 
 	const form = useForm<FormData>({
+		mode: 'onChange',
 		defaultValues: { groupName: '' },
 	});
 
-	const addGroup = useLibraryMutation('spaces.add_group');
+	const addGroup = useLibraryMutation('spaces.add_group', {
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				predicate: (query) => {
+					const key = query.queryKey;
+					return Array.isArray(key) && key[0] === 'query:spaces.get_layout';
+				},
+			});
+		},
+	});
 
 	const onSubmit = form.handleSubmit(async (data) => {
-		await addGroup.mutateAsync({
-			space_id: props.spaceId,
-			name: data.groupName || getDefaultName(groupType),
-			group_type: groupType,
-		});
-		form.reset();
-		setGroupType('Custom');
-		dialog.state.open = false;
+		try {
+			await addGroup.mutateAsync({
+				space_id: props.spaceId,
+				name: data.groupName || getDefaultName(groupType),
+				group_type: groupType,
+			});
+			form.reset();
+			setGroupType('Custom');
+			dialogManager.setState(dialog.id, { open: false });
+		} catch (error) {
+			console.error('Failed to add group:', error);
+		}
 	});
 
 	return (

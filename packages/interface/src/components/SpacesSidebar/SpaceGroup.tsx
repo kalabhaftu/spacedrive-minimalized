@@ -4,7 +4,6 @@ import type {
 } from "@sd/ts-client";
 import { useSidebarStore, useLibraryMutation } from "@sd/ts-client";
 import { SpaceItem } from "./SpaceItem";
-import { DevicesGroup } from "./DevicesGroup";
 import { LocationsGroup } from "./LocationsGroup";
 import { VolumesGroup } from "./VolumesGroup";
 import { TagsGroup } from "./TagsGroup";
@@ -41,6 +40,7 @@ export function SpaceGroup({
 		try {
 			await updateGroup.mutateAsync({
 				group_id: group.id,
+				name: null,
 				is_collapsed: !isCollapsed,
 			});
 		} catch (error) {

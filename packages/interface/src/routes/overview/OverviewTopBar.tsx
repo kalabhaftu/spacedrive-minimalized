@@ -1,8 +1,6 @@
 import {
 	ArrowsClockwise,
 	CaretDown,
-	CloudArrowUp,
-	DeviceMobile,
 	GearSix,
 	MagnifyingGlass,
 	Plus

@@ -1,10 +1,8 @@
-import {CaretLeft, CaretRight, Lightning} from '@phosphor-icons/react';
-import ComputeIcon from '@sd/assets/icons/Compute.png';
+import {CaretLeft, CaretRight} from '@phosphor-icons/react';
 import DatabaseIcon from '@sd/assets/icons/Database.png';
 import DevicesIcon from '@sd/assets/icons/Devices.png';
 import IndexedIcon from '@sd/assets/icons/Indexed.png';
 import LocationIcon from '@sd/assets/icons/Location.png';
-import MobileIcon from '@sd/assets/icons/Mobile.png';
 import StorageIcon from '@sd/assets/icons/Storage.png';
 import TagsIcon from '@sd/assets/icons/Tags.png';
 import {CircleButton} from '@spacedrive/primitives';
@@ -35,14 +33,6 @@ function formatBytes(bytes: number): {value: string; unit: string} {
 	};
 }
 
-function getTOPSRank(tops: number): {label: string} {
-	if (tops >= 100) return {label: 'Extreme'};
-	if (tops >= 70) return {label: 'Very High'};
-	if (tops >= 40) return {label: 'High'};
-	if (tops >= 20) return {label: 'Moderate'};
-	return {label: 'Low'};
-}
-
 export function HeroStats({
 	totalStorage,
 	usedStorage,
@@ -66,8 +56,6 @@ export function HeroStats({
 	const usedFormatted = formatBytes(usedStorage);
 	const databaseFormatted = formatBytes(databaseSize);
 	const sidecarFormatted = formatBytes(sidecarSize);
-	const topsValue = 70;
-	const topsRank = getTOPSRank(topsValue);
 
 	const updateScrollState = () => {
 		if (!scrollRef.current) return;
@@ -240,6 +228,21 @@ export function HeroStats({
 					value={tagCount}
 					subtitle="organization labels"
 					color="from-pink-500 to-rose-500"
+				/>
+
+				{/* Devices */}
+				<StatCard
+					icon={
+						<img
+							src={DevicesIcon}
+							alt="Devices"
+							className="size-10 opacity-80"
+						/>
+					}
+					label="Devices"
+					value={deviceCount}
+					subtitle="connected devices"
+					color="from-emerald-500 to-teal-500"
 				/>
 			</div>
 

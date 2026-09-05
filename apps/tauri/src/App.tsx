@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { DragOverlay } from "./routes/DragOverlay";
 import { ContextMenuWindow } from "./routes/ContextMenuWindow";
 import { DragDemo } from "./components/DragDemo";
+import { SpacedropWindow } from "./routes/Spacedrop";
 import { platform } from "./platform";
 import { initializeContextMenuHandler } from "./contextMenu";
 import { initializeKeybindGlobal } from "./keybinds";

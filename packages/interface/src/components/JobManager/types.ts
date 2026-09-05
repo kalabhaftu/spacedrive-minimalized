@@ -31,7 +31,7 @@ export function getJobDisplayName(job: JobListItem): string {
     actionType === "indexing.start" ||
     job.name === "indexer"
   ) {
-    const context = job.action_context?.context as JsonValue;
+    const context = job.action_context?.context as JsonValue | undefined;
     const locationName = extractLocationName(actionInput) || extractLocationName(context);
     if (locationName) {
       return `Indexing "${locationName}"`;
@@ -109,7 +109,7 @@ export function getJobDisplayName(job: JobListItem): string {
  */
 export function getJobSubtext(job: JobListItem): string {
   const actionInput = job.action_context?.action_input;
-  const context = job.action_context?.context as JsonValue;
+  const context = job.action_context?.context as JsonValue | undefined;
   const path = extractPath(actionInput) || extractPath(context);
   const formattedPath = path ? path.replace(/^\/Users\/[^/]+/, "~") : null;
 
@@ -205,8 +205,8 @@ export function timeAgo(date: string | Date | undefined): string {
 }
 
 // Helper functions to extract metadata from JsonValue
-function extractLocationName(input: JsonValue): string | null {
-  if (typeof input === "object" && input !== null) {
+function extractLocationName(input: JsonValue | undefined): string | null {
+  if (input && typeof input === "object") {
     if ("name" in input && typeof input.name === "string" && input.name.trim().length > 0) {
       return input.name;
     }
@@ -214,8 +214,8 @@ function extractLocationName(input: JsonValue): string | null {
   return null;
 }
 
-function extractPath(input: JsonValue): string | null {
-  if (typeof input === "object" && input !== null && "path" in input) {
+function extractPath(input: JsonValue | undefined): string | null {
+  if (input && typeof input === "object" && "path" in input) {
     const path = input.path;
     // Handle Physical path: { Physical: { device_slug: "...", path: "..." } }
     if (typeof path === "object" && path !== null && "Physical" in path) {
@@ -239,11 +239,11 @@ function extractPath(input: JsonValue): string | null {
   return null;
 }
 
-function extractSourcePath(input: JsonValue): string | null {
-  if (typeof input === "object" && input !== null && "source" in input) {
+function extractSourcePath(input: JsonValue | undefined): string | null {
+  if (input && typeof input === "object" && "source" in input) {
     return String(input.source);
   }
-  if (typeof input === "object" && input !== null && "sources" in input) {
+  if (input && typeof input === "object" && "sources" in input) {
     const sources = input.sources;
     if (
       typeof sources === "object" &&
@@ -268,11 +268,11 @@ function extractSourcePath(input: JsonValue): string | null {
   return null;
 }
 
-function extractTargetPath(input: JsonValue): string | null {
-  if (typeof input === "object" && input !== null && "target" in input) {
+function extractTargetPath(input: JsonValue | undefined): string | null {
+  if (input && typeof input === "object" && "target" in input) {
     return String(input.target);
   }
-  if (typeof input === "object" && input !== null && "targets" in input) {
+  if (input && typeof input === "object" && "targets" in input) {
     const targets = input.targets;
     if (
       typeof targets === "object" &&
