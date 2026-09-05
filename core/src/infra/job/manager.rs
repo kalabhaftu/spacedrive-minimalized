@@ -126,34 +126,7 @@ impl JobManager {
 				.await;
 		}
 
-		// Check if it's an extension job (contains colon)
-		#[cfg(feature = "wasm")]
-		if job_name.contains(':') {
-			// Try extension job registry
-			if let Some(plugin_manager) = self.context.get_plugin_manager().await {
-				let job_registry = plugin_manager.read().await.job_registry();
-
-				if job_registry.has_job(job_name) {
-					// Extract state JSON from params
-					let state_json = serde_json::to_string(&params).map_err(|e| {
-						JobError::serialization(format!("Failed to serialize params: {}", e))
-					})?;
-
-					// Create WasmJob from registry
-					let wasm_job = job_registry
-						.create_wasm_job(job_name, state_json)
-						.map_err(|e| JobError::NotFound(e))?;
-
-					// Box as ErasedJob and dispatch with the extension job name
-					let erased_job = Box::new(wasm_job) as Box<dyn ErasedJob>;
-					return self
-						.dispatch_erased_job(job_name, erased_job, priority, None)
-						.await;
-				}
-			}
-		}
-
-		// Job not found in either registry
+		// Job not found in registry
 		Err(JobError::NotFound(format!(
 			"Job type '{}' not registered",
 			job_name

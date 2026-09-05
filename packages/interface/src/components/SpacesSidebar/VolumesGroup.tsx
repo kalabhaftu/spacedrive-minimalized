@@ -1,17 +1,47 @@
+import {useMemo} from 'react';
 import {EyeSlash} from '@phosphor-icons/react';
-import {getVolumeIcon, useNormalizedQuery} from '@sd/ts-client';
+import {getVolumeIcon, useNormalizedQuery, useSidebarStore} from '@sd/ts-client';
 import type {Device, Volume} from '@sd/ts-client';
 import {GroupHeader} from './GroupHeader';
 import {SpaceItem} from './SpaceItem';
 import {useVolumeContextMenu} from './hooks/useVolumeContextMenu';
 
 interface VolumesGroupProps {
+	groupId?: string;
 	isCollapsed: boolean;
 	onToggle: () => void;
 	/** Filter to show tracked, untracked, or all volumes (default: "All") */
 	filter?: 'TrackedOnly' | 'UntrackedOnly' | 'All';
 	sortableAttributes?: any;
 	sortableListeners?: any;
+}
+
+/**
+ * Determines if a volume is an internal system volume (cryptex, asset data, recovery, preboot, VM, etc.)
+ */
+export function isInternalSystemVolume(volume: Volume): boolean {
+	if (volume.volume_type === 'System') return true;
+	if (volume.is_user_visible === false) return true;
+	const mount = (volume.mount_point || '').toLowerCase();
+	const name = (volume.name || '').toLowerCase();
+	if (
+		mount.includes('/assetsv2/') ||
+		mount.includes('.assetdata') ||
+		mount.includes('cryptex') ||
+		mount.startsWith('/system/volumes/preboot') ||
+		mount.startsWith('/system/volumes/vm') ||
+		mount.startsWith('/system/volumes/update') ||
+		mount.startsWith('/system/volumes/hardware') ||
+		mount.startsWith('/system/volumes/xarts') ||
+		mount.startsWith('/system/volumes/iscpreboot') ||
+		mount.startsWith('/private/var/') ||
+		mount.startsWith('/private/preboot/') ||
+		name.includes('cryptex') ||
+		name.includes('pkitruststore')
+	) {
+		return true;
+	}
+	return false;
 }
 
 // Helper to render volume status indicator
@@ -63,12 +93,15 @@ function VolumeItem({volume, index, volumesLength, devices}: {volume: Volume; in
 }
 
 export function VolumesGroup({
-	isCollapsed,
+	groupId,
+	isCollapsed: propIsCollapsed,
 	onToggle,
 	filter = 'All',
 	sortableAttributes,
 	sortableListeners
 }: VolumesGroupProps) {
+	const { showInternalVolumes, collapsedGroups, toggleGroup } = useSidebarStore();
+
 	const {data: volumesData} = useNormalizedQuery({
 		query: 'volumes.list',
 		input: {filter},
@@ -81,17 +114,45 @@ export function VolumesGroup({
 		resourceType: 'device'
 	});
 
-	const volumes = volumesData?.volumes || [];
+	const rawVolumes: Volume[] = volumesData?.volumes || [];
 	const devices: Device[] = (devicesData as Device[]) ?? [];
+
+	const volumes = useMemo(() => {
+		if (showInternalVolumes) {
+			return rawVolumes;
+		}
+		return rawVolumes.filter((vol) => !isInternalSystemVolume(vol));
+	}, [rawVolumes, showInternalVolumes]);
+
+	// If user hasn't explicitly set collapse state, collapse if empty (0 visible volumes)
+	const userCollapsed = groupId ? collapsedGroups[groupId] : undefined;
+	const isCollapsed =
+		userCollapsed !== undefined
+			? userCollapsed
+			: (volumes.length === 0 ? true : propIsCollapsed);
+
+	const handleToggle = () => {
+		if (groupId) {
+			toggleGroup(groupId, isCollapsed);
+		}
+		onToggle();
+	};
 
 	return (
 		<div>
 			<GroupHeader
 				label="Volumes"
 				isCollapsed={isCollapsed}
-				onToggle={onToggle}
+				onToggle={handleToggle}
 				sortableAttributes={sortableAttributes}
 				sortableListeners={sortableListeners}
+				rightComponent={
+					volumes.length > 0 && (
+						<span className="text-sidebar-ink-faint ml-auto">
+							{volumes.length}
+						</span>
+					)
+				}
 			/>
 
 			{/* Volumes List */}

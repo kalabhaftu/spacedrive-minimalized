@@ -5,23 +5,15 @@ version = "2.0.0-alpha.2"
 autobins = true
 
 [features]
-default = ["wasm"]
+default = []
 # FFmpeg support for video thumbnails and audio extraction
 ffmpeg = ["dep:sd-ffmpeg"]
-# Whisper speech recognition engine (internal dependency)
-whisper = ["dep:whisper-rs", "dep:hound", "dep:rubato"]
-# Speech-to-text transcription (requires audio extraction + recognition)
-speech-to-text = ["ffmpeg", "whisper"]
-# AI features umbrella (heavy deps, can be disabled for lite builds or mobile)
-ai = ["speech-to-text"]
 # HEIF image support (extends sd-images with HEIF format)
 heif = ["sd-images/heif"]
-# Mobile platform support (excludes wasm which doesn't work on iOS)
+# Mobile platform support
 mobile = []
 # CLI support (clap is now always available)
 cli = []
-# WASM plugin system (disabled on mobile)
-wasm = ["dep:wasmer", "dep:wasmer-middlewares"]
 
 
 [dependencies]

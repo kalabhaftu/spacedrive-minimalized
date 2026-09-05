@@ -34,8 +34,16 @@ impl VolumeClassifier for MacOSClassifier {
 			// This is where all user data, applications, and writable files live
 			path if path.starts_with("/System/Volumes/Data") => VolumeType::Primary,
 
-			// System internal volumes (preboot, recovery, VM, etc.)
-			path if path.starts_with("/System/Volumes/") => VolumeType::System,
+			// System internal volumes (preboot, recovery, VM, cryptex, asset data, etc.)
+			path if path.starts_with("/System/Volumes/")
+				|| path.starts_with("/System/Library/Assets")
+				|| path.contains(".AssetData")
+				|| path.contains("Cryptex")
+				|| path.starts_with("/private/var/")
+				|| path.starts_with("/private/preboot/") =>
+			{
+				VolumeType::System
+			}
 
 			// macOS autofs system and /home mount
 			path if mount_str.contains("auto_home")

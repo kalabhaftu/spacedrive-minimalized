@@ -21,8 +21,6 @@ pub struct CoreContext {
 	// This is wrapped in an RwLock to allow it to be set after initialization
 	pub sidecar_manager: Arc<RwLock<Option<Arc<SidecarManager>>>>,
 	pub action_manager: Arc<RwLock<Option<Arc<ActionManager>>>>,
-	#[cfg(feature = "wasm")]
-	pub plugin_manager: Arc<RwLock<Option<Arc<RwLock<crate::infra::extension::PluginManager>>>>>,
 	pub fs_watcher: Arc<RwLock<Option<Arc<FsWatcherService>>>>,
 	// Ephemeral index cache for unmanaged paths
 	pub ephemeral_index_cache: Arc<EphemeralIndexCache>,
@@ -53,8 +51,6 @@ impl CoreContext {
 			key_manager,
 			sidecar_manager: Arc::new(RwLock::new(None)),
 			action_manager: Arc::new(RwLock::new(None)),
-			#[cfg(feature = "wasm")]
-			plugin_manager: Arc::new(RwLock::new(None)),
 			fs_watcher: Arc::new(RwLock::new(None)),
 			ephemeral_index_cache: Arc::new(
 				EphemeralIndexCache::new().expect("Failed to create ephemeral index cache"),
@@ -122,23 +118,6 @@ impl CoreContext {
 	/// Method for Core to set action manager after it's initialized
 	pub async fn set_action_manager(&self, action_manager: Arc<ActionManager>) {
 		*self.action_manager.write().await = Some(action_manager);
-	}
-
-	/// Method for Core to set plugin manager after it's initialized
-	#[cfg(feature = "wasm")]
-	pub async fn set_plugin_manager(
-		&self,
-		plugin_manager: Arc<RwLock<crate::infra::extension::PluginManager>>,
-	) {
-		*self.plugin_manager.write().await = Some(plugin_manager);
-	}
-
-	/// Get plugin manager
-	#[cfg(feature = "wasm")]
-	pub async fn get_plugin_manager(
-		&self,
-	) -> Option<Arc<RwLock<crate::infra::extension::PluginManager>>> {
-		self.plugin_manager.read().await.clone()
 	}
 
 	/// Helper method to get the sidecar manager

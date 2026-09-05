@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { useLibraryQuery, useLibraryMutation, useSpacedriveClient } from "../../contexts/SpacedriveContext";
+import { useSidebarStore } from "@sd/ts-client";
 
 interface LibrarySettingsForm {
   generate_thumbnails: boolean;
@@ -12,6 +13,7 @@ interface LibrarySettingsForm {
 export function LibrarySettings() {
   const client = useSpacedriveClient();
   const libraryId = client.getCurrentLibraryId();
+  const { showInternalVolumes, setShowInternalVolumes } = useSidebarStore();
   const { data: config, refetch, isLoading } = useLibraryQuery(
     { type: "config.library.get", input: null as any },
     { enabled: !!libraryId }
@@ -145,6 +147,24 @@ export function LibrarySettings() {
               type="checkbox"
               {...form.register("auto_track_external_volumes")}
               className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
+            />
+          </label>
+        </div>
+
+        {/* Storage & Volumes Section */}
+        <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
+          <h3 className="text-sm font-medium text-ink">Storage & Volumes</h3>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <span className="text-sm text-ink">Show Internal & System Volumes</span>
+              <p className="text-xs text-ink-dull">Display OS cryptex, recovery, asset, and internal system disks in the sidebar</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={showInternalVolumes}
+              onChange={(e) => setShowInternalVolumes(e.target.checked)}
+              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent accent-accent cursor-pointer"
             />
           </label>
         </div>

@@ -11,9 +11,14 @@ interface SidebarStore {
 	currentSpaceId: string | null;
 	setCurrentSpace: (id: string | null) => void;
 
-	// Ephemeral state
-	collapsedGroups: Set<string>;
-	toggleGroup: (groupId: string) => void;
+	// Internal/system volumes visibility setting
+	showInternalVolumes: boolean;
+	setShowInternalVolumes: (show: boolean) => void;
+
+	// Collapsed state per group ID (persisted Record)
+	collapsedGroups: Record<string, boolean>;
+	toggleGroup: (groupId: string, defaultCollapsed?: boolean) => void;
+	setGroupCollapsed: (groupId: string, isCollapsed: boolean) => void;
 	collapseAll: (groupIds: string[]) => void;
 	expandAll: () => void;
 
@@ -29,23 +34,38 @@ export const useSidebarStore = create<SidebarStore>()(
 			currentSpaceId: null,
 			setCurrentSpace: (id) => set({ currentSpaceId: id }),
 
-			// Ephemeral
-			collapsedGroups: new Set(),
-			toggleGroup: (groupId) =>
+			showInternalVolumes: false,
+			setShowInternalVolumes: (show) => set({ showInternalVolumes: show }),
+
+			collapsedGroups: {},
+			toggleGroup: (groupId, defaultCollapsed = false) =>
 				set((state) => {
-					const newSet = new Set(state.collapsedGroups);
-					if (newSet.has(groupId)) {
-						newSet.delete(groupId);
-					} else {
-						newSet.add(groupId);
-					}
-					return { collapsedGroups: newSet };
+					const current =
+						state.collapsedGroups[groupId] !== undefined
+							? state.collapsedGroups[groupId]
+							: defaultCollapsed;
+					return {
+						collapsedGroups: {
+							...state.collapsedGroups,
+							[groupId]: !current,
+						},
+					};
 				}),
+			setGroupCollapsed: (groupId, isCollapsed) =>
+				set((state) => ({
+					collapsedGroups: {
+						...state.collapsedGroups,
+						[groupId]: isCollapsed,
+					},
+				})),
 			collapseAll: (groupIds) =>
 				set({
-					collapsedGroups: new Set(groupIds),
+					collapsedGroups: groupIds.reduce(
+						(acc, id) => ({ ...acc, [id]: true }),
+						{}
+					),
 				}),
-			expandAll: () => set({ collapsedGroups: new Set() }),
+			expandAll: () => set({ collapsedGroups: {} }),
 
 			// Drag
 			draggedItem: null,
@@ -55,6 +75,8 @@ export const useSidebarStore = create<SidebarStore>()(
 			name: 'spacedrive-sidebar',
 			partialize: (state) => ({
 				currentSpaceId: state.currentSpaceId,
+				showInternalVolumes: state.showInternalVolumes,
+				collapsedGroups: state.collapsedGroups,
 			}),
 		}
 	)

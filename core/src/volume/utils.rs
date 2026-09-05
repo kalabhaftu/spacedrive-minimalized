@@ -171,7 +171,23 @@ pub fn should_hide_by_mount_path(mount_point: &Path) -> bool {
 	is_system_mount_point(mount_point) || is_nested_app_mount(mount_point)
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "macos")]
+pub fn should_hide_by_mount_path(mount_point: &Path) -> bool {
+	let mount_str = mount_point.to_string_lossy();
+	mount_str.starts_with("/System/Volumes/Preboot")
+		|| mount_str.starts_with("/System/Volumes/VM")
+		|| mount_str.starts_with("/System/Volumes/Update")
+		|| mount_str.starts_with("/System/Volumes/Hardware")
+		|| mount_str.starts_with("/System/Volumes/xarts")
+		|| mount_str.starts_with("/System/Volumes/iSCPreboot")
+		|| mount_str.starts_with("/System/Library/Assets")
+		|| mount_str.contains(".AssetData")
+		|| mount_str.contains("Cryptex")
+		|| mount_str.starts_with("/private/var/")
+		|| mount_str.starts_with("/private/preboot/")
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 pub fn should_hide_by_mount_path(_mount_point: &Path) -> bool {
 	false
 }

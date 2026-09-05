@@ -30,18 +30,22 @@ export function SpaceGroup({
 	const updateGroup = useLibraryMutation("spaces.update_group");
 	const { active } = useDndContext();
 
-	const isCollapsed = collapsedGroups.has(group.id);
+	// Default custom groups to collapsed if empty or if marked collapsed in DB
+	const defaultCollapsed = items.length === 0 || group.is_collapsed === true;
+	const userCollapsed = collapsedGroups[group.id];
+	const isCollapsed = userCollapsed !== undefined ? userCollapsed : defaultCollapsed;
 
-	const handleToggle = async () => {
+	const handleToggle = async (explicitCurrentState?: boolean) => {
+		const current = explicitCurrentState !== undefined ? explicitCurrentState : isCollapsed;
 		// Optimistically toggle in local store for instant UI response
-		toggleGroupLocal(group.id);
+		toggleGroupLocal(group.id, current);
 
 		// Persist to database in background
 		try {
 			await updateGroup.mutateAsync({
 				group_id: group.id,
 				name: null,
-				is_collapsed: !isCollapsed,
+				is_collapsed: !current,
 			});
 		} catch (error) {
 			console.warn("Failed to persist group collapse state to DB:", error);
@@ -80,6 +84,7 @@ export function SpaceGroup({
 		return (
 			<div data-group-id={group.id}>
 				<VolumesGroup
+					groupId={group.id}
 					isCollapsed={isCollapsed}
 					onToggle={handleToggle}
 					sortableAttributes={sortableAttributes}
@@ -94,6 +99,7 @@ export function SpaceGroup({
 		return (
 			<div data-group-id={group.id}>
 				<TagsGroup
+					groupId={group.id}
 					isCollapsed={isCollapsed}
 					onToggle={handleToggle}
 					sortableAttributes={sortableAttributes}

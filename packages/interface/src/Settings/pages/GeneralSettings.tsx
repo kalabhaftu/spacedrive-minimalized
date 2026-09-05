@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
+import { useSidebarStore } from "@sd/ts-client";
 
 interface DeviceSettingsForm {
   name: string;
@@ -8,6 +9,7 @@ interface DeviceSettingsForm {
 }
 
 export function GeneralSettings() {
+  const { showInternalVolumes, setShowInternalVolumes } = useSidebarStore();
   const [rememberLastTab, setRememberLastTab] = useState<boolean>(() => {
     const val = localStorage.getItem("sd_remember_last_tab");
     return val === null ? true : val === "true";
@@ -121,6 +123,28 @@ export function GeneralSettings() {
                 localStorage.setItem("sd_show_image_thumbnails", String(newVal));
                 window.dispatchEvent(new Event("sd_thumbnails_setting_changed"));
               }}
+              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent accent-accent cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Sidebar & Storage */}
+        <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
+          <h3 className="text-sm font-medium text-ink">Sidebar & Storage</h3>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5 max-w-[80%]">
+              <span className="text-sm font-medium text-ink block">
+                Show internal & system volumes
+              </span>
+              <p className="text-xs text-ink-dull">
+                Display internal OS disk images, Cryptex assets, and system partitions in the sidebar Volumes list.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={showInternalVolumes}
+              onChange={(e) => setShowInternalVolumes(e.target.checked)}
               className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent accent-accent cursor-pointer"
             />
           </div>

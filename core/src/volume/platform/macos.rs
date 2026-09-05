@@ -303,10 +303,15 @@ fn should_be_user_visible(mount_point: &PathBuf, name: &str, filesystem: &str) -
 		return false;
 	}
 
-	// Hide cryptex volumes (e.g., MetalToolchainCryptex)
-	if mount_str.starts_with("/private/var/run/com.apple.security.cryptexd/") {
+	// Hide cryptex volumes and system asset disk images (e.g., MetalToolchainCryptex, MobileAsset PKI trust store)
+	if mount_str.starts_with("/private/var/run/com.apple.security.cryptexd/")
+		|| mount_str.starts_with("/System/Library/Assets")
+		|| mount_str.contains(".AssetData")
+		|| mount_str.contains("Cryptex")
+		|| name.contains("Cryptex")
+	{
 		debug!(
-			"VISIBILITY: Hiding cryptex volume: name='{}' mount='{}'",
+			"VISIBILITY: Hiding cryptex/asset volume: name='{}' mount='{}'",
 			name, mount_str
 		);
 		return false;

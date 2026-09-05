@@ -23,15 +23,12 @@ use specta::Type;
 use std::sync::Arc;
 use uuid::Uuid;
 
-/// Type of job to trigger for a location
+/// Type of job to trigger for a location (local-only: thumbnail/thumbstrip)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum JobType {
 	Thumbnail,
 	Thumbstrip,
-	Ocr,
-	SpeechToText,
-	ObjectDetection,
 }
 
 impl std::fmt::Display for JobType {
@@ -39,9 +36,6 @@ impl std::fmt::Display for JobType {
 		match self {
 			JobType::Thumbnail => write!(f, "thumbnail"),
 			JobType::Thumbstrip => write!(f, "thumbstrip"),
-			JobType::Ocr => write!(f, "ocr"),
-			JobType::SpeechToText => write!(f, "speech_to_text"),
-			JobType::ObjectDetection => write!(f, "object_detection"),
 		}
 	}
 }
@@ -154,20 +148,6 @@ impl LibraryAction for LocationTriggerJobAction {
 				})?
 			}
 
-			JobType::Ocr => {
-				return Err(ActionError::Validation {
-					field: "job_type".to_string(),
-					message: "OCR removed in local-only build.".to_string(),
-				});
-			}
-
-			JobType::SpeechToText => {
-				return Err(ActionError::Validation {
-					field: "job_type".to_string(),
-					message: "Speech-to-text removed in local-only build.".to_string(),
-				});
-			}
-
 			#[cfg(not(feature = "ffmpeg"))]
 			JobType::Thumbnail | JobType::Thumbstrip => {
 				return Err(ActionError::Validation {
@@ -176,13 +156,6 @@ impl LibraryAction for LocationTriggerJobAction {
 						"{} requires FFmpeg support which is not enabled",
 						self.input.job_type
 					),
-				});
-			}
-
-			JobType::ObjectDetection => {
-				return Err(ActionError::Validation {
-					field: "job_type".to_string(),
-					message: "Object detection is not yet implemented".to_string(),
 				});
 			}
 		};

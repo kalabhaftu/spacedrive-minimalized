@@ -12,8 +12,10 @@ import {useContextMenu} from '../../hooks/useContextMenu';
 import {useRefetchTagQueries} from '../../hooks/useRefetchTagQueries';
 import {useExplorer} from '../../routes/explorer/context';
 import {GroupHeader} from './GroupHeader';
+import {useSidebarStore} from '@sd/ts-client';
 
 interface TagsGroupProps {
+	groupId?: string;
 	isCollapsed: boolean;
 	onToggle: () => void;
 	sortableAttributes?: any;
@@ -128,7 +130,8 @@ function TagItem({tag, depth = 0}: TagItemProps) {
 }
 
 export function TagsGroup({
-	isCollapsed,
+	groupId,
+	isCollapsed: propIsCollapsed,
 	onToggle,
 	sortableAttributes,
 	sortableListeners
@@ -137,6 +140,7 @@ export function TagsGroup({
 	const {loadPreferencesForSpaceItem} = useExplorer();
 	const [isCreating, setIsCreating] = useState(false);
 	const [newTagName, setNewTagName] = useState('');
+	const { collapsedGroups, toggleGroup } = useSidebarStore();
 
 	const refetchTagQueries = useRefetchTagQueries();
 	const createTag = useLibraryMutation('tags.create', {
@@ -153,6 +157,20 @@ export function TagsGroup({
 				?.map((result: any) => result.tag || result)
 				.filter(Boolean) ?? []
 	});
+
+	// If user hasn't explicitly set collapse state, collapse if empty (0 tags)
+	const userCollapsed = groupId ? collapsedGroups[groupId] : undefined;
+	const isCollapsed =
+		userCollapsed !== undefined
+			? userCollapsed
+			: (tags.length === 0 ? true : propIsCollapsed);
+
+	const handleToggle = () => {
+		if (groupId) {
+			toggleGroup(groupId, isCollapsed);
+		}
+		onToggle();
+	};
 
 	const handleCreateTag = async () => {
 		if (!newTagName.trim()) return;
@@ -195,7 +213,7 @@ export function TagsGroup({
 			<GroupHeader
 				label="Tags"
 				isCollapsed={isCollapsed}
-				onToggle={onToggle}
+				onToggle={handleToggle}
 				sortableAttributes={sortableAttributes}
 				sortableListeners={sortableListeners}
 				rightComponent={

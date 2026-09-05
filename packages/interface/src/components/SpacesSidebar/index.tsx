@@ -22,7 +22,7 @@ import type {
 import {CircleButton, Popover, usePopover} from '@spacedrive/primitives';
 import clsx from 'clsx';
 import {motion} from 'framer-motion';
-import {memo, useEffect, useState} from 'react';
+import {memo, useEffect, useMemo, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {usePlatform} from '../../contexts/PlatformContext';
 import {useSpacedriveClient} from '../../contexts/SpacedriveContext';
@@ -320,6 +320,23 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 	const {data: layoutData} = useSpaceLayout(currentSpace?.id ?? null);
 	const layout = layoutData as { space_items: SpaceItemType[]; groups: Array<{ group: SpaceGroupType; items: SpaceItemType[] }> } | undefined;
 
+	// Sort groups so Locations is always on top (2nd below space items), followed by Volumes and Tags
+	const sortedGroups = useMemo(() => {
+		if (!layout?.groups) return [];
+		return [...layout.groups].sort((a, b) => {
+			const getPriority = (group: SpaceGroupType) => {
+				if (group.group_type === "Locations") return 1;
+				if (group.group_type === "Volumes") return 2;
+				if (group.group_type === "Tags") return 3;
+				return 10 + (group.order ?? 0);
+			};
+			const pA = getPriority(a.group);
+			const pB = getPriority(b.group);
+			if (pA !== pB) return pA - pB;
+			return (a.group.order ?? 0) - (b.group.order ?? 0);
+		});
+	}, [layout?.groups]);
+
 	return (
 		<div className="flex h-full w-[220px] min-w-[176px] max-w-[300px] flex-col bg-transparent p-2">
 			<div
@@ -382,12 +399,12 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 						})()}
 
 						{/* Groups with space-level drop zones between them */}
-						{layout?.groups && (
+						{sortedGroups.length > 0 && (
 							<SortableContext
-								items={layout.groups.map(({group}) => group.id)}
+								items={sortedGroups.map(({group}) => group.id)}
 								strategy={verticalListSortingStrategy}
 							>
-								{layout.groups.map(({group, items}, index) => (
+								{sortedGroups.map(({group, items}, index) => (
 									<SpaceGroupWithDropZone
 										key={group.id}
 										group={group}
