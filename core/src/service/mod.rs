@@ -12,18 +12,15 @@ use tracing::info;
 pub mod device;
 pub mod file_sharing;
 pub mod file_sync;
-pub mod network;
 pub mod session;
 pub mod sidecar_manager;
 pub mod statistics_listener;
-pub mod sync;
 pub mod volume_monitor;
 pub mod watcher;
 // NOTE: watcher_old/ is kept as reference during migration but not compiled
 
 use device::DeviceService;
 use file_sharing::FileSharingService;
-use network::NetworkingService;
 use sidecar_manager::SidecarManager;
 use statistics_listener::StatisticsListenerService;
 use volume_monitor::{VolumeMonitorConfig, VolumeMonitorService};
@@ -38,8 +35,6 @@ pub struct Services {
 	pub file_sharing: Arc<FileSharingService>,
 	/// Device management service
 	pub device: Arc<DeviceService>,
-	/// Networking service for device connections
-	pub networking: Option<Arc<NetworkingService>>,
 	/// Volume monitoring service
 	pub volume_monitor: Option<Arc<VolumeMonitorService>>,
 	/// Statistics listener service - recalculates library statistics
@@ -69,7 +64,6 @@ impl Services {
 			fs_watcher,
 			file_sharing,
 			device,
-			networking: None,     // Initialized separately when needed
 			volume_monitor: None, // Initialized after library manager is available
 			statistics_listener,
 			sidecar_manager,
@@ -121,18 +115,6 @@ impl Services {
 			info!("Volume monitoring disabled in configuration");
 		}
 
-		// Start networking if initialized and enabled
-		if config.networking_enabled {
-			if let Some(_networking) = &self.networking {
-				self.start_networking().await?;
-				info!("Networking service started");
-			} else {
-				info!("Networking enabled in config but not initialized - call init_networking() first");
-			}
-		} else {
-			info!("Networking disabled in configuration");
-		}
-
 		// Start statistics listener if initialized and enabled
 		if config.statistics_listener_enabled {
 			if let Some(stats) = &self.statistics_listener {
@@ -161,57 +143,7 @@ impl Services {
 			stats.stop().await?;
 		}
 
-		// Stop networking service if initialized
-		if let Some(networking) = &self.networking {
-			networking
-				.shutdown()
-				.await
-				.map_err(|e| anyhow::anyhow!("Failed to stop networking: {}", e))?;
-		}
-
 		Ok(())
-	}
-
-	/// Initialize networking service
-	pub async fn init_networking(
-		&mut self,
-		device_manager: std::sync::Arc<crate::device::DeviceManager>,
-		key_manager: std::sync::Arc<crate::crypto::key_manager::KeyManager>,
-		data_dir: impl AsRef<std::path::Path>,
-	) -> Result<()> {
-		use crate::service::network::{utils::logging::ConsoleLogger, NetworkingService};
-
-		info!("Initializing networking service");
-		let logger = std::sync::Arc::new(ConsoleLogger);
-		let networking_service =
-			NetworkingService::new(device_manager, key_manager, data_dir, logger)
-				.await
-				.map_err(|e| anyhow::anyhow!("Failed to create networking service: {}", e))?;
-
-		self.networking = Some(Arc::new(networking_service));
-		Ok(())
-	}
-
-	/// Start networking service after initialization
-	pub async fn start_networking(&self) -> Result<()> {
-		if let Some(networking) = &self.networking {
-			// Create a temporary mutable reference to start the service
-			// This is safe because start() is only called once during initialization
-			let networking_ptr =
-				Arc::as_ptr(networking) as *mut crate::service::network::NetworkingService;
-			unsafe {
-				(*networking_ptr)
-					.start()
-					.await
-					.map_err(|e| anyhow::anyhow!("Failed to start networking service: {}", e))?;
-			}
-		}
-		Ok(())
-	}
-
-	/// Get networking service if initialized
-	pub fn networking(&self) -> Option<Arc<NetworkingService>> {
-		self.networking.clone()
 	}
 
 	/// Initialize volume monitor service

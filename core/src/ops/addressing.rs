@@ -128,36 +128,13 @@ impl PathResolver {
 			return Ok(());
 		}
 
-		// Check with networking service
-		let is_online = if let Some(networking) = context.get_networking().await {
-			// Check if device is in connected devices list
-			networking
-				.get_connected_devices()
-				.await
-				.iter()
-				.any(|dev| dev.device_id == device_id)
-		} else {
-			false
-		};
-
-		if is_online {
-			Ok(())
-		} else {
-			Err(PathResolutionError::DeviceOffline(device_id))
-		}
+		// Local-only mode: only current device is online
+		Err(PathResolutionError::DeviceOffline(device_id))
 	}
 
 	/// Get list of currently online devices
-	async fn get_online_devices(&self, context: &CoreContext) -> Vec<Uuid> {
-		let mut online = vec![crate::device::get_current_device_id()];
-
-		if let Some(networking) = context.get_networking().await {
-			for device in networking.get_connected_devices().await {
-				online.push(device.device_id);
-			}
-		}
-
-		online
+	async fn get_online_devices(&self, _context: &CoreContext) -> Vec<Uuid> {
+		vec![crate::device::get_current_device_id()]
 	}
 
 	/// Get device performance metrics for cost calculation
@@ -174,19 +151,7 @@ impl PathResolver {
 			},
 		);
 
-		// Get metrics from networking service
-		if let Some(networking) = context.get_networking().await {
-			for device in networking.get_connected_devices().await {
-				// TODO: Get actual metrics from networking service
-				metrics.insert(
-					device.device_id,
-					DeviceMetrics {
-						latency_ms: 50,      // Placeholder
-						bandwidth_mbps: 100, // Placeholder
-					},
-				);
-			}
-		}
+
 
 		metrics
 	}

@@ -26,6 +26,8 @@
 
 :root,
 body {
+	color-scheme: dark;
+	color: var(--color-ink);
 	--color-sidebar-ink: hsl(235, 15%, 92%);
 	--color-sidebar-ink-dull: hsl(235, 10%, 70%);
 	--color-sidebar-ink-faint: hsl(235, 10%, 55%);
@@ -45,13 +47,17 @@ body {
 	--color-inkFaint: var(--color-ink-faint, hsl(235, 10%, 55%));
 }
 
-/* Ensure dialogs, modals, and Radix portals always render above sidebars (z-[65]) and panels (z-[70]) */
+/* Ensure dialogs, modals, and Radix portals always render above sidebars, custom panels, and content */
 [role="dialog"],
+div[data-radix-portal],
 div[data-radix-portal] > div,
 div[data-radix-portal] div[role="dialog"],
 div[data-radix-portal] > div[class*="fixed"],
-div[data-radix-portal] .z-50 {
-	z-index: 1000 !important;
+div[data-radix-portal] .z-50,
+[data-dialog-container],
+div[class*="z-[102]"],
+div[class*="z-[103]"] {
+	z-index: 99999 !important;
 }
 
 

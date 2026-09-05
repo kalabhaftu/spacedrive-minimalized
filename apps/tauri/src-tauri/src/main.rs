@@ -16,7 +16,6 @@ use std::sync::Arc;
 use tauri::menu::MenuItem;
 use tauri::Emitter;
 use tauri::{AppHandle, Manager};
-use tauri_plugin_global_shortcut::ShortcutState;
 use tokio::sync::oneshot;
 use tokio::sync::RwLock;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -1682,16 +1681,7 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 		.build()?;
 
 	let view_menu = SubmenuBuilder::new(app, "View")
-		.item(
-			&MenuItemBuilder::with_id("drag-demo", "Drag Demo")
-				.accelerator("Cmd+Shift+D")
-				.build(app)?,
-		)
-		.item(
-			&MenuItemBuilder::with_id("spacedrop", "Spacedrop")
-				.accelerator("Cmd+Shift+S")
-				.build(app)?,
-		)
+		.item(&PredefinedMenuItem::fullscreen(app, None)?)
 		.build()?;
 
 	let menu = MenuBuilder::new(app)
@@ -1850,26 +1840,6 @@ fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 					}
 				});
 			}
-			"drag-demo" => {
-				let app_clone = app_handle.clone();
-				tauri::async_runtime::spawn(async move {
-					if let Err(e) =
-						windows::show_window(app_clone, windows::SpacedriveWindow::DragDemo).await
-					{
-						tracing::error!("Failed to show drag demo: {}", e);
-					}
-				});
-			}
-			"spacedrop" => {
-				let app_clone = app_handle.clone();
-				tauri::async_runtime::spawn(async move {
-					if let Err(e) =
-						windows::show_window(app_clone, windows::SpacedriveWindow::Spacedrop).await
-					{
-						tracing::error!("Failed to show spacedrop: {}", e);
-					}
-				});
-			}
 			// File menu actions - emit events to frontend
 			"duplicate" | "rename" | "delete" => {
 				if let Err(e) = app_handle.emit("menu-action", event_id) {
@@ -1914,22 +1884,7 @@ fn main() {
 		.plugin(tauri_plugin_os::init())
 		.plugin(tauri_plugin_shell::init())
 		.plugin(tauri_plugin_updater::Builder::new().build())
-		.plugin(
-			tauri_plugin_global_shortcut::Builder::new()
-				.with_shortcut("Alt+Space")
-				.expect("failed to register Alt+Space global shortcut")
-				.with_handler(|app, _shortcut, event| {
-					if event.state() == ShortcutState::Pressed {
-						if let Err(error) = windows::toggle_voice_overlay_internal(app.clone()) {
-							tracing::warn!(
-								?error,
-								"Failed to toggle voice overlay from global shortcut"
-							);
-						}
-					}
-				})
-				.build(),
-		)
+		.plugin(tauri_plugin_global_shortcut::Builder::new().build())
 		.invoke_handler(tauri::generate_handler![
 			app_ready,
 			get_daemon_socket,
@@ -1954,7 +1909,6 @@ fn main() {
 			open_macos_settings,
 			windows::show_window,
 			windows::close_window,
-			windows::toggle_voice_overlay,
 			windows::list_windows,
 			windows::apply_macos_styling,
 			windows::resize_overlay_window,

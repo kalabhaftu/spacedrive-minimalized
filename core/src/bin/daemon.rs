@@ -82,7 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		result = sd_core::infra::daemon::bootstrap::start_default_server(
 			socket_addr,
 			data_dir,
-			true, // Always enable networking
+			true, // Local-only mode (networking removed)
 		) => {
 			result
 		}

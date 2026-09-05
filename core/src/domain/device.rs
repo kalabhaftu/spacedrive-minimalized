@@ -11,7 +11,7 @@ use uuid::Uuid;
 /// A device running Spacedrive
 ///
 /// This is the canonical device type used throughout the application.
-/// It represents both database-registered devices and network-paired devices.
+/// Local-only mode: represents database-registered devices.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Device {
 	/// Unique identifier for this device
@@ -70,7 +70,7 @@ pub struct Device {
 	/// Total swap space in bytes
 	pub swap_total_bytes: Option<i64>,
 
-	/// Network addresses for P2P connections
+	/// Network addresses (local-only, plain address list, no P2P)
 	pub network_addresses: Vec<String>,
 
 	/// Device capabilities (indexing, P2P, volume detection, etc.)
@@ -96,21 +96,21 @@ pub struct Device {
 	#[serde(default)]
 	pub is_current: bool,
 
-	/// Whether this device is paired via network but not in library DB
+	/// Whether this device is paired (local-only: always false, reserved)
 	#[serde(default)]
 	pub is_paired: bool,
 
-	/// Whether this device is currently connected via network
+	/// Whether this device is currently connected (local-only: false except current)
 	#[serde(default)]
 	pub is_connected: bool,
 
-	/// Connection method when connected (Direct, Relay, or Mixed)
+	/// Connection method when connected (local-only: always None, reserved)
 	#[serde(default)]
 	#[specta(optional)]
 	pub connection_method: Option<ConnectionMethod>,
 }
 
-/// Network connection method for a device
+/// Network connection method for a device (local-only, reserved for future use)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Type)]
 pub enum ConnectionMethod {
 	/// Direct connection on local network (mDNS/same subnet)
@@ -124,37 +124,8 @@ pub enum ConnectionMethod {
 	RelayProxy,
 }
 
-impl ConnectionMethod {
-	/// Convert from Iroh's ConnectionType
-	///
-	/// For Mixed connections (UDP + relay simultaneously), we report the
-	/// Direct path since that's what Iroh is attempting to use primarily.
-	pub fn from_iroh_connection_type(conn_type: iroh::endpoint::ConnectionType) -> Option<Self> {
-		use iroh::endpoint::ConnectionType;
-		match conn_type {
-			ConnectionType::Direct(addr) => {
-				if is_local_address(&addr) {
-					Some(Self::LocalNetwork)
-				} else {
-					Some(Self::DirectInternet)
-				}
-			}
-			ConnectionType::Relay(_) => Some(Self::RelayProxy),
-			// Mixed means both UDP and relay are active, but UDP is preferred
-			// Report the UDP path since that's what Iroh will use when confirmed
-			ConnectionType::Mixed(addr, _relay) => {
-				if is_local_address(&addr) {
-					Some(Self::LocalNetwork)
-				} else {
-					Some(Self::DirectInternet)
-				}
-			}
-			ConnectionType::None => None,
-		}
-	}
-}
-
 /// Check if a socket address is a local/private network address
+#[allow(dead_code)]
 fn is_local_address(addr: &std::net::SocketAddr) -> bool {
 	match addr.ip() {
 		std::net::IpAddr::V4(ipv4) => {
@@ -171,6 +142,7 @@ fn is_local_address(addr: &std::net::SocketAddr) -> bool {
 }
 
 /// Check if IPv6 address is in unique local range (fc00::/7)
+#[allow(dead_code)]
 fn is_ipv6_unique_local(ipv6: &std::net::Ipv6Addr) -> bool {
 	matches!(ipv6.segments()[0] & 0xfe00, 0xfc00)
 }
@@ -281,86 +253,6 @@ impl Device {
 	/// Check if this is the current device
 	pub fn is_current_device(&self, current_device_id: Uuid) -> bool {
 		self.id == current_device_id
-	}
-
-	/// Create a Device from network DeviceInfo
-	///
-	/// This converts the network layer's DeviceInfo into the canonical Device model.
-	/// Used for paired devices that may not be registered in the library database.
-	pub fn from_network_info(
-		info: &crate::service::network::device::DeviceInfo,
-		is_connected: bool,
-		connection_method: Option<ConnectionMethod>,
-	) -> Self {
-		use crate::service::network::device::DeviceType;
-
-		// Map DeviceType to OperatingSystem (best effort)
-		let os = match &info.device_type {
-			DeviceType::Desktop | DeviceType::Laptop => {
-				// Try to infer from os_version string
-				let os_lower = info.os_version.to_lowercase();
-				if os_lower.contains("mac") || os_lower.contains("darwin") {
-					OperatingSystem::MacOS
-				} else if os_lower.contains("windows") {
-					OperatingSystem::Windows
-				} else if os_lower.contains("linux") {
-					OperatingSystem::Linux
-				} else {
-					OperatingSystem::Other
-				}
-			}
-			DeviceType::Mobile => {
-				let os_lower = info.os_version.to_lowercase();
-				if os_lower.contains("ios") || os_lower.contains("iphone") {
-					OperatingSystem::IOs
-				} else if os_lower.contains("android") {
-					OperatingSystem::Android
-				} else {
-					OperatingSystem::Other
-				}
-			}
-			DeviceType::Server => OperatingSystem::Linux,
-			DeviceType::Other(_) => OperatingSystem::Other,
-		};
-
-		Self {
-			id: info.device_id,
-			name: info.device_name.clone(),
-			slug: info.device_slug.clone(),
-			os,
-			os_version: Some(info.os_version.clone()),
-			hardware_model: None,
-			// Phase 1 fields - not available from network info
-			cpu_model: None,
-			cpu_architecture: None,
-			cpu_cores_physical: None,
-			cpu_cores_logical: None,
-			cpu_frequency_mhz: None,
-			memory_total_bytes: None,
-			form_factor: None,
-			manufacturer: None,
-			// Phase 2 fields
-			gpu_models: None,
-			boot_disk_type: None,
-			boot_disk_capacity_bytes: None,
-			swap_total_bytes: None,
-			network_addresses: Vec::new(),
-			capabilities: serde_json::json!({
-				"indexing": true,
-				"p2p": true,
-				"volume_detection": true
-			}),
-			is_online: is_connected,
-			last_seen_at: info.last_seen,
-			sync_enabled: true,
-			created_at: info.last_seen,
-			updated_at: info.last_seen,
-			// Ephemeral fields
-			is_current: false,
-			is_paired: true,
-			is_connected,
-			connection_method,
-		}
 	}
 }
 

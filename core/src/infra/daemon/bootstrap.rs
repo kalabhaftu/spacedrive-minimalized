@@ -14,24 +14,17 @@ pub async fn start_default_server(
 	// Initialize basic tracing with file logging first
 	initialize_tracing_with_file_logging(&data_dir)?;
 
-	// Create a single Core instance
-	let mut core = Core::new(data_dir.clone())
+	// Create a single Core instance (local-only mode)
+	let core = Core::new(data_dir.clone())
 		.await
 		.map_err(|e| format!("Failed to create core: {}", e))?;
 
-	// Initialize networking if enabled
-	if enable_networking {
-		core.init_networking()
-			.await
-			.map_err(|e| format!("Failed to initialize networking: {}", e))?;
-	}
-
 	let core = Arc::new(core);
 
-	info!("Starting Spacedrive daemon");
+	info!("Starting Spacedrive daemon (local-only)");
 	info!("Data directory: {:?}", data_dir);
 	info!("Socket address: {}", socket_addr);
-	info!("Networking enabled: {}", enable_networking);
+	info!("Networking removed: {}", !enable_networking);
 
 	// Log file descriptor limits for debugging
 	#[cfg(unix)]

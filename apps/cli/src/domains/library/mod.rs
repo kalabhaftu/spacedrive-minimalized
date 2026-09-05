@@ -12,12 +12,6 @@ use sd_core::ops::libraries::{
 	info::{output::LibraryInfoOutput, query::LibraryInfoQuery},
 	list::query::ListLibrariesQuery,
 };
-use sd_core::ops::network::sync_setup::{
-	discovery::{output::DiscoverRemoteLibrariesOutput, query::DiscoverRemoteLibrariesInput},
-	input::{LibrarySyncAction, LibrarySyncSetupInput},
-	output::LibrarySyncSetupOutput,
-};
-
 use self::args::*;
 
 #[derive(Subcommand, Debug)]
@@ -32,9 +26,6 @@ pub enum LibraryCmd {
 	Switch(LibrarySwitchArgs),
 	/// Delete a library
 	Delete(LibraryDeleteArgs),
-	/// Library sync setup commands
-	#[command(subcommand)]
-	SyncSetup(SyncSetupCmd),
 }
 
 pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
@@ -103,8 +94,6 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 				println!("--------");
 				println!("Generate thumbnails: {}", info.settings.generate_thumbnails);
 				println!("Thumbnail quality: {}", info.settings.thumbnail_quality);
-				println!("AI tagging enabled: {}", info.settings.enable_ai_tagging);
-				println!("Sync enabled: {}", info.settings.sync_enabled);
 				println!("Encryption enabled: {}", info.settings.encryption_enabled);
 				println!(
 					"Auto track system volumes: {}",
@@ -191,230 +180,7 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 				println!("Deleted library {}", o.library_id);
 			});
 		}
-		LibraryCmd::SyncSetup(cmd) => match cmd {
-			SyncSetupCmd::Discover(args) => {
-				let input: DiscoverRemoteLibrariesInput = args.into();
-				let out: DiscoverRemoteLibrariesOutput = execute_core_query!(ctx, input);
-				print_output!(ctx, &out, |o: &DiscoverRemoteLibrariesOutput| {
-					println!("Device: {} ({})", o.device_name, o.device_id);
-					println!("Online: {}", o.is_online);
-					println!();
-					if o.libraries.is_empty() {
-						println!("No libraries found on remote device");
-					} else {
-						println!("Remote Libraries ({}):", o.libraries.len());
-						println!("─────────────────────────────────────────");
-						for lib in &o.libraries {
-							println!();
-							println!("  Name: {}", lib.name);
-							println!("  ID: {}", lib.id);
-							if let Some(desc) = &lib.description {
-								println!("  Description: {}", desc);
-							}
-							println!("  Created: {}", lib.created_at.format("%Y-%m-%d %H:%M:%S"));
-							println!("  Files: {}", lib.statistics.total_files);
-							println!("  Locations: {}", lib.statistics.location_count);
-							println!("  Thumbnails: {}", lib.statistics.thumbnail_count);
-							if lib.statistics.total_size > 0 {
-								println!("  Size: {} bytes", lib.statistics.total_size);
-							}
-						}
-					}
-				});
-			}
-			SyncSetupCmd::Setup(args) => {
-				let input = if args.is_interactive() {
-					run_interactive_sync_setup(ctx).await?
-				} else {
-					args.to_input(ctx)?
-				};
-
-				let out: LibrarySyncSetupOutput = execute_core_action!(ctx, input);
-				print_output!(ctx, &out, |o: &LibrarySyncSetupOutput| {
-					if o.success {
-						println!("✓ Library sync setup successful");
-						println!("  Local library: {}", o.local_library_id);
-						if let Some(remote) = o.remote_library_id {
-							println!("  Remote library: {}", remote);
-						}
-						println!("  {}", o.message);
-					} else {
-						println!("✗ Library sync setup failed");
-						println!("  {}", o.message);
-					}
-				});
-			}
-		},
 	}
 	Ok(())
 }
 
-async fn run_interactive_sync_setup(ctx: &Context) -> Result<LibrarySyncSetupInput> {
-	use crate::util::confirm::{select, text};
-	use sd_core::ops::network::devices::{
-		output::ListPairedDevicesOutput, query::ListPairedDevicesInput,
-	};
-
-	println!("\n=== Library Sync Setup ===\n");
-
-	// Get local device ID from config
-	let config_path = ctx.data_dir.join("device.json");
-	if !config_path.exists() {
-		anyhow::bail!(
-			"Device config not found. Please run the daemon first to initialize device config."
-		);
-	}
-	let config_data = std::fs::read_to_string(&config_path)?;
-	let device_config: sd_core::device::DeviceConfig = serde_json::from_str(&config_data)?;
-	let local_device_id = device_config.id;
-
-	// Step 1: Select local library
-	let libraries: Vec<sd_core::ops::libraries::list::output::LibraryInfo> = execute_core_query!(
-		ctx,
-		sd_core::ops::libraries::list::query::ListLibrariesInput {
-			include_stats: false
-		}
-	);
-
-	if libraries.is_empty() {
-		anyhow::bail!(
-			"No libraries found. Create a library first with:\n  sd library create <name>"
-		);
-	}
-
-	let library_choices: Vec<String> = libraries
-		.iter()
-		.map(|lib| format!("{} ({})", lib.name, lib.id))
-		.collect();
-
-	let library_idx = select("Select local library to sync", &library_choices)?;
-	let local_library_id = libraries[library_idx].id;
-
-	println!(
-		"\n✓ Selected local library: {}\n",
-		libraries[library_idx].name
-	);
-
-	// Step 2: Select remote device from paired devices
-	let paired_devices: ListPairedDevicesOutput = execute_core_query!(
-		ctx,
-		ListPairedDevicesInput {
-			connected_only: false
-		}
-	);
-
-	if paired_devices.devices.is_empty() {
-		anyhow::bail!(
-			"No paired devices found.\n\
-			Pair a device first with:\n\
-			  sd network pair generate  # on this device\n\
-			  sd network pair join <code>  # on the other device"
-		);
-	}
-
-	let device_choices: Vec<String> = paired_devices
-		.devices
-		.iter()
-		.map(|d| {
-			let status = if d.is_connected {
-				"connected"
-			} else {
-				"paired"
-			};
-			format!("{} - {} ({})", d.name, d.os_version, status)
-		})
-		.collect();
-
-	let device_idx = select("Select remote device to sync with", &device_choices)?;
-	let remote_device = &paired_devices.devices[device_idx];
-	let remote_device_id = remote_device.id;
-
-	println!("\n✓ Selected remote device: {}\n", remote_device.name);
-
-	// Step 3: Discover remote libraries
-	println!("Discovering libraries on remote device...\n");
-
-	let discovery_input = DiscoverRemoteLibrariesInput {
-		device_id: remote_device_id,
-	};
-	let discovery_out: DiscoverRemoteLibrariesOutput = execute_core_query!(ctx, discovery_input);
-
-	if !discovery_out.is_online {
-		anyhow::bail!("Remote device {} is not online", remote_device.name);
-	}
-
-	// Step 4: Select sync action
-	let action_idx = select(
-		"Select sync action",
-		&[
-			"Share my library to remote device (create shared library from local)".to_string(),
-			"Join remote library (use their existing library)".to_string(),
-			"Merge libraries (combine two libraries) [NOT YET IMPLEMENTED]".to_string(),
-		],
-	)?;
-
-	let action = match action_idx {
-		0 => {
-			// Share local library
-			let name = libraries[library_idx].name.clone();
-
-			println!(
-				"\n✓ Will share library '{}' to remote device '{}'\n",
-				name, remote_device.name
-			);
-
-			(
-				LibrarySyncAction::ShareLocalLibrary { library_name: name },
-				None,
-			)
-		}
-		1 => {
-			// Join remote library
-			if discovery_out.libraries.is_empty() {
-				anyhow::bail!(
-					"No libraries found on remote device. Use 'Share my library' instead."
-				);
-			}
-
-			let remote_lib_choices: Vec<String> = discovery_out
-				.libraries
-				.iter()
-				.map(|lib| {
-					format!(
-						"{} ({} entries, {} locations)",
-						lib.name, lib.statistics.total_files, lib.statistics.location_count
-					)
-				})
-				.collect();
-
-			let remote_lib_idx = select("Select remote library to join", &remote_lib_choices)?;
-			let remote_library = &discovery_out.libraries[remote_lib_idx];
-
-			println!("\n✓ Will join remote library: {}\n", remote_library.name);
-
-			(
-				LibrarySyncAction::JoinRemoteLibrary {
-					remote_library_id: remote_library.id,
-					remote_library_name: remote_library.name.clone(),
-				},
-				Some(remote_library.id),
-			)
-		}
-		2 => {
-			anyhow::bail!("Library merging is not yet implemented");
-		}
-		_ => unreachable!(),
-	};
-
-	// Leader device is always local for now (deprecated concept but still in input struct)
-	let leader_device_id = local_device_id;
-
-	Ok(LibrarySyncSetupInput {
-		local_device_id,
-		remote_device_id,
-		local_library_id,
-		remote_library_id: action.1,
-		action: action.0,
-		leader_device_id,
-	})
-}

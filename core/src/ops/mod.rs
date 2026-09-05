@@ -19,8 +19,6 @@ pub mod libraries;
 pub mod locations;
 pub mod media;
 pub mod metadata;
-pub mod models;
-pub mod network;
 pub mod search;
 pub mod sidecar;
 pub mod spaces;

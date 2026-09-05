@@ -39,14 +39,6 @@ impl CoreAction for ResetDataAction {
 
 		info!("Resetting data directory: {:?}", data_dir);
 
-		// Stop networking to release any file handles
-		if let Some(networking) = context.get_networking().await {
-			info!("Stopping networking service");
-			if let Err(e) = networking.shutdown().await {
-				warn!("Failed to shutdown networking: {}", e);
-			}
-		}
-
 		// Close all libraries
 		let library_manager = context.libraries().await;
 		let libraries = library_manager.list().await;

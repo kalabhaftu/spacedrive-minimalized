@@ -292,7 +292,6 @@ impl JobManager {
 			})?;
 
 		// Get services from context
-		let networking = self.context.get_networking().await;
 		let volume_manager = Some(self.context.volume_manager.clone());
 
 		// Clone status_rx for cleanup task
@@ -338,7 +337,6 @@ impl JobManager {
 				db: self.db.clone(),
 			}),
 			handle.output.clone(),
-			networking,
 			volume_manager,
 			job_logging_config,
 			Some(library.job_logs_dir()),
@@ -730,7 +728,6 @@ impl JobManager {
 			})?;
 
 		// Get services from context
-		let networking = self.context.get_networking().await;
 		let volume_manager = Some(self.context.volume_manager.clone());
 
 		// Clone status_rx for cleanup task
@@ -777,7 +774,6 @@ impl JobManager {
 				db: self.db.clone(),
 			}),
 			handle.output.clone(),
-			networking,
 			volume_manager,
 			job_logging_config,
 			Some(library.job_logs_dir()),
@@ -1477,8 +1473,7 @@ impl JobManager {
 							})?;
 
 						// Get services from context
-						let networking = self.context.get_networking().await;
-						let volume_manager = Some(self.context.volume_manager.clone());
+										let volume_manager = Some(self.context.volume_manager.clone());
 
 						// Create handle
 						let job_name = job_record.name.clone();
@@ -1509,7 +1504,6 @@ impl JobManager {
 								db: self.db.clone(),
 							}),
 							handle.output.clone(),
-							networking,
 							volume_manager,
 							self.context.job_logging_config.clone(),
 							self.context.job_logs_dir.clone(),
@@ -1985,8 +1979,7 @@ impl JobManager {
 				})?;
 
 			// Get services from context
-			let networking = self.context.get_networking().await;
-			let volume_manager = Some(self.context.volume_manager.clone());
+				let volume_manager = Some(self.context.volume_manager.clone());
 
 			// Create handle
 			let handle = JobHandle {
@@ -2016,7 +2009,6 @@ impl JobManager {
 					db: self.db.clone(),
 				}),
 				handle.output.clone(),
-				networking,
 				volume_manager,
 				self.context.job_logging_config.clone(),
 				self.context.job_logs_dir.clone(),

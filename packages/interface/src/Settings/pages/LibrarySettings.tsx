@@ -4,8 +4,6 @@ import { useLibraryQuery, useLibraryMutation, useSpacedriveClient } from "../../
 interface LibrarySettingsForm {
   generate_thumbnails: boolean;
   thumbnail_quality: number;
-  enable_ai_tagging: boolean;
-  sync_enabled: boolean;
   encryption_enabled: boolean;
   auto_track_system_volumes: boolean;
   auto_track_external_volumes: boolean;
@@ -24,9 +22,7 @@ export function LibrarySettings() {
     values: {
       generate_thumbnails: config?.generate_thumbnails ?? true,
       thumbnail_quality: config?.thumbnail_quality ?? 85,
-      enable_ai_tagging: config?.enable_ai_tagging ?? false,
-      sync_enabled: config?.sync_enabled ?? false,
-      encryption_enabled: config?.encryption_enabled ?? false,
+      encryption_enabled: (config as any)?.encryption_enabled ?? false,
       auto_track_system_volumes: config?.auto_track_system_volumes ?? true,
       auto_track_external_volumes: config?.auto_track_external_volumes ?? false,
     },
@@ -105,34 +101,11 @@ export function LibrarySettings() {
             </div>
           </label>
 
-          <label className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-ink">AI Tagging</span>
-              <p className="text-xs text-ink-dull">Enable AI-powered automatic tagging</p>
-            </div>
-            <input
-              type="checkbox"
-              {...form.register("enable_ai_tagging")}
-              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
-            />
-          </label>
         </div>
 
-        {/* Sync & Security Section */}
+        {/* Security Section */}
         <div className="p-4 bg-app-box rounded-lg border border-app-line space-y-4">
-          <h3 className="text-sm font-medium text-ink">Sync & Security</h3>
-
-          <label className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-ink">Sync Enabled</span>
-              <p className="text-xs text-ink-dull">Sync this library across devices</p>
-            </div>
-            <input
-              type="checkbox"
-              {...form.register("sync_enabled")}
-              className="h-4 w-4 rounded border-app-line text-accent focus:ring-accent"
-            />
-          </label>
+          <h3 className="text-sm font-medium text-ink">Security</h3>
 
           <label className="flex items-center justify-between">
             <div>

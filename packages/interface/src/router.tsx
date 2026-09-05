@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { Overview } from "./routes/overview";
 import { ExplorerView } from "./routes/explorer";
 import { ShellLayout } from "./ShellLayout";
@@ -44,14 +44,6 @@ export const explorerRoutes = [
 				element: <TagView />,
 			},
 			{
-				path: "search",
-				element: (
-					<div className="flex items-center justify-center h-full text-ink">
-						Search
-					</div>
-				),
-			},
-			{
 				path: "jobs",
 				element: <JobsScreen />,
 			},
@@ -66,18 +58,6 @@ export const explorerRoutes = [
 			{
 				path: "settings/:page",
 				element: <Settings />,
-			},
-			{
-				path: "sync",
-				element: <Navigate to="/" replace />,
-			},
-			{
-				path: "sources",
-				element: <Navigate to="/" replace />,
-			},
-			{
-				path: "sources/:sourceId",
-				element: <Navigate to="/" replace />,
 			},
 			{
 				path: "*",

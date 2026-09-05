@@ -4,7 +4,7 @@ use crate::{
 	infra::db::entities::{sidecar, sidecar_availability},
 	library::Library,
 	ops::sidecar::{SidecarKind, SidecarVariant},
-	service::{network::NetworkingService, sidecar_manager::SidecarManager},
+	service::sidecar_manager::SidecarManager,
 };
 use anyhow::Result;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
@@ -14,19 +14,16 @@ use uuid::Uuid;
 
 pub struct SidecarSyncCoordinator {
 	library: Arc<Library>,
-	networking: Arc<NetworkingService>,
 	sidecar_manager: Arc<SidecarManager>,
 }
 
 impl SidecarSyncCoordinator {
 	pub fn new(
 		library: Arc<Library>,
-		networking: Arc<NetworkingService>,
 		sidecar_manager: Arc<SidecarManager>,
 	) -> Self {
 		Self {
 			library,
-			networking,
 			sidecar_manager,
 		}
 	}
@@ -101,75 +98,12 @@ impl SidecarSyncCoordinator {
 		Ok(missing)
 	}
 
-	/// Query remote devices for sidecar availability
+	/// Local-only mode: no remote devices, always empty
 	pub async fn query_remote_availability(
 		&self,
-		missing: &[MissingSidecar],
+		_missing: &[MissingSidecar],
 	) -> Result<HashMap<Uuid, Vec<SidecarSource>>> {
-		if missing.is_empty() {
-			return Ok(HashMap::new());
-		}
-
-		let db = self.library.db();
-		let current_device = get_current_device_id();
-
-		// Build list of content UUIDs to query
-		let content_uuids: Vec<Uuid> = missing.iter().map(|m| m.content_uuid).collect();
-
-		// Query availability across all devices (except current)
-		let availability = sidecar_availability::Entity::find()
-			.filter(sidecar_availability::Column::ContentUuid.is_in(content_uuids))
-			.filter(sidecar_availability::Column::Has.eq(true))
-			.filter(sidecar_availability::Column::DeviceUuid.ne(current_device))
-			.all(db.conn())
-			.await?;
-
-		debug!(
-			"Found {} availability records from remote devices",
-			availability.len()
-		);
-
-		// Get online devices
-		let online_devices = self.networking.get_connected_devices().await;
-		let online_device_ids: std::collections::HashSet<Uuid> = online_devices
-			.iter()
-			.map(|d| d.device_id)
-			.collect();
-
-		// Build map of content_uuid -> sources, filtering to online devices
-		let mut sources_map: HashMap<Uuid, Vec<SidecarSource>> = HashMap::new();
-
-		for avail in availability {
-			// Check if device is online
-			if !online_device_ids.contains(&avail.device_uuid) {
-				continue;
-			}
-
-			// Match with missing sidecar (ensure kind/variant match)
-			let matches = missing.iter().any(|m| {
-				m.content_uuid == avail.content_uuid
-					&& m.kind.as_str() == avail.kind
-					&& m.variant.as_str() == avail.variant
-			});
-
-			if matches {
-				sources_map
-					.entry(avail.content_uuid)
-					.or_default()
-					.push(SidecarSource {
-						device_uuid: avail.device_uuid,
-						last_seen_at: avail.last_seen_at,
-						verified_checksum: avail.checksum,
-					});
-			}
-		}
-
-		debug!(
-			"Found online sources for {} sidecars",
-			sources_map.len()
-		);
-
-		Ok(sources_map)
+		Ok(HashMap::new())
 	}
 
 	/// Plan transfers by selecting best source for each sidecar

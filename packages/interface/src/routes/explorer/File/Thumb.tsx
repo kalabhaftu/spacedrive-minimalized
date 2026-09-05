@@ -124,14 +124,17 @@ export const Thumb = memo(function Thumb({
 
     if (isImage && platform.convertFileSrc) {
       const rawFile = file as any;
-      const physicalPath =
+      let physicalPath =
         rawFile.physical_path ||
         rawFile.path ||
         (typeof rawFile.sd_path === "string" ? rawFile.sd_path : null) ||
         (rawFile.sd_path && 'Physical' in rawFile.sd_path ? rawFile.sd_path.Physical.path : null) ||
         (rawFile.sd_path && 'Local' in rawFile.sd_path ? rawFile.sd_path.Local.path : null);
       if (physicalPath) {
-        return platform.convertFileSrc(physicalPath);
+        if (typeof physicalPath === "object" && "path" in physicalPath) {
+          physicalPath = physicalPath.path;
+        }
+        return platform.convertFileSrc(String(physicalPath));
       }
     }
 

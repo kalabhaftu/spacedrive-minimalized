@@ -5,7 +5,6 @@ use specta::Type;
 use uuid::Uuid;
 
 use crate::ops::libraries::list::output::LibraryInfo;
-use crate::ops::network::status::output::NetworkStatus;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct CoreStatus {
@@ -15,7 +14,6 @@ pub struct CoreStatus {
 	pub device_info: DeviceInfo,
 	pub libraries: Vec<LibraryInfo>,
 	pub services: ServiceStatus,
-	pub network: NetworkStatus,
 	pub system: SystemInfo,
 }
 
@@ -32,7 +30,6 @@ pub struct DeviceInfo {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct ServiceStatus {
 	pub location_watcher: ServiceState,
-	pub networking: ServiceState,
 	pub volume_monitor: ServiceState,
 	pub file_sharing: ServiceState,
 }

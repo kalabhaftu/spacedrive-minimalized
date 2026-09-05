@@ -82,9 +82,6 @@ export type Platform = {
 	/** Close a window by label (Tauri only) */
 	closeWindow?(label: string): Promise<void>;
 
-	/** Toggle the floating voice overlay window */
-	toggleVoiceOverlay?(): Promise<void>;
-
 	/** Listen for window events (Tauri only) */
 	onWindowEvent?(event: string, callback: () => void): Promise<() => void>;
 

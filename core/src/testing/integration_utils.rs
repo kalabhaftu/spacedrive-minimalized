@@ -39,12 +39,11 @@
 //!     let setup = IntegrationTestSetup::with_config("custom_test", |builder| {
 //!         builder
 //!             .log_level("debug")
-//!             .networking_enabled(true)
 //!             .volume_monitoring_enabled(true)
 //!     }).await.unwrap();
 //!
 //!     let core = setup.create_core().await.unwrap();
-//!     // Test with networking and volume monitoring enabled...
+//!     // Test with volume monitoring enabled...
 //! }
 //! ```
 //!
@@ -135,7 +134,6 @@ impl TestEnvironment {
 pub struct TestConfigBuilder {
 	data_dir: PathBuf,
 	log_level: String,
-	networking_enabled: bool,
 	volume_monitoring_enabled: bool,
 	fs_watcher_enabled: bool,
 	statistics_listener_enabled: bool,
@@ -149,7 +147,6 @@ impl TestConfigBuilder {
 		Self {
 			data_dir,
 			log_level: "warn".to_string(),      // Reduce log noise by default
-			networking_enabled: false,          // Disable for faster tests
 			volume_monitoring_enabled: false,   // Disable for faster tests
 			fs_watcher_enabled: true,           // Usually needed for indexing tests
 			statistics_listener_enabled: false, // Disable for faster tests
@@ -161,12 +158,6 @@ impl TestConfigBuilder {
 	/// Set the log level (default: "warn")
 	pub fn log_level(mut self, level: impl Into<String>) -> Self {
 		self.log_level = level.into();
-		self
-	}
-
-	/// Enable/disable networking (default: false)
-	pub fn networking_enabled(mut self, enabled: bool) -> Self {
-		self.networking_enabled = enabled;
 		self
 	}
 
@@ -216,14 +207,11 @@ impl TestConfigBuilder {
 				log_ephemeral_jobs: false,
 			},
 			services: ServiceConfig {
-				networking_enabled: self.networking_enabled,
 				volume_monitoring_enabled: self.volume_monitoring_enabled,
 				fs_watcher_enabled: self.fs_watcher_enabled,
 				statistics_listener_enabled: self.statistics_listener_enabled,
 			},
 			logging: crate::config::app_config::LoggingConfig::default(),
-			proxy_pairing: crate::config::app_config::ProxyPairingConfig::default(),
-			spacebot: crate::config::app_config::SpacebotConfig::default(),
 		}
 	}
 
@@ -243,10 +231,6 @@ impl TestConfigBuilder {
 			config.data_dir.display()
 		);
 		info!("  - Log level: {}", config.log_level);
-		info!(
-			"  - Networking enabled: {}",
-			config.services.networking_enabled
-		);
 		info!(
 			"  - Volume monitoring enabled: {}",
 			config.services.volume_monitoring_enabled
@@ -274,12 +258,7 @@ pub fn initialize_test_tracing(
 		let env_filter = rust_log_override
 			.map(|s| s.to_string())
 			.or_else(|| std::env::var("RUST_LOG").ok())
-			.unwrap_or_else(|| {
-				format!(
-					"warn,sd_core=info,{}=info,iroh::magicsock::transports::relay=error",
-					test_env.test_name
-				)
-			});
+			.unwrap_or_else(|| format!("warn,sd_core=info,{}=info", test_env.test_name));
 
 		// Create file appender that rotates daily in the test's log directory
 		let file_appender = RollingFileAppender::new(
@@ -436,10 +415,6 @@ impl IntegrationTestSetup {
 			info!("Core initialized with config:");
 			info!("  - Log level: {}", loaded_config.log_level);
 			info!(
-				"  - Networking enabled: {}",
-				loaded_config.services.networking_enabled
-			);
-			info!(
 				"  - Volume monitoring enabled: {}",
 				loaded_config.services.volume_monitoring_enabled
 			);
@@ -490,11 +465,9 @@ mod tests {
 
 		let config = TestConfigBuilder::new(temp_dir.clone())
 			.log_level("debug")
-			.networking_enabled(true)
 			.build();
 
 		assert_eq!(config.log_level, "debug");
-		assert_eq!(config.services.networking_enabled, true);
 		assert_eq!(config.services.volume_monitoring_enabled, false); // default
 
 		// Cleanup

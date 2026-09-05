@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form";
 import { useCoreQuery, useCoreMutation } from "../../contexts/SpacedriveContext";
 
 interface ServicesSettingsForm {
-  networking_enabled: boolean;
   volume_monitoring_enabled: boolean;
   fs_watcher_enabled: boolean;
   statistics_listener_enabled: boolean;
@@ -14,7 +13,6 @@ export function ServicesSettings() {
 
   const form = useForm<ServicesSettingsForm>({
     values: {
-      networking_enabled: config?.services?.networking_enabled ?? true,
       volume_monitoring_enabled: config?.services?.volume_monitoring_enabled ?? true,
       fs_watcher_enabled: config?.services?.fs_watcher_enabled ?? true,
       statistics_listener_enabled: config?.services?.statistics_listener_enabled ?? true,

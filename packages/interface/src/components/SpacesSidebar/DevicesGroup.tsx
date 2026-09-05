@@ -1,5 +1,5 @@
-import { WifiHigh, WifiSlashIcon, Trash } from "@phosphor-icons/react";
-import { useNormalizedQuery, getDeviceIcon, useCoreMutation } from "../../contexts/SpacedriveContext";
+import { WifiHigh, WifiSlashIcon } from "@phosphor-icons/react";
+import { useNormalizedQuery, getDeviceIcon } from "../../contexts/SpacedriveContext";
 import { useExplorer } from "../../routes/explorer/context";
 import { SpaceItem } from "./SpaceItem";
 import { GroupHeader } from "./GroupHeader";
@@ -29,58 +29,15 @@ export function DevicesGroup({
 		input: {
 			include_offline: true,
 			include_details: false,
-			show_paired: true,
+			show_paired: false,
 		},
 		resourceType: "device",
 	});
 
-	// Mutation for unpairing devices
-	const revokeDevice = useCoreMutation("network.device.revoke");
-
-	// Handler for device context menu
-	const handleDeviceContextMenu = (device: Device) => async (e: React.MouseEvent) => {
+	// Handler for device context menu (local-only: no unpair actions)
+	const handleDeviceContextMenu = (_device: Device) => async (e: React.MouseEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
-
-		// Only show context menu for non-current devices
-		if (device.is_current) return;
-
-		// Create context menu items for this device
-		const items = [
-			{
-				icon: Trash,
-				label: "Unpair Device",
-				onClick: async () => {
-					await revokeDevice.mutateAsync({
-						device_id: device.id,
-						remove_from_library: false, // Keep device in library
-					});
-				},
-				variant: "default" as const,
-			},
-			{
-				icon: Trash,
-				label: "Remove Device Completely",
-				onClick: async () => {
-					await revokeDevice.mutateAsync({
-						device_id: device.id,
-						remove_from_library: true, // Remove from library too
-					});
-				},
-				variant: "danger" as const,
-			},
-		];
-
-		// Show platform-appropriate context menu
-		if ((window as any).__SPACEDRIVE__?.showContextMenu) {
-			// Tauri native menu
-			await (window as any).__SPACEDRIVE__.showContextMenu(items, {
-				x: e.clientX,
-				y: e.clientY,
-			});
-		}
-		// For web, we'd need to implement a Radix-based context menu
-		// but for now, just call the action directly or show an alert
 	};
 
 	return (

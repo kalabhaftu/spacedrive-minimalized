@@ -13,7 +13,6 @@ use specta::Type;
 use std::{path::PathBuf, sync::Arc};
 
 use crate::ops::libraries::list::output::LibraryInfo;
-use crate::ops::network::status::output::NetworkStatus;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct CoreStatusQuery;
@@ -86,14 +85,6 @@ impl CoreQuery for CoreStatusQuery {
 				running: true, // TODO: Get actual status from service
 				details: Some("Monitoring file system changes".to_string()),
 			},
-			networking: ServiceState {
-				running: context.get_networking().await.is_some(),
-				details: if context.get_networking().await.is_some() {
-					Some("P2P networking enabled".to_string())
-				} else {
-					Some("P2P networking disabled".to_string())
-				},
-			},
 			volume_monitor: ServiceState {
 				running: true, // TODO: Get actual status
 				details: Some("Monitoring volume changes".to_string()),
@@ -102,30 +93,6 @@ impl CoreQuery for CoreStatusQuery {
 				running: true, // TODO: Get actual status
 				details: Some("File sharing service active".to_string()),
 			},
-		};
-
-		// Get network status and paired devices
-		let network_status = if let Some(networking) = context.get_networking().await {
-			let relay_url = networking.get_relay_url().await;
-			NetworkStatus {
-				running: true,
-				node_id: Some(networking.node_id().to_string()),
-				addresses: Vec::new(), // TODO: Get actual addresses
-				paired_devices: 0,     // TODO: Get actual paired device count
-				connected_devices: 0,  // TODO: Get actual connected device count
-				version: env!("CARGO_PKG_VERSION").to_string(),
-				relay_url,
-			}
-		} else {
-			NetworkStatus {
-				running: false,
-				node_id: None,
-				addresses: Vec::new(),
-				paired_devices: 0,
-				connected_devices: 0,
-				version: env!("CARGO_PKG_VERSION").to_string(),
-				relay_url: None,
-			}
 		};
 
 		// Get current library name from the active library
@@ -151,7 +118,6 @@ impl CoreQuery for CoreStatusQuery {
 			device_info,
 			libraries,
 			services,
-			network: network_status,
 			system,
 		})
 	}

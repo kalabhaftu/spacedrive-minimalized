@@ -439,26 +439,6 @@ fn summarize_event(event: &Event) -> String {
 			format!("Sync error: {}", message)
 		}
 
-		// Proxy pairing events
-		Event::ProxyPairingConfirmationRequired {
-			vouchee_device_name,
-			voucher_device_name,
-			..
-		} => {
-			format!(
-				"Proxy pairing confirmation required: {} vouched by {}",
-				vouchee_device_name, voucher_device_name
-			)
-		}
-		Event::ProxyPairingVouchingReady {
-			vouchee_device_id, ..
-		} => {
-			format!(
-				"Proxy pairing vouching ready for device {}",
-				vouchee_device_id
-			)
-		}
-
 		// Config events
 		Event::ConfigChanged { .. } => "Configuration changed".to_string(),
 

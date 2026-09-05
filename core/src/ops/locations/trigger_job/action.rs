@@ -152,39 +152,17 @@ impl LibraryAction for LocationTriggerJobAction {
 			}
 
 			JobType::Ocr => {
-				if !job_policies.ocr.enabled && !self.input.force {
-					return Err(ActionError::Validation {
-						field: "job_type".to_string(),
-						message: "OCR is disabled for this location. Use force=true to override."
-							.to_string(),
-					});
-				}
-
-				let config = job_policies.ocr.to_job_config(Some(self.input.location_id));
-				let job = crate::ops::media::ocr::OcrJob::new(config);
-
-				library.jobs().dispatch(job).await.map_err(|e| {
-					ActionError::Internal(format!("Failed to dispatch OCR job: {}", e))
-				})?
+				return Err(ActionError::Validation {
+					field: "job_type".to_string(),
+					message: "OCR removed in local-only build.".to_string(),
+				});
 			}
 
-			#[cfg(feature = "speech-to-text")]
 			JobType::SpeechToText => {
-				if !job_policies.speech_to_text.enabled && !self.input.force {
-					return Err(ActionError::Validation {
-						field: "job_type".to_string(),
-						message: "Speech-to-text is disabled for this location. Use force=true to override.".to_string(),
-					});
-				}
-
-				let config = job_policies
-					.speech_to_text
-					.to_job_config(Some(self.input.location_id));
-				let job = crate::ops::media::speech::SpeechToTextJob::new(config);
-
-				library.jobs().dispatch(job).await.map_err(|e| {
-					ActionError::Internal(format!("Failed to dispatch speech-to-text job: {}", e))
-				})?
+				return Err(ActionError::Validation {
+					field: "job_type".to_string(),
+					message: "Speech-to-text removed in local-only build.".to_string(),
+				});
 			}
 
 			#[cfg(not(feature = "ffmpeg"))]
@@ -198,15 +176,7 @@ impl LibraryAction for LocationTriggerJobAction {
 				});
 			}
 
-			#[cfg(not(feature = "speech-to-text"))]
-			JobType::SpeechToText => {
-				return Err(ActionError::Validation {
-					field: "job_type".to_string(),
-					message:
-						"Speech-to-text requires FFmpeg and Whisper support which is not enabled"
-							.to_string(),
-				});
-			}
+
 
 			JobType::ObjectDetection => {
 				return Err(ActionError::Validation {

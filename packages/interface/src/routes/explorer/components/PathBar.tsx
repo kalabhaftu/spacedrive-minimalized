@@ -157,10 +157,17 @@ function IndexIndicator({path}: {path: SdPath}) {
 
 	const activeJob = matchingLocation ? jobs.find((j: any) => {
 		if (j.status !== "running" && j.status !== "queued" && j.status !== "paused") return false;
-		if (j.location_id === matchingLocation.id) return true;
-		const inputPath = j.action_context?.action_input?.path || j.action_context?.context?.path;
+		if (j.location_id && j.location_id === matchingLocation.id) return true;
+		const inputPath = j.action_context?.action_input?.path || j.action_context?.context?.path || j.current_path;
 		const locPath = 'Physical' in (matchingLocation.sd_path || {}) ? (matchingLocation.sd_path as any).Physical?.path : null;
-		if (inputPath && locPath && inputPath === locPath) return true;
+		if (inputPath && locPath) {
+			const strInput = String(inputPath);
+			if (strInput === locPath || strInput.startsWith(locPath) || locPath.startsWith(strInput)) return true;
+		}
+		// If an indexer job is active and this location is being scanned
+		if ((j.name === "indexer" || j.action_type === "indexing.index") && j.status === "running") {
+			return true;
+		}
 		return false;
 	}) : undefined;
 
@@ -174,7 +181,11 @@ function IndexIndicator({path}: {path: SdPath}) {
 	const isIndexed =
 		!isScanning &&
 		matchingLocation?.index_mode !== undefined &&
-		matchingLocation.index_mode !== 'none';
+		matchingLocation.index_mode !== 'none' &&
+		matchingLocation?.scan_state !== "Unknown" &&
+		matchingLocation?.scan_state !== "unknown" &&
+		matchingLocation?.scan_state !== "pending" &&
+		matchingLocation?.scan_state !== "scanning";
 
 	const statusText = (() => {
 		if (!matchingLocation) return 'Not indexed';
@@ -185,6 +196,9 @@ function IndexIndicator({path}: {path: SdPath}) {
 		}
 		if (isIndexed) {
 			return `Indexed (${matchingLocation.index_mode})`;
+		}
+		if (matchingLocation.index_mode && matchingLocation.index_mode !== 'none') {
+			return `Pending index (${matchingLocation.index_mode})`;
 		}
 		return 'Not indexed';
 	})();

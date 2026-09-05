@@ -246,38 +246,19 @@ impl Library {
 			.map_err(|e| anyhow::anyhow!("Failed to commit device-owned data: {}", e))
 	}
 
-	/// Internal: Sync shared resource (log-based with HLC)
+	/// Internal: Sync shared resource (local-only mode, P2P removed)
 	async fn sync_shared_internal(
 		&self,
 		model_type: &str,
 		record_uuid: Uuid,
-		change_type: ChangeType,
-		data: serde_json::Value,
+		_change_type: ChangeType,
+		_data: serde_json::Value,
 	) -> Result<()> {
-		// Gracefully handle missing sync service (networking disabled or not connected)
-		let Some(sync_service) = self.sync_service() else {
-			debug!(
-				"Sync service not initialized - operation saved locally but not synced (model={}, uuid={})",
-				model_type, record_uuid
-			);
-			return Ok(());
-		};
-
-		let peer_log = sync_service.peer_sync().peer_log();
-		let mut hlc_gen = sync_service.peer_sync().hlc_generator().lock().await;
-
-		self.transaction_manager()
-			.commit_shared(
-				self.id(),
-				model_type,
-				record_uuid,
-				change_type,
-				data,
-				peer_log,
-				&mut *hlc_gen,
-			)
-			.await
-			.map_err(|e| anyhow::anyhow!("Failed to commit shared data: {}", e))
+		debug!(
+			"Local-only mode - operation saved locally (model={}, uuid={})",
+			model_type, record_uuid
+		);
+		Ok(())
 	}
 
 	/// Internal: Batch sync device-owned resources
@@ -316,94 +297,18 @@ impl Library {
 		Ok(())
 	}
 
-	/// Internal: Batch sync shared resources
+	/// Internal: Batch sync shared resources (local-only mode, P2P removed)
 	async fn sync_shared_batch_internal(
 		&self,
 		model_type: &str,
-		change_type: ChangeType,
+		_change_type: ChangeType,
 		records: Vec<(Uuid, serde_json::Value)>,
 	) -> Result<()> {
-		// Gracefully handle missing sync service
-		let Some(sync_service) = self.sync_service() else {
-			debug!(
-				"Sync service not initialized - {} {} records saved locally but not synced",
-				records.len(),
-				model_type
-			);
-			return Ok(());
-		};
-
-		let peer_log = sync_service.peer_sync().peer_log();
-		let mut hlc_gen = sync_service.peer_sync().hlc_generator().lock().await;
-
 		debug!(
-			"Batch syncing {} shared {} records",
+			"Local-only mode - {} {} records saved locally",
 			records.len(),
 			model_type
 		);
-
-		// Collect resources and IDs for batch event
-		let record_ids: Vec<_> = records.iter().map(|(id, _)| *id).collect();
-		let resources_for_event: Vec<_> = records.iter().map(|(_, data)| data.clone()).collect();
-
-		// Generate HLCs, append to peer log, AND emit real-time events (for instant sync)
-		let mut entries_to_broadcast = Vec::new();
-
-		for (record_uuid, data) in records {
-			let hlc = hlc_gen.next();
-
-			let entry = crate::infra::sync::SharedChangeEntry {
-				hlc,
-				model_type: model_type.to_string(),
-				record_uuid,
-				change_type,
-				data,
-			};
-
-			// Write to peer log (for durability and pruning)
-			peer_log
-				.append(entry.clone())
-				.await
-				.map_err(|e| anyhow::anyhow!("Failed to append to peer log: {}", e))?;
-
-			// Collect for real-time broadcast
-			entries_to_broadcast.push(entry);
-		}
-
-		// Emit real-time broadcasts for instant sync (HLC dedup prevents double-processing)
-		for entry in entries_to_broadcast {
-			self.transaction_manager().sync_events().emit(
-				crate::infra::sync::SyncEvent::SharedChange {
-					library_id: self.id(),
-					entry,
-				},
-			);
-		}
-
-		// Emit batch resource event for UI reactivity
-		use crate::infra::sync::ChangeType as CT;
-		match change_type {
-			CT::Delete => {
-				// For batch deletes, emit individual delete events since ResourceDeletedBatch doesn't exist
-				// This should be rare for batch operations anyway
-				for record_uuid in record_ids {
-					self.event_bus().emit(Event::ResourceDeleted {
-						resource_type: model_type.to_string(),
-						resource_id: record_uuid,
-					});
-				}
-			}
-			CT::Insert | CT::Update => {
-				self.event_bus().emit(Event::ResourceChangedBatch {
-					resource_type: model_type.to_string(),
-					resources: serde_json::to_value(&resources_for_event).map_err(|e| {
-						anyhow::anyhow!("Failed to serialize batch resources: {}", e)
-					})?,
-					metadata: None,
-				});
-			}
-		}
-
 		Ok(())
 	}
 }

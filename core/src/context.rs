@@ -10,7 +10,6 @@ use crate::{
 	infra::sync::TransactionManager,
 	library::LibraryManager,
 	ops::indexing::ephemeral::EphemeralIndexCache,
-	service::network::{NetworkingService, RemoteJobCache},
 	service::session::SessionStateService,
 	service::sidecar_manager::SidecarManager,
 	service::watcher::FsWatcherService,
@@ -29,14 +28,11 @@ pub struct CoreContext {
 	// This is wrapped in an RwLock to allow it to be set after initialization
 	pub sidecar_manager: Arc<RwLock<Option<Arc<SidecarManager>>>>,
 	pub action_manager: Arc<RwLock<Option<Arc<ActionManager>>>>,
-	pub networking: Arc<RwLock<Option<Arc<NetworkingService>>>>,
 	#[cfg(feature = "wasm")]
 	pub plugin_manager: Arc<RwLock<Option<Arc<RwLock<crate::infra::extension::PluginManager>>>>>,
 	pub fs_watcher: Arc<RwLock<Option<Arc<FsWatcherService>>>>,
 	// Ephemeral index cache for unmanaged paths
 	pub ephemeral_index_cache: Arc<EphemeralIndexCache>,
-	// Remote job cache for cross-device job visibility
-	pub remote_job_cache: Arc<RemoteJobCache>,
 	// File type registry (loaded once at startup, never changes)
 	pub file_type_registry: Arc<FileTypeRegistry>,
 	// Job logging configuration
@@ -64,14 +60,12 @@ impl CoreContext {
 			key_manager,
 			sidecar_manager: Arc::new(RwLock::new(None)),
 			action_manager: Arc::new(RwLock::new(None)),
-			networking: Arc::new(RwLock::new(None)),
 			#[cfg(feature = "wasm")]
 			plugin_manager: Arc::new(RwLock::new(None)),
 			fs_watcher: Arc::new(RwLock::new(None)),
 			ephemeral_index_cache: Arc::new(
 				EphemeralIndexCache::new().expect("Failed to create ephemeral index cache"),
 			),
-			remote_job_cache: Arc::new(RemoteJobCache::new()),
 			file_type_registry: Arc::new(FileTypeRegistry::new()),
 			job_logging_config: None,
 			job_logs_dir: None,
@@ -115,16 +109,6 @@ impl CoreContext {
 	pub fn set_job_logging(&mut self, config: JobLoggingConfig, logs_dir: Option<PathBuf>) {
 		self.job_logging_config = Some(config);
 		self.job_logs_dir = logs_dir;
-	}
-
-	/// Helper method for services to get the networking service
-	pub async fn get_networking(&self) -> Option<Arc<NetworkingService>> {
-		self.networking.read().await.clone()
-	}
-
-	/// Method for Core to set networking after it's initialized
-	pub async fn set_networking(&self, networking: Arc<NetworkingService>) {
-		*self.networking.write().await = Some(networking);
 	}
 
 	/// Helper method for services to get the filesystem watcher

@@ -1,10 +1,5 @@
 [workspace]
 exclude = [
-	"crates/actors",
-	"crates/crypto",
-	"crates/fda",
-	"crates/sdk",
-	"crates/sdk-macros",
 	"extensions/*"
 ]
 members = [

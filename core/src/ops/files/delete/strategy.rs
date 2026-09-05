@@ -374,56 +374,16 @@ impl RemoteDeleteStrategy {
 		ctx: &JobContext<'_>,
 		device_id: Uuid,
 		paths: &[SdPath],
-		mode: DeleteMode,
+		_mode: DeleteMode,
 	) -> Result<Vec<DeleteResult>> {
-		let networking = ctx
-			.networking_service()
-			.ok_or_else(|| anyhow::anyhow!("Networking service not available"))?;
-
-		let request_id = Uuid::new_v4();
-
-		// Create delete request
-		let request = FileDeleteMessage::Request {
-			paths: paths.to_vec(),
-			mode,
-			request_id,
-		};
-
-		// Serialize request
-		let request_data = rmp_serde::to_vec(&request)?;
-
 		ctx.log(format!(
-			"Sending delete request to device {} for {} paths",
+			"Cross-device delete removed in local-only build (device {}, {} paths)",
 			device_id,
 			paths.len()
 		));
-
-		// Send request via networking service
-		let networking_guard = &*networking;
-		networking_guard
-			.send_message(device_id, "file_delete", request_data)
-			.await?;
-
-		// TODO: Implement proper request/response pattern
-		// For now, return optimistic results
-		// In production, we need to wait for response from remote device
-		let results = paths
-			.iter()
-			.map(|path| DeleteResult {
-				path: path.clone(),
-				success: true,
-				bytes_freed: 0,
-				error: None,
-			})
-			.collect();
-
-		ctx.log(format!(
-			"Delete request sent to device {}, {} paths",
-			device_id,
-			paths.len()
-		));
-
-		Ok(results)
+		Err(anyhow::anyhow!(
+			"Cross-device delete removed in local-only build"
+		))
 	}
 }
 

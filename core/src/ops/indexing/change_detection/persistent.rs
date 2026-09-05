@@ -405,9 +405,7 @@ impl ChangeHandler for DatabaseAdapter {
 		use crate::ops::indexing::processor::{
 			load_location_processor_config, ContentHashProcessor, ProcessorEntry,
 		};
-		#[cfg(feature = "speech-to-text")]
-		use crate::ops::media::speech::SpeechToTextProcessor;
-		use crate::ops::media::{ocr::OcrProcessor, proxy::ProxyProcessor};
+		use crate::ops::media::proxy::ProxyProcessor;
 		#[cfg(feature = "ffmpeg")]
 		use crate::ops::media::{thumbnail::ThumbnailProcessor, thumbstrip::ThumbstripProcessor};
 
@@ -567,36 +565,7 @@ impl ChangeHandler for DatabaseAdapter {
 			}
 		}
 
-		// OCR
-		if proc_config
-			.watcher_processors
-			.iter()
-			.any(|c| c.processor_type == "ocr" && c.enabled)
-		{
-			let proc_entry = build_proc_entry(&self.db, entry).await?;
-			let ocr_proc = OcrProcessor::new(library.clone());
-			if ocr_proc.should_process(&proc_entry) {
-				if let Err(e) = ocr_proc.process(&self.db, &proc_entry).await {
-					tracing::warn!("OCR processing failed: {}", e);
-				}
-			}
-		}
-
-		// Speech-to-text
-		#[cfg(feature = "speech-to-text")]
-		if proc_config
-			.watcher_processors
-			.iter()
-			.any(|c| c.processor_type == "speech_to_text" && c.enabled)
-		{
-			let proc_entry = build_proc_entry(&self.db, entry).await?;
-			let speech_proc = SpeechToTextProcessor::new(library.clone());
-			if speech_proc.should_process(&proc_entry) {
-				if let Err(e) = speech_proc.process(&self.db, &proc_entry).await {
-					tracing::warn!("Speech-to-text processing failed: {}", e);
-				}
-			}
-		}
+		// OCR and speech-to-text removed in local-only build
 
 		Ok(())
 	}

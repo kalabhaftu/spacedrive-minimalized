@@ -37,53 +37,11 @@ pub struct AppConfig {
 	/// Daemon logging configuration with multi-stream support
 	#[serde(default)]
 	pub logging: LoggingConfig,
-
-	/// Proxy pairing configuration
-	#[serde(default)]
-	pub proxy_pairing: ProxyPairingConfig,
-
-	/// Spacebot companion runtime configuration
-	#[serde(default)]
-	pub spacebot: SpacebotConfig,
-}
-
-/// Spacebot integration configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SpacebotConfig {
-	/// Whether Spacebot features are visible in the UI.
-	pub enabled: bool,
-
-	/// Base URL for the Spacebot HTTP API.
-	pub base_url: String,
-
-	/// Optional bearer token used for Spacebot API requests.
-	pub auth_token: Option<String>,
-
-	/// Default agent to target from the embedded chat.
-	pub default_agent_id: String,
-
-	/// Default sender name used by the embedded chat.
-	pub default_sender_name: String,
-}
-
-impl Default for SpacebotConfig {
-	fn default() -> Self {
-		Self {
-			enabled: false,
-			base_url: "http://127.0.0.1:19898".to_string(),
-			auth_token: None,
-			default_agent_id: "main".to_string(),
-			default_sender_name: "user".to_string(),
-		}
-	}
 }
 
 /// Configuration for core services
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceConfig {
-	/// Whether networking is enabled
-	pub networking_enabled: bool,
-
 	/// Whether volume monitoring is enabled
 	pub volume_monitoring_enabled: bool,
 
@@ -102,7 +60,6 @@ fn default_true() -> bool {
 impl Default for ServiceConfig {
 	fn default() -> Self {
 		Self {
-			networking_enabled: true,
 			volume_monitoring_enabled: true,
 			fs_watcher_enabled: true,
 			statistics_listener_enabled: true,
@@ -171,33 +128,6 @@ pub struct LoggingConfig {
 	/// Additional log streams with custom filters
 	#[serde(default)]
 	pub streams: Vec<LogStreamConfig>,
-}
-
-/// Proxy pairing configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProxyPairingConfig {
-	/// Automatically accept vouches from trusted devices
-	pub auto_accept_vouched: bool,
-	/// Automatically vouch new devices to all paired devices
-	pub auto_vouch_to_all: bool,
-	/// Maximum age of vouch signatures in seconds
-	pub vouch_signature_max_age: u64,
-	/// Timeout for proxy confirmation in seconds
-	pub vouch_response_timeout: u64,
-	/// Maximum retries for queued vouches
-	pub vouch_queue_retry_limit: u32,
-}
-
-impl Default for ProxyPairingConfig {
-	fn default() -> Self {
-		Self {
-			auto_accept_vouched: true,
-			auto_vouch_to_all: false,
-			vouch_signature_max_age: 300,
-			vouch_response_timeout: 60,
-			vouch_queue_retry_limit: 5,
-		}
-	}
 }
 
 impl Default for LoggingConfig {
@@ -276,8 +206,6 @@ impl AppConfig {
 			job_logging: JobLoggingConfig::default(),
 			services: ServiceConfig::default(),
 			logging: LoggingConfig::default(),
-			proxy_pairing: ProxyPairingConfig::default(),
-			spacebot: SpacebotConfig::default(),
 		}
 	}
 
@@ -341,7 +269,7 @@ impl Migrate for AppConfig {
 	}
 
 	fn target_version() -> u32 {
-		6 // Added Spacebot configuration
+		7 // Removed networking / proxy pairing / spacebot configuration (local-only)
 	}
 
 	fn migrate(&mut self) -> Result<()> {
@@ -369,19 +297,12 @@ impl Migrate for AppConfig {
 				self.version = 4;
 				Ok(())
 			}
-			4 => {
-				// Migration from v4 to v5: Add proxy pairing configuration
-				self.proxy_pairing = ProxyPairingConfig::default();
-				self.version = 5;
-				self.migrate()
-			}
-			5 => {
-				// Migration from v5 to v6: Add Spacebot companion configuration
-				self.spacebot = SpacebotConfig::default();
-				self.version = 6;
+			4 | 5 | 6 => {
+				// Migration to v7: drop proxy pairing / spacebot / networking flags, local-only mode
+				self.version = 7;
 				Ok(())
 			}
-			6 => Ok(()), // Already at target version
+			7 => Ok(()), // Already at target version
 			v => Err(anyhow!("Unknown config version: {}", v)),
 		}
 	}

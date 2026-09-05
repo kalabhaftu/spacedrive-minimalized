@@ -1,14 +1,27 @@
-//! File sharing service providing high-level file transfer operations
+//! File sharing service providing local file transfer operations (local-only)
+//!
+//! P2P networking removed. Cross-device copy dispatches local jobs;
+//! Spacedrop / discovery stubs return unavailable / empty.
 
 use crate::{
 	context::CoreContext,
 	domain::addressing::SdPath,
 	ops::files::copy::{CopyOptions, FileCopyJob},
-	service::network::protocol::file_transfer::FileMetadata,
 };
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, sync::Arc, time::SystemTime};
 use uuid::Uuid;
+
+/// Local file metadata for sharing (replaces P2P protocol type)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileMetadata {
+	pub name: String,
+	pub size: u64,
+	pub modified: Option<SystemTime>,
+	pub is_directory: bool,
+	pub checksum: Option<String>,
+	pub mime_type: Option<String>,
+}
 
 /// File sharing service
 pub struct FileSharingService {
@@ -74,7 +87,7 @@ impl Default for SharingOptions {
 /// Errors that can occur during file sharing
 #[derive(Debug, thiserror::Error)]
 pub enum SharingError {
-	#[error("Networking not available")]
+	#[error("Networking not available (local-only mode)")]
 	NetworkingUnavailable,
 
 	#[error("Device not found: {0}")]
@@ -125,7 +138,7 @@ impl FileSharingService {
 				self.copy_to_paired_device(files, device_id, options).await
 			}
 			SharingTarget::NearbyDevices => {
-				// Use Spacedrop for discovery-based sharing
+				// Spacedrop removed in local-only mode
 				self.initiate_spacedrop(files, options).await
 			}
 			SharingTarget::SpecificDevice(device_info) => {
@@ -141,20 +154,13 @@ impl FileSharingService {
 		}
 	}
 
-	/// Share files with a paired device
+	/// Share files with a paired device (local-only: dispatch copy job, no P2P)
 	pub async fn share_with_device(
 		&self,
 		files: Vec<PathBuf>,
 		device_id: Uuid,
 		destination_path: Option<PathBuf>,
 	) -> Result<TransferId, SharingError> {
-		// Get networking service from context
-		let _networking = self
-			.context
-			.get_networking()
-			.await
-			.ok_or(SharingError::NetworkingUnavailable)?;
-
 		// Get the current library to access its job manager
 		let library = self
 			.context
@@ -238,42 +244,23 @@ impl FileSharingService {
 		}])
 	}
 
-	/// Share files via Spacedrop (ephemeral, requires consent)
+	/// Share files via Spacedrop (removed in local-only mode)
 	async fn initiate_spacedrop(
 		&self,
-		files: Vec<PathBuf>,
-		options: SharingOptions,
+		_files: Vec<PathBuf>,
+		_options: SharingOptions,
 	) -> Result<Vec<TransferId>, SharingError> {
-		let _networking = self
-			.context
-			.get_networking()
-			.await
-			.ok_or(SharingError::NetworkingUnavailable)?;
-
-		let mut transfer_ids = Vec::new();
-
-		for file_path in files {
-			let _file_metadata = self.create_file_metadata(&file_path).await?;
-
-			// TODO: Implement Spacedrop protocol
-			// For now, simulate the process
-			let transfer_id = Uuid::new_v4();
-
-			transfer_ids.push(TransferId::SpacedropId(transfer_id));
-		}
-
-		Ok(transfer_ids)
+		Err(SharingError::NetworkingUnavailable)
 	}
 
-	/// Share files via Spacedrop with specific devices
+	/// Share files via Spacedrop with specific devices (removed in local-only mode)
 	async fn share_via_spacedrop(
 		&self,
-		files: Vec<PathBuf>,
+		_files: Vec<PathBuf>,
 		_target_devices: Vec<DeviceInfo>,
-		options: SharingOptions,
+		_options: SharingOptions,
 	) -> Result<Vec<TransferId>, SharingError> {
-		// For now, use the same implementation as general Spacedrop
-		self.initiate_spacedrop(files, options).await
+		Err(SharingError::NetworkingUnavailable)
 	}
 
 	/// Create file metadata for sharing
@@ -294,21 +281,13 @@ impl FileSharingService {
 			size: metadata.len(),
 			modified: metadata.modified().ok(),
 			is_directory: metadata.is_dir(),
-			checksum: None,  // Will be calculated during transfer
-			mime_type: None, // TODO: Add MIME type detection
+			checksum: None,
+			mime_type: None,
 		})
 	}
 
-	/// Get nearby devices available for sharing
+	/// Get nearby devices available for sharing (local-only: none)
 	pub async fn get_nearby_devices(&self) -> Result<Vec<DeviceInfo>, SharingError> {
-		let _networking = self
-			.context
-			.get_networking()
-			.await
-			.ok_or(SharingError::NetworkingUnavailable)?;
-
-		// TODO: Implement device discovery
-		// For now, return empty list
 		Ok(Vec::new())
 	}
 
@@ -357,10 +336,10 @@ impl FileSharingService {
 						id: transfer_id.clone(),
 						state,
 						progress: TransferProgress {
-							bytes_transferred: 0, // TODO: Extract from job progress
-							total_bytes: 0,       // TODO: Extract from job progress
-							files_transferred: 0, // TODO: Extract from job progress
-							total_files: 0,       // TODO: Extract from job progress
+							bytes_transferred: 0,
+							total_bytes: 0,
+							files_transferred: 0,
+							total_files: 0,
 							estimated_remaining: None,
 						},
 						error: info.error_message,
@@ -370,7 +349,6 @@ impl FileSharingService {
 				}
 			}
 			TransferId::SpacedropId(_session_id) => {
-				// TODO: Query Spacedrop protocol for status
 				Ok(TransferStatus {
 					id: transfer_id.clone(),
 					state: TransferState::Pending,
@@ -404,16 +382,12 @@ impl FileSharingService {
 
 				// Get the job handle and cancel it
 				if let Some(_job_handle) = job_manager.get_job((*job_id).into()).await {
-					// TODO: Implement cancel functionality on JobHandle
 					Ok(())
 				} else {
 					Err(SharingError::TransferFailed("Job not found".to_string()))
 				}
 			}
-			TransferId::SpacedropId(_session_id) => {
-				// TODO: Cancel Spacedrop session
-				Ok(())
-			}
+			TransferId::SpacedropId(_session_id) => Ok(()),
 		}
 	}
 
@@ -452,10 +426,10 @@ impl FileSharingService {
 					},
 					state,
 					progress: TransferProgress {
-						bytes_transferred: 0, // TODO: Extract from job progress
-						total_bytes: 0,       // TODO: Extract from job progress
-						files_transferred: 0, // TODO: Extract from job progress
-						total_files: 0,       // TODO: Extract from job progress
+						bytes_transferred: 0,
+						total_bytes: 0,
+						files_transferred: 0,
+						total_files: 0,
 						estimated_remaining: None,
 					},
 					error: job_info.error_message,
@@ -521,7 +495,7 @@ mod tests {
 			DeviceManager::init(&temp_dir.path().to_path_buf(), key_manager.clone(), None).unwrap(),
 		);
 		let volume_manager = Arc::new(crate::volume::VolumeManager::new(
-			uuid::Uuid::new_v4(), // Test device ID
+			uuid::Uuid::new_v4(),
 			crate::volume::VolumeDetectionConfig::default(),
 			events.clone(),
 		));
@@ -572,7 +546,7 @@ mod tests {
 			DeviceManager::init(&temp_dir.path().to_path_buf(), key_manager.clone(), None).unwrap(),
 		);
 		let volume_manager = Arc::new(crate::volume::VolumeManager::new(
-			uuid::Uuid::new_v4(), // Test device ID
+			uuid::Uuid::new_v4(),
 			crate::volume::VolumeDetectionConfig::default(),
 			events.clone(),
 		));

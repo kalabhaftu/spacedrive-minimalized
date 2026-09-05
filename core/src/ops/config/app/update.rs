@@ -32,10 +32,6 @@ pub struct UpdateAppConfigInput {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub language: Option<String>,
 
-	/// Whether networking is enabled
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub networking_enabled: Option<bool>,
-
 	/// Whether volume monitoring is enabled
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub volume_monitoring_enabled: Option<bool>,
@@ -55,46 +51,6 @@ pub struct UpdateAppConfigInput {
 	/// Whether to include debug logs in job logs
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub job_logging_include_debug: Option<bool>,
-
-	/// Automatically accept vouches from trusted devices
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub proxy_pairing_auto_accept_vouched: Option<bool>,
-
-	/// Automatically vouch new devices to all paired devices
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub proxy_pairing_auto_vouch_to_all: Option<bool>,
-
-	/// Maximum age of vouch signatures in seconds
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub proxy_pairing_vouch_signature_max_age: Option<u64>,
-
-	/// Timeout for proxy confirmation in seconds
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub proxy_pairing_vouch_response_timeout: Option<u64>,
-
-	/// Maximum retries for queued vouches
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub proxy_pairing_vouch_queue_retry_limit: Option<u32>,
-
-	/// Whether Spacebot features are enabled in the UI
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub spacebot_enabled: Option<bool>,
-
-	/// Spacebot API base URL
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub spacebot_base_url: Option<String>,
-
-	/// Optional Spacebot bearer token
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub spacebot_auth_token: Option<String>,
-
-	/// Default Spacebot agent ID for embedded chat
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub spacebot_default_agent_id: Option<String>,
-
-	/// Default sender name for embedded chat
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub spacebot_default_sender_name: Option<String>,
 }
 
 /// Output for update app configuration action
@@ -167,60 +123,6 @@ impl CoreAction for UpdateAppConfigAction {
 			}
 		}
 
-		if let Some(max_age) = self.input.proxy_pairing_vouch_signature_max_age {
-			if max_age == 0 {
-				return Err(ActionError::Validation {
-					field: "proxy_pairing_vouch_signature_max_age".to_string(),
-					message: "Signature max age must be greater than 0".to_string(),
-				});
-			}
-		}
-
-		if let Some(timeout) = self.input.proxy_pairing_vouch_response_timeout {
-			if timeout == 0 {
-				return Err(ActionError::Validation {
-					field: "proxy_pairing_vouch_response_timeout".to_string(),
-					message: "Response timeout must be greater than 0".to_string(),
-				});
-			}
-		}
-
-		if let Some(retry_limit) = self.input.proxy_pairing_vouch_queue_retry_limit {
-			if retry_limit == 0 {
-				return Err(ActionError::Validation {
-					field: "proxy_pairing_vouch_queue_retry_limit".to_string(),
-					message: "Retry limit must be greater than 0".to_string(),
-				});
-			}
-		}
-
-		if let Some(ref base_url) = self.input.spacebot_base_url {
-			if base_url.trim().is_empty() {
-				return Err(ActionError::Validation {
-					field: "spacebot_base_url".to_string(),
-					message: "Spacebot base URL cannot be empty".to_string(),
-				});
-			}
-		}
-
-		if let Some(ref agent_id) = self.input.spacebot_default_agent_id {
-			if agent_id.trim().is_empty() {
-				return Err(ActionError::Validation {
-					field: "spacebot_default_agent_id".to_string(),
-					message: "Default agent ID cannot be empty".to_string(),
-				});
-			}
-		}
-
-		if let Some(ref sender_name) = self.input.spacebot_default_sender_name {
-			if sender_name.trim().is_empty() {
-				return Err(ActionError::Validation {
-					field: "spacebot_default_sender_name".to_string(),
-					message: "Default sender name cannot be empty".to_string(),
-				});
-			}
-		}
-
 		Ok(ValidationResult::Success { metadata: None })
 	}
 
@@ -258,14 +160,6 @@ impl CoreAction for UpdateAppConfigAction {
 			if config.preferences.language != *language {
 				config.preferences.language = language.clone();
 				changes.push("language");
-			}
-		}
-
-		if let Some(networking_enabled) = self.input.networking_enabled {
-			if config.services.networking_enabled != networking_enabled {
-				config.services.networking_enabled = networking_enabled;
-				changes.push("networking_enabled");
-				requires_restart = true;
 			}
 		}
 
@@ -307,84 +201,6 @@ impl CoreAction for UpdateAppConfigAction {
 			}
 		}
 
-		if let Some(auto_accept_vouched) = self.input.proxy_pairing_auto_accept_vouched {
-			if config.proxy_pairing.auto_accept_vouched != auto_accept_vouched {
-				config.proxy_pairing.auto_accept_vouched = auto_accept_vouched;
-				changes.push("proxy_pairing_auto_accept_vouched");
-			}
-		}
-
-		if let Some(auto_vouch_to_all) = self.input.proxy_pairing_auto_vouch_to_all {
-			if config.proxy_pairing.auto_vouch_to_all != auto_vouch_to_all {
-				config.proxy_pairing.auto_vouch_to_all = auto_vouch_to_all;
-				changes.push("proxy_pairing_auto_vouch_to_all");
-			}
-		}
-
-		if let Some(max_age) = self.input.proxy_pairing_vouch_signature_max_age {
-			if config.proxy_pairing.vouch_signature_max_age != max_age {
-				config.proxy_pairing.vouch_signature_max_age = max_age;
-				changes.push("proxy_pairing_vouch_signature_max_age");
-			}
-		}
-
-		if let Some(timeout) = self.input.proxy_pairing_vouch_response_timeout {
-			if config.proxy_pairing.vouch_response_timeout != timeout {
-				config.proxy_pairing.vouch_response_timeout = timeout;
-				changes.push("proxy_pairing_vouch_response_timeout");
-			}
-		}
-
-		if let Some(retry_limit) = self.input.proxy_pairing_vouch_queue_retry_limit {
-			if config.proxy_pairing.vouch_queue_retry_limit != retry_limit {
-				config.proxy_pairing.vouch_queue_retry_limit = retry_limit;
-				changes.push("proxy_pairing_vouch_queue_retry_limit");
-			}
-		}
-
-		if let Some(spacebot_enabled) = self.input.spacebot_enabled {
-			if config.spacebot.enabled != spacebot_enabled {
-				config.spacebot.enabled = spacebot_enabled;
-				changes.push("spacebot_enabled");
-			}
-		}
-
-		if let Some(ref spacebot_base_url) = self.input.spacebot_base_url {
-			let normalized = spacebot_base_url.trim().trim_end_matches('/').to_string();
-			if config.spacebot.base_url != normalized {
-				config.spacebot.base_url = normalized;
-				changes.push("spacebot_base_url");
-			}
-		}
-
-		if let Some(ref spacebot_auth_token) = self.input.spacebot_auth_token {
-			let normalized = if spacebot_auth_token.trim().is_empty() {
-				None
-			} else {
-				Some(spacebot_auth_token.trim().to_string())
-			};
-			if config.spacebot.auth_token != normalized {
-				config.spacebot.auth_token = normalized;
-				changes.push("spacebot_auth_token");
-			}
-		}
-
-		if let Some(ref spacebot_default_agent_id) = self.input.spacebot_default_agent_id {
-			let normalized = spacebot_default_agent_id.trim().to_string();
-			if config.spacebot.default_agent_id != normalized {
-				config.spacebot.default_agent_id = normalized;
-				changes.push("spacebot_default_agent_id");
-			}
-		}
-
-		if let Some(ref spacebot_default_sender_name) = self.input.spacebot_default_sender_name {
-			let normalized = spacebot_default_sender_name.trim().to_string();
-			if config.spacebot.default_sender_name != normalized {
-				config.spacebot.default_sender_name = normalized;
-				changes.push("spacebot_default_sender_name");
-			}
-		}
-
 		if changes.is_empty() {
 			return Ok(UpdateAppConfigOutput {
 				success: true,
@@ -396,19 +212,6 @@ impl CoreAction for UpdateAppConfigAction {
 		config
 			.save()
 			.map_err(|e| ActionError::Internal(format!("Failed to save config: {}", e)))?;
-
-		if let Some(networking) = context.get_networking().await {
-			let registry = networking.protocol_registry();
-			let guard = registry.read().await;
-			if let Some(handler) = guard.get_handler("pairing") {
-				if let Some(pairing) = handler
-					.as_any()
-					.downcast_ref::<crate::service::network::protocol::PairingProtocolHandler>(
-				) {
-					pairing.set_proxy_config(config.proxy_pairing.clone()).await;
-				}
-			}
-		}
 
 		// Emit config change events for each changed field
 		for field in &changes {

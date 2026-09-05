@@ -10,17 +10,14 @@ import {
 	FolderPlus,
 	Image,
 	MagnifyingGlass,
-	Microphone,
 	Pencil,
 	Scissors,
 	ShareNetwork,
 	Sparkle,
 	Stack,
 	Tag as TagIconComponent,
-	TextAa,
 	Trash,
-	Video,
-	Waveform
+	Video
 } from '@phosphor-icons/react';
 import type {File} from '@sd/ts-client';
 import {getContentKind, isVirtualFile} from '@sd/ts-client';
@@ -59,8 +56,6 @@ export function useFileContextMenu({
 	const regenerateThumbnail = useLibraryMutation(
 		'media.thumbnail.regenerate'
 	);
-	const extractText = useLibraryMutation('media.ocr.extract');
-	const transcribeAudio = useLibraryMutation('media.speech.transcribe');
 	const generateThumbstrip = useLibraryMutation('media.thumbstrip.generate');
 	const generateProxy = useLibraryMutation('media.proxy.generate');
 
@@ -404,21 +399,6 @@ export function useFileContextMenu({
 							);
 						}
 					},
-					{
-						icon: TextAa,
-						label: 'Extract Text (OCR)',
-						onClick: async () => {
-							const targets = getTargetFiles();
-							await forEachTarget(targets, (f) =>
-								extractText.mutateAsync({
-									entry_uuid: f.id,
-									languages: null,
-									force: false
-								})
-							);
-						},
-						keybind: '⌘⇧T'
-					}
 				]
 			},
 			{
@@ -475,20 +455,6 @@ export function useFileContextMenu({
 						}
 					},
 					{
-						icon: Waveform,
-						label: 'Extract Subtitles',
-						onClick: async () => {
-							const targets = getTargetFiles();
-							await forEachTarget(targets, (f) =>
-								transcribeAudio.mutateAsync({
-									entry_uuid: f.id,
-									model: null,
-									language: null
-								})
-							);
-						}
-					},
-					{
 						icon: FileVideo,
 						label: 'Generate Proxy',
 						onClick: async () => {
@@ -508,29 +474,6 @@ export function useFileContextMenu({
 			},
 			{
 				type: 'submenu',
-				icon: Microphone,
-				label: 'Audio Processing',
-				condition: () => !!file && getContentKind(file) === 'audio',
-				submenu: [
-					{
-						icon: TextAa,
-						label: 'Transcribe Audio',
-						onClick: async () => {
-							const targets = getTargetFiles();
-							await forEachTarget(targets, (f) =>
-								transcribeAudio.mutateAsync({
-									entry_uuid: f.id,
-									model: 'whisper-base',
-									language: null
-								})
-							);
-						},
-						keybind: '⌘⇧T'
-					}
-				]
-			},
-			{
-				type: 'submenu',
 				icon: FileText,
 				label: 'Document Processing',
 				condition: () =>
@@ -538,21 +481,6 @@ export function useFileContextMenu({
 					file.kind === 'File' &&
 					['pdf', 'doc', 'docx'].includes(file.extension || ''),
 				submenu: [
-					{
-						icon: TextAa,
-						label: 'Extract Text (OCR)',
-						onClick: async () => {
-							const targets = getTargetFiles();
-							await forEachTarget(targets, (f) =>
-								extractText.mutateAsync({
-									entry_uuid: f.id,
-									languages: null,
-									force: false
-								})
-							);
-						},
-						keybind: '⌘⇧T'
-					},
 					{
 						icon: Crop,
 						label: 'Regenerate Thumbnail',
@@ -603,19 +531,6 @@ export function useFileContextMenu({
 						},
 						keybind: '⌘⇧B'
 					},
-					{
-						icon: TextAa,
-						label: 'Extract Text (OCR)',
-						onClick: async () => {
-							await forEachTarget(selectedFiles, (f) =>
-								extractText.mutateAsync({
-									entry_uuid: f.id,
-									languages: null,
-									force: false
-								})
-							);
-						}
-					}
 				]
 			},
 			{

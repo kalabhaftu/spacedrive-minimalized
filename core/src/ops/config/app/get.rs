@@ -6,9 +6,7 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 
 use crate::{
-	config::{
-		AppConfig, JobLoggingConfig, LoggingConfig, Preferences, ServiceConfig, SpacebotConfig,
-	},
+	config::{AppConfig, JobLoggingConfig, LoggingConfig, Preferences, ServiceConfig},
 	context::CoreContext,
 	infra::query::{CoreQuery, QueryError, QueryResult},
 };
@@ -43,12 +41,6 @@ pub struct AppConfigOutput {
 
 	/// Daemon logging configuration
 	pub logging: LoggingConfigOutput,
-
-	/// Proxy pairing configuration
-	pub proxy_pairing: ProxyPairingConfigOutput,
-
-	/// Spacebot companion configuration
-	pub spacebot: SpacebotConfigOutput,
 }
 
 /// User preferences output
@@ -71,7 +63,6 @@ pub struct JobLoggingConfigOutput {
 /// Service configuration output
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct ServiceConfigOutput {
-	pub networking_enabled: bool,
 	pub volume_monitoring_enabled: bool,
 	pub fs_watcher_enabled: bool,
 	pub statistics_listener_enabled: bool,
@@ -81,38 +72,6 @@ pub struct ServiceConfigOutput {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct LoggingConfigOutput {
 	pub main_filter: String,
-}
-
-/// Proxy pairing configuration output
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct ProxyPairingConfigOutput {
-	pub auto_accept_vouched: bool,
-	pub auto_vouch_to_all: bool,
-	pub vouch_signature_max_age: u64,
-	pub vouch_response_timeout: u64,
-	pub vouch_queue_retry_limit: u32,
-}
-
-/// Spacebot companion configuration output
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct SpacebotConfigOutput {
-	pub enabled: bool,
-	pub base_url: String,
-	pub auth_token: Option<String>,
-	pub default_agent_id: String,
-	pub default_sender_name: String,
-}
-
-impl From<&SpacebotConfig> for SpacebotConfigOutput {
-	fn from(config: &SpacebotConfig) -> Self {
-		Self {
-			enabled: config.enabled,
-			base_url: config.base_url.clone(),
-			auth_token: config.auth_token.clone(),
-			default_agent_id: config.default_agent_id.clone(),
-			default_sender_name: config.default_sender_name.clone(),
-		}
-	}
 }
 
 impl From<&AppConfig> for AppConfigOutput {
@@ -134,7 +93,6 @@ impl From<&AppConfig> for AppConfigOutput {
 				log_ephemeral_jobs: config.job_logging.log_ephemeral_jobs,
 			},
 			services: ServiceConfigOutput {
-				networking_enabled: config.services.networking_enabled,
 				volume_monitoring_enabled: config.services.volume_monitoring_enabled,
 				fs_watcher_enabled: config.services.fs_watcher_enabled,
 				statistics_listener_enabled: config.services.statistics_listener_enabled,
@@ -142,14 +100,6 @@ impl From<&AppConfig> for AppConfigOutput {
 			logging: LoggingConfigOutput {
 				main_filter: config.logging.main_filter.clone(),
 			},
-			proxy_pairing: ProxyPairingConfigOutput {
-				auto_accept_vouched: config.proxy_pairing.auto_accept_vouched,
-				auto_vouch_to_all: config.proxy_pairing.auto_vouch_to_all,
-				vouch_signature_max_age: config.proxy_pairing.vouch_signature_max_age,
-				vouch_response_timeout: config.proxy_pairing.vouch_response_timeout,
-				vouch_queue_retry_limit: config.proxy_pairing.vouch_queue_retry_limit,
-			},
-			spacebot: SpacebotConfigOutput::from(&config.spacebot),
 		}
 	}
 }

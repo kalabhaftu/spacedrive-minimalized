@@ -498,15 +498,8 @@ impl Default for OcrPolicy {
 }
 
 impl OcrPolicy {
-	/// Convert this policy to an OcrJobConfig for job dispatch
-	pub fn to_job_config(&self, location_id: Option<Uuid>) -> crate::ops::media::ocr::OcrJobConfig {
-		crate::ops::media::ocr::OcrJobConfig {
-			location_id,
-			entry_uuid: None,
-			languages: self.languages.clone(),
-			min_confidence: self.min_confidence,
-			reprocess: self.reprocess,
-		}
+	/// Local-only build: OCR removed
+	pub fn to_job_config(&self, _location_id: Option<Uuid>) -> () {
 	}
 }
 
@@ -538,20 +531,8 @@ impl Default for SpeechPolicy {
 }
 
 impl SpeechPolicy {
-	/// Convert this policy to a SpeechToTextJobConfig for job dispatch
-	#[cfg(feature = "speech-to-text")]
-	pub fn to_job_config(
-		&self,
-		location_id: Option<Uuid>,
-	) -> crate::ops::media::speech::SpeechToTextJobConfig {
-		crate::ops::media::speech::SpeechToTextJobConfig {
-			location_id,
-			entry_uuid: None,
-			language: self.language.clone(),
-			model: self.model.clone(),
-			reprocess: self.reprocess,
-		}
-	}
+	/// Local-only build: speech-to-text removed
+	pub fn to_job_config(&self, _location_id: Option<Uuid>) {}
 }
 
 /// Object detection policy (for future AI features)

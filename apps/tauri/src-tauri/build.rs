@@ -58,8 +58,6 @@ fn main() {
 			} else {
 				println!("Successfully compiled Spacedrive.icon to Assets.car");
 			}
-		} else {
-			println!("cargo:warning=Spacedrive.icon not found at {}", icon_source);
 		}
 	}
 

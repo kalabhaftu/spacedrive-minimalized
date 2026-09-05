@@ -12,10 +12,8 @@ use std::time::SystemTime;
 use crate::ops::indexing::state::EntryKind;
 use crate::volume::error::VolumeError;
 
-pub mod cloud;
 pub mod local;
 
-pub use cloud::CloudBackend;
 pub use local::LocalBackend;
 
 /// Minimal I/O backend trait for volume operations
@@ -56,11 +54,10 @@ pub trait VolumeBackend: Send + Sync + Debug {
 	fn backend_type(&self) -> BackendType;
 }
 
-/// Backend type identifier
+/// Backend type identifier (local-only)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BackendType {
 	Local,
-	Cloud(CloudServiceType),
 }
 
 /// Cloud service type identifier

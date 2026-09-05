@@ -536,7 +536,6 @@ impl LibraryManager {
 			event_bus: self.event_bus.clone(),
 			sync_events,
 			transaction_manager,
-			sync_service: OnceCell::new(),      // Initialized later
 			file_sync_service: OnceCell::new(), // Initialized later
 			device_cache: Arc::new(std::sync::RwLock::new(device_cache)),
 			_lock: std::sync::Mutex::new(Some(lock)),
@@ -591,46 +590,7 @@ impl LibraryManager {
 		// 	);
 		// }
 
-		// Initialize sync service if networking is available
-		// If networking isn't ready, sync simply won't be initialized until caller does it explicitly
-		// TODO: maybe consider checking if networking is enabled rather than just checking if it's available
-		if let Some(networking) = context.networking.read().await.as_ref() {
-			if let Err(e) = library
-				.init_sync_service(device_id, networking.clone())
-				.await
-			{
-				warn!(
-					"Failed to initialize sync service for library {}: {}",
-					config.id, e
-				);
-			} else {
-				// Wire up network event receiver to PeerSync for connection tracking
-				if let Some(sync_service) = library.sync_service() {
-					let peer_sync = sync_service.peer_sync();
-					let network_events = networking.subscribe_events();
-					peer_sync.set_network_events(network_events).await;
-					info!(
-						"Network event receiver wired to PeerSync for library {}",
-						config.id
-					);
-
-					// Register library with sync multiplexer
-					networking
-						.sync_multiplexer()
-						.register_library(
-							config.id,
-							peer_sync.clone(),
-							sync_service.backfill_manager().clone(),
-						)
-						.await;
-					info!("Library {} registered with sync multiplexer", config.id);
-				}
-			}
-		} else {
-			info!(
-				"NetworkingService not available, sync service will be initialized later when networking is ready"
-			);
-		}
+		// Local-only mode: P2P sync removed
 
 		// Auto-track user-relevant volumes for this library
 		info!(

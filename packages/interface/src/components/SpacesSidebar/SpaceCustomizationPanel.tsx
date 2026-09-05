@@ -154,7 +154,7 @@ export function SpaceCustomizationPanel({
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
 						transition={{ duration: 0.2 }}
-						className="fixed inset-0 bg-black/20 z-[65]"
+						className="fixed inset-0 bg-black/40 z-[100] backdrop-blur-[2px]"
 						onClick={onClose}
 					/>
 
@@ -164,9 +164,9 @@ export function SpaceCustomizationPanel({
 						animate={{ x: 0, opacity: 1 }}
 						exit={{ x: -20, opacity: 0 }}
 						transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-						className="fixed left-[228px] top-2 bottom-2 w-[220px] z-[70]"
+						className="fixed left-[228px] top-2 bottom-2 w-[220px] z-[110]"
 					>
-						<div className="h-full rounded-2xl bg-sidebar flex flex-col p-2.5">
+						<div className="h-full rounded-2xl bg-sidebar border border-sidebar-line shadow-2xl flex flex-col p-2.5">
 							{/* Header */}
 							<div className="flex items-center justify-between px-2 py-2 mb-2">
 								<div>
@@ -181,7 +181,7 @@ export function SpaceCustomizationPanel({
 									onClick={onClose}
 									className="p-1 rounded-md hover:bg-sidebar-selected/30 transition-colors"
 								>
-									<X size={14} className="text-sidebar-ink-dull" />
+									<X size={14} className="text-sidebar-ink-dull hover:text-sidebar-ink" />
 								</button>
 							</div>
 
@@ -208,7 +208,7 @@ export function SpaceCustomizationPanel({
 									{!isAddingGroup ? (
 										<button
 											onClick={() => setIsAddingGroup(true)}
-											className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-ink hover:text-white hover:bg-sidebar-selected/30 transition-colors"
+											className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-sidebar-ink bg-sidebar-box/60 hover:text-white hover:bg-sidebar-selected/40 transition-colors cursor-pointer"
 										>
 											<Plus size={16} weight="bold" />
 											<span>Add Group</span>
@@ -286,7 +286,7 @@ export function SpaceCustomizationPanel({
 
 							{/* Footer */}
 							<div className="px-2 py-2 mt-2 border-t border-sidebar-line/50">
-								<p className="text-xs text-sidebar-ink-faint text-center">
+								<p className="text-xs text-sidebar-ink-dull text-center">
 									Drag items to your space
 								</p>
 							</div>

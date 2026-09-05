@@ -39,14 +39,14 @@ function SettingsSidebar({ currentPage, onPageChange }: SettingsSidebarProps) {
           key={section.id}
           onClick={() => onPageChange(section.id)}
           className={clsx(
-            "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300",
+            "w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 cursor-pointer",
             currentPage === section.id
               ? isAboutPage
-                ? "bg-white/20 text-white"
-                : "bg-sidebar-selected text-sidebar-ink"
+                ? "bg-white/20 text-white font-semibold"
+                : "bg-sidebar-selected text-sidebar-ink font-semibold"
               : isAboutPage
               ? "text-white/60 hover:text-white hover:bg-white/10"
-              : "text-sidebar-ink-dull hover:text-sidebar-ink hover:bg-sidebar-box"
+              : "text-sidebar-ink-dull hover:text-sidebar-ink hover:bg-sidebar-box/60"
           )}
         >
           {section.label}
@@ -95,7 +95,7 @@ function SettingsContentWrapper() {
   return (
     <div className={clsx(
       "h-screen flex transition-colors duration-500 relative",
-      currentPage === "about" ? "bg-black" : "bg-app"
+      currentPage === "about" ? "bg-black" : "bg-app text-ink"
     )}>
       {/* Drag region for macOS traffic lights area */}
       <div
@@ -105,7 +105,7 @@ function SettingsContentWrapper() {
 
       {/* Sidebar */}
       <nav className={clsx(
-        "w-48 border-r p-4 pt-[52px] transition-all duration-500",
+        "w-48 border-r p-4 pt-[52px] transition-all duration-500 select-none text-sidebar-ink",
         currentPage === "about"
           ? "bg-black border-black"
           : "bg-sidebar border-sidebar-line"

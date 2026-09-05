@@ -6,7 +6,7 @@ use super::{
 	progress::Progress,
 	types::{JobId, JobMetrics},
 };
-use crate::{library::Library, service::network::NetworkingService};
+use crate::library::Library;
 use sd_task_system::Interrupter;
 use sea_orm::DatabaseConnection;
 use serde::{de::DeserializeOwned, Serialize};
@@ -23,7 +23,6 @@ pub struct JobContext<'a> {
 	pub(crate) metrics: Arc<Mutex<JobMetrics>>,
 	pub(crate) checkpoint_handler: Arc<dyn CheckpointHandler>,
 	pub(crate) child_handles: Arc<Mutex<Vec<JobHandle>>>,
-	pub(crate) networking: Option<Arc<NetworkingService>>,
 	pub(crate) volume_manager: Option<Arc<crate::volume::VolumeManager>>,
 	pub(crate) file_logger: Option<Arc<super::logger::FileJobLogger>>,
 }
@@ -47,11 +46,6 @@ impl<'a> JobContext<'a> {
 	/// Get the library database connection
 	pub fn library_db(&self) -> &DatabaseConnection {
 		self.library.db().conn()
-	}
-
-	/// Get networking service if available
-	pub fn networking_service(&self) -> Option<Arc<NetworkingService>> {
-		self.networking.clone()
 	}
 
 	/// Get volume manager if available

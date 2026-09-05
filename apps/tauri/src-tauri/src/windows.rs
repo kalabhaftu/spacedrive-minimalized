@@ -35,15 +35,6 @@ pub enum SpacedriveWindow {
 	TagAssignment,
 	SearchOverlay,
 
-	/// Floating controls (small, always on top)
-	FloatingControls,
-	VoiceOverlay,
-
-	/// Drag demo window
-	DragDemo,
-
-	/// Spacedrop window
-	Spacedrop,
 
 	/// Drag overlay (cursor-tracking preview during drag operations)
 	DragOverlay {
@@ -73,10 +64,6 @@ impl SpacedriveWindow {
 			Self::QuickPreview { file_id } => format!("quick-preview-{}", file_id),
 			Self::TagAssignment => "tag-assignment".to_string(),
 			Self::SearchOverlay => "search-overlay".to_string(),
-			Self::FloatingControls => "floating-controls".to_string(),
-			Self::VoiceOverlay => "voice-overlay".to_string(),
-			Self::DragDemo => "drag-demo".to_string(),
-			Self::Spacedrop => "spacedrop".to_string(),
 			Self::DragOverlay { session_id } => format!("drag-overlay-{}", session_id),
 			Self::ContextMenu { context_id } => format!("context-menu-{}", context_id),
 		}
@@ -245,88 +232,6 @@ impl SpacedriveWindow {
 				)
 			}
 
-			Self::FloatingControls => {
-				// Small floating control panel like Cap's recording controls
-				let window = WebviewWindowBuilder::new(
-					app,
-					label,
-					WebviewUrl::App("/floating-controls".into()),
-				)
-				.title("Controls")
-				.inner_size(200.0, 80.0)
-				.resizable(false)
-				.decorations(false)
-				.transparent(true)
-				.always_on_top(true)
-				.skip_taskbar(true)
-				.build()
-				.map_err(|e| format!("Failed to create window: {}", e))?;
-
-				// Position at bottom center of screen
-				#[cfg(target_os = "macos")]
-				{
-					use tauri::Position;
-					// Get screen size and position window
-					if let Ok(Some(monitor)) = window.current_monitor() {
-						let size = monitor.size();
-						// Bottom center, 40px from bottom
-						window
-							.set_position(Position::Physical(tauri::PhysicalPosition {
-								x: (size.width as i32) / 2 - 100,
-								y: (size.height as i32) - 120,
-							}))
-							.ok();
-					}
-				}
-
-				window.show().ok();
-				Ok(window)
-			}
-
-			Self::VoiceOverlay => {
-				let window =
-					WebviewWindowBuilder::new(app, label, WebviewUrl::App("/voice-overlay".into()))
-						.title("Voice Overlay")
-						.inner_size(520.0, 112.0)
-						.resizable(false)
-						.decorations(false)
-						.shadow(false)
-						.transparent(true)
-						.always_on_top(true)
-						.skip_taskbar(true)
-						.visible(false)
-						.build()
-						.map_err(|e| format!("Failed to create voice overlay: {}", e))?;
-
-				position_overlay_window(&window, 520.0, 112.0)?;
-
-				window.show().ok();
-				Ok(window)
-			}
-
-			Self::DragDemo => create_window(
-				app,
-				&label,
-				"/drag-demo",
-				"Drag Demo",
-				(600.0, 400.0),
-				(400.0, 300.0),
-				true,
-				false,
-				false,
-			),
-
-			Self::Spacedrop => create_window(
-				app,
-				&label,
-				"/spacedrop",
-				"Spacedrop",
-				(800.0, 600.0),
-				(600.0, 400.0),
-				true,
-				false,
-				false,
-			),
 
 			Self::DragOverlay { session_id } => {
 				let url = format!("/drag-overlay?session={}", session_id);
@@ -476,28 +381,6 @@ pub async fn close_window(app: AppHandle, label: String) -> Result<(), String> {
 	Ok(())
 }
 
-pub fn toggle_voice_overlay_internal(app: AppHandle) -> Result<(), String> {
-	let window = SpacedriveWindow::VoiceOverlay;
-	let label = window.label();
-
-	if let Some(existing) = app.get_webview_window(&label) {
-		existing.close().map_err(|e| e.to_string())?;
-		return Ok(());
-	}
-
-	tauri::async_runtime::spawn(async move {
-		if let Err(error) = window.show(&app).await {
-			tracing::warn!(?error, "Failed to open voice overlay window");
-		}
-	});
-
-	Ok(())
-}
-
-#[tauri::command]
-pub async fn toggle_voice_overlay(app: AppHandle) -> Result<(), String> {
-	toggle_voice_overlay_internal(app)
-}
 
 #[tauri::command]
 pub async fn resize_overlay_window(

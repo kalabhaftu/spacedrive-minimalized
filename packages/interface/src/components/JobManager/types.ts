@@ -36,10 +36,13 @@ export function getJobDisplayName(job: JobListItem): string {
     if (locationName) {
       return `Indexing "${locationName}"`;
     }
-    const path = extractPath(actionInput) || extractPath(context);
+    const path = extractPath(actionInput) || extractPath(context) || extractPathFromUnknown(job.current_path);
     if (path) {
       const folderName = path.split("/").filter(Boolean).pop() || path;
       return `Indexing "${folderName}"`;
+    }
+    if (job.status_message && !job.status_message.startsWith("Batch")) {
+      return `Indexing (${job.status_message})`;
     }
     return "Indexing";
   }
@@ -110,12 +113,20 @@ export function getJobDisplayName(job: JobListItem): string {
 export function getJobSubtext(job: JobListItem): string {
   const actionInput = job.action_context?.action_input;
   const context = job.action_context?.context as JsonValue | undefined;
-  const path = extractPath(actionInput) || extractPath(context);
+  const path = extractPath(actionInput) || extractPath(context) || extractPathFromUnknown(job.current_path);
   const formattedPath = path ? path.replace(/^\/Users\/[^/]+/, "~") : null;
 
   switch (job.status) {
     case "running": {
-      if (formattedPath) return formattedPath;
+      if (formattedPath) {
+        if (job.current_phase && job.current_phase !== "indexer") {
+          return `${formattedPath} • ${job.current_phase}`;
+        }
+        if (job.status_message && !job.status_message.startsWith("Batch")) {
+          return `${formattedPath} • ${job.status_message}`;
+        }
+        return formattedPath;
+      }
       if (job.status_message) return job.status_message;
       if (job.current_path) {
         const pathStr = typeof job.current_path === "string"
@@ -131,7 +142,7 @@ export function getJobSubtext(job: JobListItem): string {
     case "failed":
       return formattedPath ? `Failed • ${formattedPath}` : "Job failed";
     case "queued":
-      return formattedPath || "Waiting to start";
+      return formattedPath ? `Queued • ${formattedPath}` : "Waiting to start";
     case "paused":
       return formattedPath ? `Paused • ${formattedPath}` : "Paused";
     case "cancelled":
@@ -214,26 +225,47 @@ function extractLocationName(input: JsonValue | undefined): string | null {
   return null;
 }
 
+function extractPathFromUnknown(val: unknown): string | null {
+  if (!val) return null;
+  if (typeof val === "string") {
+    if (val.startsWith("/") || val.startsWith("~") || val.includes("/")) {
+      return val;
+    }
+    return null;
+  }
+  if (typeof val === "object" && val !== null) {
+    if ("Physical" in (val as any)) return String((val as any).Physical?.path || "");
+    if ("Local" in (val as any)) return String((val as any).Local?.path || "");
+  }
+  return null;
+}
+
 function extractPath(input: JsonValue | undefined): string | null {
-  if (input && typeof input === "object" && "path" in input) {
-    const path = input.path;
-    // Handle Physical path: { Physical: { device_slug: "...", path: "..." } }
-    if (typeof path === "object" && path !== null && "Physical" in path) {
-      const physical = path.Physical;
-      if (typeof physical === "object" && physical !== null && "path" in physical) {
-        return String(physical.path);
+  if (input && typeof input === "object") {
+    if ("path" in input) {
+      const path = (input as any).path;
+      // Handle Physical path: { Physical: { device_slug: "...", path: "..." } }
+      if (typeof path === "object" && path !== null && "Physical" in path) {
+        const physical = path.Physical;
+        if (typeof physical === "object" && physical !== null && "path" in physical) {
+          return String(physical.path);
+        }
+      }
+      // Handle Local path: { Local: { path: "..." } }
+      if (typeof path === "object" && path !== null && "Local" in path) {
+        const local = path.Local;
+        if (typeof local === "object" && local !== null && "path" in local) {
+          return String(local.path);
+        }
+      }
+      // Handle direct string path
+      if (typeof path === "string") {
+        return path;
       }
     }
-    // Handle Local path: { Local: { path: "..." } }
-    if (typeof path === "object" && path !== null && "Local" in path) {
-      const local = path.Local;
-      if (typeof local === "object" && local !== null && "path" in local) {
-        return String(local.path);
-      }
-    }
-    // Handle direct string path
-    if (typeof path === "string") {
-      return path;
+    if ("paths" in input && Array.isArray((input as any).paths) && (input as any).paths.length > 0) {
+      const first = (input as any).paths[0];
+      return extractPath({ path: first } as any);
     }
   }
   return null;

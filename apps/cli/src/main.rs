@@ -47,7 +47,7 @@ mod util;
 
 use crate::context::{Context, OutputFormat};
 use crate::domains::{
-	cloud, config as config_cmd,
+	config as config_cmd,
 	daemon::{self, DaemonCmd},
 	devices::{self, DevicesCmd},
 	events::{self, EventsCmd},
@@ -57,7 +57,6 @@ use crate::domains::{
 	library::{self, LibraryCmd},
 	location::{self, LocationCmd},
 	logs::{self, LogsCmd},
-	network::{self, NetworkCmd},
 	search::{self, SearchCmd},
 	spaces::{self, SpacesCmd},
 	tag::{self, TagCmd},
@@ -197,9 +196,6 @@ enum Commands {
 	/// Location operations
 	#[command(subcommand)]
 	Location(LocationCmd),
-	/// Networking and pairing
-	#[command(subcommand)]
-	Network(NetworkCmd),
 	/// Job commands
 	#[command(subcommand)]
 	Job(JobCmd),
@@ -218,8 +214,6 @@ enum Commands {
 	/// Volume operations
 	#[command(subcommand)]
 	Volume(VolumeCmd),
-	/// Interactive cloud storage setup
-	Cloud,
 	/// Update CLI and daemon to latest version
 	Update {
 		/// Force update even if already on latest version
@@ -622,13 +616,6 @@ async fn run_client_command(
 					};
 					services_table.add_row(vec!["Location Watcher", watcher_status]);
 
-					let net_status = if services.networking.running {
-						"● Running"
-					} else {
-						"○ Stopped"
-					};
-					services_table.add_row(vec!["Networking", net_status]);
-
 					let vol_status = if services.volume_monitor.running {
 						"● Running"
 					} else {
@@ -643,51 +630,6 @@ async fn run_client_command(
 					};
 					services_table.add_row(vec!["File Sharing", share_status]);
 					println!("{}", services_table);
-					println!();
-
-					// Network
-					let mut network_table = Table::new();
-					network_table.load_preset(UTF8_BORDERS_ONLY);
-					network_table.set_header(vec![
-						Cell::new("Network").add_attribute(Attribute::Bold),
-						Cell::new(""),
-					]);
-					if status.network.running {
-						network_table.add_row(vec!["Status", "● Running"]);
-
-						if let Some(node_id) = &status.network.node_id {
-							let node_id_display = if node_id.len() > 50 {
-								format!("{}...", &node_id[..47])
-							} else {
-								node_id.clone()
-							};
-							network_table.add_row(vec!["Node ID", &node_id_display]);
-						}
-
-						network_table.add_row(vec![
-							"Connected Devices",
-							&status.network.connected_devices.to_string(),
-						]);
-
-						network_table.add_row(vec![
-							"Paired Devices",
-							&status.network.paired_devices.to_string(),
-						]);
-
-						if !status.network.addresses.is_empty() {
-							network_table.add_row(vec![
-								"Addresses",
-								&format!("{} address(es)", status.network.addresses.len()),
-							]);
-							for addr in &status.network.addresses {
-								network_table.add_row(vec![format!("  {}", addr), "".to_string()]);
-							}
-						}
-
-						network_table.add_row(vec!["Version", &status.network.version]);
-					} else {
-						network_table.add_row(vec!["Status", "○ Stopped"]);
-					}
 					println!("{}", network_table);
 				}
 				OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&status)?),
@@ -699,14 +641,12 @@ async fn run_client_command(
 		Commands::File(cmd) => file::run(&ctx, cmd).await?,
 		Commands::Index(cmd) => index::run(&ctx, cmd).await?,
 		Commands::Location(cmd) => location::run(&ctx, cmd).await?,
-		Commands::Network(cmd) => network::run(&ctx, cmd).await?,
 		Commands::Job(cmd) => job::run(&ctx, cmd).await?,
 		Commands::Logs(cmd) => logs::run(&ctx, cmd).await?,
 		Commands::Search(cmd) => search::run(&ctx, cmd).await?,
 		Commands::Spaces(cmd) => spaces::exec(cmd, &ctx).await?,
 		Commands::Tag(cmd) => tag::run(&ctx, cmd).await?,
 		Commands::Volume(cmd) => volume::run(&ctx, cmd).await?,
-		Commands::Cloud => cloud::run(&ctx).await?,
 		_ => {} // Start and Stop are handled in main
 	}
 	Ok(())

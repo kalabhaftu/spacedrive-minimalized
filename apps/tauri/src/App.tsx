@@ -3,7 +3,6 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import {
 	Shell,
-	FloatingControls,
 	PopoutInspector,
 	QuickPreview,
 	JobsScreen,
@@ -22,8 +21,6 @@ import type { Event as CoreEvent } from "@sd/ts-client";
 import { useEffect, useState } from "react";
 import { DragOverlay } from "./routes/DragOverlay";
 import { ContextMenuWindow } from "./routes/ContextMenuWindow";
-import { DragDemo } from "./components/DragDemo";
-import { SpacedropWindow } from "./routes/Spacedrop";
 import { platform } from "./platform";
 import { initializeContextMenuHandler } from "./contextMenu";
 import { initializeKeybindGlobal } from "./keybinds";
@@ -31,10 +28,8 @@ import { initializeKeybindGlobal } from "./keybinds";
 function getInitialRoute() {
 	const label = getCurrentWebviewWindow().label;
 
-	if (label === "floating-controls") return "/floating-controls";
 	if (label.startsWith("drag-overlay")) return "/drag-overlay";
 	if (label.startsWith("context-menu")) return "/contextmenu";
-	if (label.startsWith("drag-demo")) return "/drag-demo";
 	if (label.startsWith("settings")) return "/settings";
 	if (label.startsWith("inspector")) return "/inspector";
 	if (label.startsWith("quick-preview")) return "/quick-preview";
@@ -178,24 +173,12 @@ function App() {
 	}, []);
 
 	// Routes that don't need the client
-	if (route === "/floating-controls") {
-		return <FloatingControls />;
-	}
-
 	if (route === "/drag-overlay") {
 		return <DragOverlay />;
 	}
 
 	if (route === "/contextmenu") {
 		return <ContextMenuWindow />;
-	}
-
-	if (route === "/drag-demo") {
-		return <DragDemo />;
-	}
-
-	if (route === "/spacedrop") {
-		return <SpacedropWindow />;
 	}
 
 	if (error) {

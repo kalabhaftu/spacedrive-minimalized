@@ -83,9 +83,9 @@ export function JobRow({ job, onPause, onResume, onCancel }: JobRowProps) {
 							</span>
 						)}
 					</div>
-					{(message || subtext) && (
+					{(subtext || message) && (
 						<p className="text-xs text-ink-dull truncate">
-							{message || subtext}
+							{subtext || message}
 						</p>
 					)}
 				</div>

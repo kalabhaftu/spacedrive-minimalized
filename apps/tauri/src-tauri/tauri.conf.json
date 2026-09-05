@@ -33,10 +33,25 @@
       }
     ],
     "security": {
-      "csp": null,
+      "csp": "default-src 'self' ipc: http://ipc.localhost data: blob: 'unsafe-inline' 'unsafe-eval'; img-src 'self' asset: http://asset.localhost https: data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;",
       "assetProtocol": {
         "enable": true,
-        "scope": ["$HOME/**", "/Volumes/**", "/System/Volumes/**", "/Users/**"]
+        "scope": [
+          "**",
+          "**/*",
+          "$HOME/**",
+          "$HOME/**/*",
+          "$DOCUMENT/**",
+          "$DOCUMENT/**/*",
+          "$PICTURES/**",
+          "$PICTURES/**/*",
+          "/Volumes/**",
+          "/Volumes/**/*",
+          "/System/Volumes/**",
+          "/System/Volumes/**/*",
+          "/Users/**",
+          "/Users/**/*"
+        ]
       }
     }
   },

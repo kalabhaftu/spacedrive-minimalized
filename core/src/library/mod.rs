@@ -59,9 +59,6 @@ pub struct Library {
 	/// Transaction manager for atomic writes + sync logging
 	transaction_manager: Arc<TransactionManager>,
 
-	/// Sync service for real-time synchronization (initialized after library creation)
-	sync_service: OnceCell<Arc<crate::service::sync::SyncService>>,
-
 	/// File sync service for cross-location file synchronization (initialized after library creation)
 	file_sync_service: OnceCell<Arc<crate::service::file_sync::FileSyncService>>,
 
@@ -118,9 +115,9 @@ impl Library {
 		&self.transaction_manager
 	}
 
-	/// Get the sync service
-	pub fn sync_service(&self) -> Option<&Arc<crate::service::sync::SyncService>> {
-		self.sync_service.get()
+	/// Legacy stub: P2P sync removed, local-only mode always returns None
+	pub fn sync_service(&self) -> Option<&Arc<()>> {
+		None
 	}
 
 	/// Get the file sync service
@@ -156,81 +153,11 @@ impl Library {
 		&self.core_context
 	}
 
-	/// Initialize the sync service (called during library setup)
-	#[cfg_attr(test, allow(dead_code))] // Exposed for integration tests
-	pub async fn init_sync_service(
-		&self,
-		device_id: Uuid,
-		network: Arc<dyn crate::infra::sync::NetworkTransport>,
-	) -> Result<()> {
-		if self.sync_service.get().is_some() {
-			warn!(
-				"Sync service already initialized for library {}, cannot replace transport. Transport: {}",
-				self.id(),
-				self.sync_service.get().unwrap().peer_sync().transport_name()
-			);
-			return Ok(());
-		}
-
-		let sync_service =
-			crate::service::sync::SyncService::new_from_library(self, device_id, network)
-				.await
-				.map_err(|e| {
-					LibraryError::Other(format!("Failed to create sync service: {}", e))
-				})?;
-
-		self.sync_service
-			.set(Arc::new(sync_service))
-			.map_err(|_| LibraryError::Other("Sync service already initialized".to_string()))?;
-
-		// Start the sync service
-		if let Some(service) = self.sync_service.get() {
-			use crate::service::Service;
-			service
-				.start()
-				.await
-				.map_err(|e| LibraryError::Other(format!("Failed to start sync service: {}", e)))?;
-		}
-
-		// Ensure current device is synced as shared resource (one-time migration)
-		// This handles the transition from device-owned to shared sync for existing devices
-		self.ensure_device_synced_as_shared(device_id).await?;
-
+	/// Local-only mode: P2P sync removed, no-op kept for compatibility
+	pub async fn init_sync_service(&self) -> Result<()> {
 		Ok(())
 	}
 
-	/// Ensure the current device is synced as a shared resource
-	/// This is called once during sync initialization to handle migration from device-owned to shared sync
-	async fn ensure_device_synced_as_shared(&self, device_id: Uuid) -> Result<()> {
-		use crate::infra::db::entities;
-		use crate::infra::sync::ChangeType;
-		use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-
-		// Find the current device in the database
-		let device = entities::device::Entity::find()
-			.filter(entities::device::Column::Uuid.eq(device_id))
-			.one(self.db().conn())
-			.await
-			.map_err(|e| LibraryError::Other(format!("Failed to query device: {}", e)))?;
-
-		if let Some(device_model) = device {
-			// Sync the device record as a shared resource
-			// This ensures it will propagate to all other devices in the library
-			self.sync_model(&device_model, ChangeType::Insert)
-				.await
-				.map_err(|e| {
-					LibraryError::Other(format!("Failed to sync device as shared resource: {}", e))
-				})?;
-
-			info!(
-				"Synced device {} as shared resource for library {}",
-				device_id,
-				self.id()
-			);
-		}
-
-		Ok(())
-	}
 
 	/// Get a copy of the current configuration
 	pub async fn config(&self) -> LibraryConfig {
@@ -312,38 +239,6 @@ impl Library {
 		if let Ok(cache) = self.device_cache.read() {
 			if let Some(device_id) = cache.get(slug).copied() {
 				return Some(device_id);
-			}
-		}
-
-		// Priority 3: Fall back to paired devices from networking layer
-		// This allows file transfers between paired devices even if they're not in the library DB
-		if let Ok(networking_guard) = self.core_context.networking.try_read() {
-			if let Some(networking) = networking_guard.as_ref() {
-				if let Ok(registry) = networking.device_registry().try_read() {
-					// Check all devices in the registry for a matching slug
-					for (device_id, state) in registry.get_all_devices() {
-						let device_info = match state {
-							crate::service::network::device::DeviceState::Paired {
-								info, ..
-							}
-							| crate::service::network::device::DeviceState::Connected {
-								info,
-								..
-							}
-							| crate::service::network::device::DeviceState::Disconnected {
-								info,
-								..
-							} => Some(info),
-							_ => None,
-						};
-
-						if let Some(info) = device_info {
-							if info.device_slug == slug {
-								return Some(device_id);
-							}
-						}
-					}
-				}
 			}
 		}
 
@@ -471,14 +366,6 @@ impl Library {
 	/// Shutdown the library, gracefully stopping all jobs
 	pub async fn shutdown(&self) -> Result<()> {
 		debug!("Shutting down library {}", self.id());
-
-		// Stop sync service
-		if let Some(sync_service) = self.sync_service() {
-			use crate::service::Service;
-			if let Err(e) = sync_service.stop().await {
-				warn!("Error stopping sync service: {}", e);
-			}
-		}
 
 		// Shutdown the job manager, which will pause all running jobs
 		self.jobs.shutdown().await?;
