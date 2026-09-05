@@ -5,15 +5,17 @@ import clsx from 'clsx';
 import {useCreateSpaceDialog} from './CreateSpaceModal';
 
 interface SpaceSwitcherProps {
-	spaces: Space[] | undefined;
-	currentSpace: Space | undefined;
+	spaces?: Space[];
+	currentSpace?: Space;
 	onSwitch: (spaceId: string) => void;
+	onOpenSettings?: () => void;
 }
 
 export function SpaceSwitcher({
 	spaces,
 	currentSpace,
-	onSwitch
+	onSwitch,
+	onOpenSettings,
 }: SpaceSwitcherProps) {
 	const createSpaceDialog = useCreateSpaceDialog();
 
@@ -80,7 +82,10 @@ export function SpaceSwitcher({
 					<Plus className="mr-2 size-4" weight="bold" />
 					New Space
 				</DropdownMenu.Item>
-				<DropdownMenu.Item className="hover:bg-menu-hover text-menu-ink rounded-lg px-2.5 py-1.5 text-sm font-medium cursor-pointer transition-colors">
+				<DropdownMenu.Item
+					onClick={onOpenSettings}
+					className="hover:bg-menu-hover text-menu-ink rounded-lg px-2.5 py-1.5 text-sm font-medium cursor-pointer transition-colors"
+				>
 					<GearSix className="mr-2 size-4" weight="bold" />
 					Space Settings
 				</DropdownMenu.Item>

@@ -5,11 +5,13 @@ import {
 	useMemo,
 	useEffect,
 	useCallback,
+	useRef,
 	type ReactNode,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useNormalizedQuery } from "../../contexts/SpacedriveContext";
 import { useTabManager } from "../../components/TabManager/useTabManager";
+import { useSelection } from "./SelectionContext";
 import type {
 	ViewMode as TabViewMode,
 	SortBy as TabSortBy,
@@ -626,6 +628,19 @@ export function ExplorerProvider({
 	}, [location.search]);
 
 	const pathKey = getPathKey(currentTarget);
+	const { clearSelection } = useSelection();
+	const prevPathKeyRef = useRef(pathKey);
+	const prevTabIdRef = useRef(activeTabId);
+
+	useEffect(() => {
+		// Only clear selection if pathKey changed within the same tab.
+		// Tab switching preserves each tab's selection via TabManager.
+		if (prevTabIdRef.current === activeTabId && prevPathKeyRef.current !== pathKey) {
+			clearSelection();
+		}
+		prevPathKeyRef.current = pathKey;
+		prevTabIdRef.current = activeTabId;
+	}, [pathKey, activeTabId, clearSelection]);
 
 	useEffect(() => {
 		const savedSort = sortPrefs.getPreferences(pathKey);
@@ -650,6 +665,7 @@ export function ExplorerProvider({
 
 	const navigateToPath = useCallback(
 		(path: SdPath) => {
+			clearSelection();
 			const target: NavigationTarget = { type: "path", path };
 			navDispatch({ type: "NAVIGATE", target });
 			routerNavigate(targetToUrl(target));
@@ -657,11 +673,12 @@ export function ExplorerProvider({
 			uiDispatch({ type: "EXIT_SEARCH_MODE" });
 			uiDispatch({ type: "EXIT_TAG_MODE" });
 		},
-		[routerNavigate],
+		[clearSelection, routerNavigate],
 	);
 
 	const navigateToView = useCallback(
 		(view: string, id?: string, params?: Record<string, string>) => {
+			clearSelection();
 			const target: NavigationTarget = { type: "view", view, id, params };
 			navDispatch({ type: "NAVIGATE", target });
 			routerNavigate(targetToUrl(target));
@@ -669,10 +686,11 @@ export function ExplorerProvider({
 			uiDispatch({ type: "EXIT_SEARCH_MODE" });
 			uiDispatch({ type: "EXIT_TAG_MODE" });
 		},
-		[routerNavigate],
+		[clearSelection, routerNavigate],
 	);
 
 	const goBack = useCallback(() => {
+		clearSelection();
 		navDispatch({ type: "GO_BACK" });
 		const targetIndex = navState.index - 1;
 		if (targetIndex >= 0) {
@@ -682,9 +700,10 @@ export function ExplorerProvider({
 			uiDispatch({ type: "EXIT_SEARCH_MODE" });
 			uiDispatch({ type: "EXIT_TAG_MODE" });
 		}
-	}, [navState.index, navState.history, routerNavigate]);
+	}, [clearSelection, navState.index, navState.history, routerNavigate]);
 
 	const goForward = useCallback(() => {
+		clearSelection();
 		navDispatch({ type: "GO_FORWARD" });
 		const targetIndex = navState.index + 1;
 		if (targetIndex < navState.history.length) {
@@ -694,7 +713,7 @@ export function ExplorerProvider({
 			uiDispatch({ type: "EXIT_SEARCH_MODE" });
 			uiDispatch({ type: "EXIT_TAG_MODE" });
 		}
-	}, [navState.index, navState.history, routerNavigate]);
+	}, [clearSelection, navState.index, navState.history, routerNavigate]);
 
 	const spaceKey = getSpaceItemKey(location.pathname, location.search);
 
@@ -795,14 +814,16 @@ export function ExplorerProvider({
 
 	const enterSearchMode = useCallback(
 		(query: string, scope: SearchScope = "folder") => {
+			clearSelection();
 			uiDispatch({ type: "ENTER_SEARCH_MODE", query, scope });
 		},
-		[],
+		[clearSelection],
 	);
 
 	const exitSearchMode = useCallback(() => {
+		clearSelection();
 		uiDispatch({ type: "EXIT_SEARCH_MODE" });
-	}, []);
+	}, [clearSelection]);
 
 	const enterRecentsMode = useCallback(() => {
 		uiDispatch({ type: "ENTER_RECENTS_MODE" });

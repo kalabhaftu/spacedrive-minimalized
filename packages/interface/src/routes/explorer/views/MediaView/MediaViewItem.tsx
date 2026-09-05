@@ -61,6 +61,7 @@ export const MediaViewItem = memo(function MediaViewItem({
 	return (
 		<div
 			data-file-id={file.id}
+			data-selectable="true"
 			tabIndex={-1}
 			className={clsx(
 				"relative overflow-hidden cursor-pointer transition-all w-full h-full group outline-none focus:outline-none",

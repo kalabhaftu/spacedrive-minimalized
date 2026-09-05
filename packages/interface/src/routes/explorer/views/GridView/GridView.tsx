@@ -38,14 +38,40 @@ export function GridView() {
 		restoreSelectionFromFiles(files);
 	}, [files, restoreSelectionFromFiles]);
 
+	const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+
+	const isEventOnItem = (e: React.MouseEvent) => {
+		const target = e.target as HTMLElement | null;
+		if (!target) return false;
+		return Boolean(
+			target.closest('[data-selectable="true"]') ||
+			target.closest('[data-file-id]') ||
+			target.closest('button, a, input, textarea, select, [role="button"]')
+		);
+	};
+
+	const handleContainerMouseDown = (e: React.MouseEvent) => {
+		if (e.button === 0) {
+			mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+		}
+	};
+
 	const handleContainerClick = (e: React.MouseEvent) => {
-		if (e.target === e.currentTarget) {
+		if (e.button !== 0 || e.shiftKey || e.metaKey || e.ctrlKey) return;
+		if (mouseDownPosRef.current) {
+			const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
+			const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
+			mouseDownPosRef.current = null;
+			// If pointer moved more than 5px, it was a drag selection
+			if (dx > 5 || dy > 5) return;
+		}
+		if (!isEventOnItem(e)) {
 			clearSelection();
 		}
 	};
 
 	const handleContainerContextMenu = async (e: React.MouseEvent) => {
-		if (e.target === e.currentTarget) {
+		if (!isEventOnItem(e)) {
 			e.preventDefault();
 			e.stopPropagation();
 			await emptySpaceContextMenu.show(e);
@@ -75,6 +101,7 @@ export function GridView() {
 			<div
 				ref={gridContainerRef}
 				className="h-full overflow-auto"
+				onMouseDown={handleContainerMouseDown}
 				onClick={handleContainerClick}
 				onContextMenu={handleContainerContextMenu}
 			>
@@ -116,6 +143,7 @@ export function GridView() {
 			selectedFiles={selectedFiles}
 			selectFile={selectFile}
 			setSelectedFiles={setSelectedFiles}
+			onContainerMouseDown={handleContainerMouseDown}
 			onContainerClick={handleContainerClick}
 			onContainerContextMenu={handleContainerContextMenu}
 		/>
@@ -137,6 +165,7 @@ interface VirtualizedGridProps {
 		range?: boolean,
 	) => void;
 	setSelectedFiles: (files: File[]) => void;
+	onContainerMouseDown: (e: React.MouseEvent) => void;
 	onContainerClick: (e: React.MouseEvent) => void;
 	onContainerContextMenu: (e: React.MouseEvent) => void;
 }
@@ -151,6 +180,7 @@ function VirtualizedGrid({
 	selectedFiles,
 	selectFile,
 	setSelectedFiles,
+	onContainerMouseDown,
 	onContainerClick,
 	onContainerContextMenu,
 }: VirtualizedGridProps) {
@@ -273,6 +303,7 @@ function VirtualizedGrid({
 		<div
 			ref={parentRef}
 			className="h-full overflow-auto"
+			onMouseDown={onContainerMouseDown}
 			onClick={onContainerClick}
 			onContextMenu={onContainerContextMenu}
 		>

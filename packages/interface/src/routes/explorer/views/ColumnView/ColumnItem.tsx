@@ -42,7 +42,15 @@ export const ColumnItem = memo(
 		});
 
 		return (
-			<div ref={setNodeRef} {...listeners} {...attributes} tabIndex={-1} className="outline-none focus:outline-none">
+			<div
+				ref={setNodeRef}
+				{...listeners}
+				{...attributes}
+				data-file-id={file.id}
+				data-selectable="true"
+				tabIndex={-1}
+				className="outline-none focus:outline-none"
+			>
 				<FileComponent
 					file={file}
 					selected={selected && !isDragging}

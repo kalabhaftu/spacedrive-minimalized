@@ -6,6 +6,7 @@ import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
 import { ColumnItem } from "./ColumnItem";
 import { useExplorer } from "../../context";
 import { useFileContextMenu } from "../../hooks/useFileContextMenu";
+import { useEmptySpaceContextMenu } from "../../hooks/useEmptySpaceContextMenu";
 import { useSelection } from "../../SelectionContext";
 
 /**
@@ -127,7 +128,46 @@ export const Column = memo(function Column({
 }: ColumnProps) {
 	const parentRef = useRef<HTMLDivElement>(null);
 	const { viewSettings, sortBy } = useExplorer();
-	const { selectedFiles } = useSelection();
+	const { selectedFiles, clearSelection } = useSelection();
+	const emptySpaceContextMenu = useEmptySpaceContextMenu();
+	const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+
+	const isEventOnItem = (e: React.MouseEvent) => {
+		const target = e.target as HTMLElement | null;
+		if (!target) return false;
+		return Boolean(
+			target.closest('[data-selectable="true"]') ||
+			target.closest('[data-file-id]') ||
+			target.closest('button, a, input, textarea, select, [role="button"]')
+		);
+	};
+
+	const handleContainerMouseDown = (e: React.MouseEvent) => {
+		if (e.button === 0) {
+			mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+		}
+	};
+
+	const handleContainerClick = (e: React.MouseEvent) => {
+		if (e.button !== 0 || e.shiftKey || e.metaKey || e.ctrlKey) return;
+		if (mouseDownPosRef.current) {
+			const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
+			const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
+			mouseDownPosRef.current = null;
+			if (dx > 5 || dy > 5) return;
+		}
+		if (!isEventOnItem(e)) {
+			clearSelection();
+		}
+	};
+
+	const handleContainerContextMenu = async (e: React.MouseEvent) => {
+		if (!isEventOnItem(e)) {
+			e.preventDefault();
+			e.stopPropagation();
+			await emptySpaceContextMenu.show(e);
+		}
+	};
 
 	const directoryQuery = useNormalizedQuery({
 		query: "files.directory_listing",
@@ -173,6 +213,9 @@ export const Column = memo(function Column({
 				isActive && "bg-app-box/30",
 			)}
 			style={{ width: `${viewSettings.columnWidth}px` }}
+			onMouseDown={handleContainerMouseDown}
+			onClick={handleContainerClick}
+			onContextMenu={handleContainerContextMenu}
 		>
 			<div
 				style={{

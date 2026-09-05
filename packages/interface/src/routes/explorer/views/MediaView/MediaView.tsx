@@ -9,6 +9,7 @@ import {
 import { useExplorer } from "../../context";
 import { useSelection } from "../../SelectionContext";
 import { useNormalizedQuery } from "../../../../contexts/SpacedriveContext";
+import { useEmptySpaceContextMenu } from "../../hooks/useEmptySpaceContextMenu";
 import type { File } from "@sd/ts-client";
 import { MediaViewItem } from "./MediaViewItem";
 import { DateHeader } from "./DateHeader";
@@ -29,6 +30,7 @@ export function MediaView() {
 		useExplorer();
 	const {
 		selectFile,
+		clearSelection,
 		focusedIndex,
 		setFocusedIndex,
 		setSelectedFiles,
@@ -54,10 +56,47 @@ export function MediaView() {
 
 	// ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
 	const parentRef = useRef<HTMLDivElement>(null);
+	const emptySpaceContextMenu = useEmptySpaceContextMenu();
+	const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
 	const [containerWidth, setContainerWidth] = useState(0);
 	const [scrollOffset, setScrollOffset] = useState(0);
 
-	// TODO: Preserve scroll position per tab using scrollPosition from context
+	const isEventOnItem = (e: React.MouseEvent) => {
+		const target = e.target as HTMLElement | null;
+		if (!target) return false;
+		return Boolean(
+			target.closest('[data-selectable="true"]') ||
+			target.closest('[data-file-id]') ||
+			target.closest('button, a, input, textarea, select, [role="button"]')
+		);
+	};
+
+	const handleContainerMouseDown = (e: React.MouseEvent) => {
+		if (e.button === 0) {
+			mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+		}
+	};
+
+	const handleContainerClick = (e: React.MouseEvent) => {
+		if (e.button !== 0 || e.shiftKey || e.metaKey || e.ctrlKey) return;
+		if (mouseDownPosRef.current) {
+			const dx = Math.abs(e.clientX - mouseDownPosRef.current.x);
+			const dy = Math.abs(e.clientY - mouseDownPosRef.current.y);
+			mouseDownPosRef.current = null;
+			if (dx > 5 || dy > 5) return;
+		}
+		if (!isEventOnItem(e)) {
+			clearSelection();
+		}
+	};
+
+	const handleContainerContextMenu = async (e: React.MouseEvent) => {
+		if (!isEventOnItem(e)) {
+			e.preventDefault();
+			e.stopPropagation();
+			await emptySpaceContextMenu.show(e);
+		}
+	};
 
 	// Track when element is ready
 	const [elementReady, setElementReady] = useState(false);
@@ -402,6 +441,9 @@ export function MediaView() {
 			style={{
 				contain: "strict",
 			}}
+			onMouseDown={handleContainerMouseDown}
+			onClick={handleContainerClick}
+			onContextMenu={handleContainerContextMenu}
 		>
 			{/* Sticky date header in top-left corner */}
 			<div className="sticky top-3 left-3 z-20 pointer-events-none">

@@ -258,7 +258,17 @@ export function useExplorerFiles(): ExplorerFilesResult {
 			return (recentsQuery.data as FileSearchOutput | undefined)?.files || [];
 		}
 		if (isSearchMode) {
-			return (searchQuery.data as FileSearchOutput | undefined)?.files || [];
+			const rawFiles = (searchQuery.data as FileSearchOutput | undefined)?.files || [];
+			const seenPaths = new Set<string>();
+			return rawFiles.filter((f) => {
+				const pathKey =
+					f.sd_path && "Physical" in f.sd_path
+						? (f.sd_path as any).Physical.path
+						: f.id;
+				if (seenPaths.has(pathKey)) return false;
+				seenPaths.add(pathKey);
+				return true;
+			});
 		}
 		if (isVirtualView) {
 			return virtualFiles || [];

@@ -485,14 +485,50 @@ impl FileSearchQuery {
 			fts_count
 		);
 
+		let mut deduplicated = Self::deduplicate_search_results(results);
+
 		// Sort by final score
-		results.sort_by(|a, b| {
+		deduplicated.sort_by(|a, b| {
 			b.score
 				.partial_cmp(&a.score)
 				.unwrap_or(std::cmp::Ordering::Equal)
 		});
 
-		Ok(results)
+		Ok(deduplicated)
+	}
+
+	/// Deduplicate search results by resolved physical path.
+	/// When overlapping locations exist (e.g. ~/Downloads and ~), multiple database entries
+	/// point to the exact same file. This keeps the entry with the highest metadata fidelity.
+	fn deduplicate_search_results(
+		results: Vec<crate::ops::search::output::FileSearchResult>,
+	) -> Vec<crate::ops::search::output::FileSearchResult> {
+		let mut deduplicated: Vec<crate::ops::search::output::FileSearchResult> = Vec::new();
+		let mut path_map: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+
+		for res in results {
+			let path_key = match &res.file.sd_path {
+				SdPath::Physical { path, .. } => path.to_string_lossy().to_string(),
+				_ => res.file.name.clone(),
+			};
+
+			if let Some(&existing_idx) = path_map.get(&path_key) {
+				let existing = &deduplicated[existing_idx];
+				let prefer_new = match (&existing.file.content_identity, &res.file.content_identity) {
+					(None, Some(_)) => true,
+					(Some(_), None) => false,
+					_ => res.score > existing.score,
+				};
+				if prefer_new {
+					deduplicated[existing_idx] = res;
+				}
+			} else {
+				path_map.insert(path_key, deduplicated.len());
+				deduplicated.push(res);
+			}
+		}
+
+		deduplicated
 	}
 
 	/// Execute normal search with FTS5 + enhanced ranking

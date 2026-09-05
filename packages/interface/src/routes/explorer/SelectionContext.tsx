@@ -310,7 +310,7 @@ export function SelectionProvider({
 				}
 			}
 
-			// Only update if we found matching files and they're different from current
+			// If matching files exist, update selection
 			if (matchingFiles.length > 0) {
 				setSelectedFilesInternal((prev) => {
 					const prevIds = new Set(prev.map((f) => f.id));
@@ -326,9 +326,16 @@ export function SelectionProvider({
 
 					return matchingFiles;
 				});
+			} else {
+				// We loaded files for a folder/view, but none of the stored selection IDs exist here.
+				// Clear stale selection so the inspector and UI don't hold onto previous folder items.
+				setSelectedFilesInternal([]);
+				setFocusedIndex(-1);
+				setLastSelectedIndex(-1);
+				updateSelectionIds(activeTabId, []);
 			}
 		},
-		[storedIds],
+		[activeTabId, storedIds, updateSelectionIds],
 	);
 
 	const isRenaming = renamingFileId !== null;
