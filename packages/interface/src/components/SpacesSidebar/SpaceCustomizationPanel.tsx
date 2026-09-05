@@ -85,7 +85,6 @@ function getDefaultGroupName(groupType: GroupType): string {
 	if (groupType === "Devices") return "Devices";
 	if (groupType === "Locations") return "Locations";
 	if (groupType === "Tags") return "Tags";
-	if (groupType === "Cloud") return "Cloud";
 	if (groupType === "Custom") return "Custom Group";
 	if (typeof groupType === "object" && "Device" in groupType) return "Device";
 	return "Group";
@@ -235,9 +234,6 @@ export function SpaceCustomizationPanel({
 													All Locations
 												</option>
 												<option value="Tags" className="bg-sidebar-box text-sidebar-ink">Tags</option>
-												<option value="Cloud" className="bg-sidebar-box text-sidebar-ink">
-													Cloud Storage
-												</option>
 												<option value="Custom" className="bg-sidebar-box text-sidebar-ink">Custom</option>
 											</select>
 

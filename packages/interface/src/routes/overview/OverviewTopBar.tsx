@@ -1,6 +1,7 @@
 import {
 	ArrowsClockwise,
 	CaretDown,
+	Check,
 	GearSix,
 	MagnifyingGlass,
 	Plus
@@ -140,26 +141,41 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 							<CaretDown size={12} weight="bold" />
 						</button>
 					</Popover.Trigger>
-					<Popover.Content className="min-w-[200px] p-2">
+					<Popover.Content
+						className="min-w-[220px] rounded-xl border p-2 shadow-2xl z-[99999]"
+						style={{
+							backgroundColor: 'var(--color-app-overlay, #1b1b26)',
+							borderColor: 'var(--color-app-line, #2a2a38)',
+							color: 'var(--color-ink, #ededf0)',
+							opacity: 1,
+							boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7)'
+						}}
+					>
 						<div className="space-y-1">
-							{libraries && libraries.length > 1 && (
+							{libraries && libraries.length > 0 && (
 								<>
-									{libraries.map((lib) => (
-										<button
-											key={lib.id}
-											onClick={() =>
-												handleLibrarySwitch(lib.id)
-											}
-											className={clsx(
-												'w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm',
-												lib.id === currentLibraryId
-													? 'bg-accent text-white'
-													: 'text-ink hover:bg-app-selected'
-											)}
-										>
-											{lib.name}
-										</button>
-									))}
+									{libraries.map((lib) => {
+										const isCurrent = lib.id === currentLibraryId;
+										return (
+											<button
+												key={lib.id}
+												onClick={() =>
+													handleLibrarySwitch(lib.id)
+												}
+												className={clsx(
+													'w-full flex items-center justify-between cursor-pointer rounded-lg px-3 py-2 text-left text-sm transition-colors',
+													isCurrent
+														? 'bg-accent text-white font-medium'
+														: 'text-ink hover:bg-app-selected'
+												)}
+											>
+												<span className="truncate">{lib.name}</span>
+												{isCurrent && (
+													<Check size={14} weight="bold" className="shrink-0 ml-2" />
+												)}
+											</button>
+										);
+									})}
 									<div className="border-app-line my-1 border-t" />
 								</>
 							)}
@@ -168,14 +184,14 @@ export function OverviewTopBar({libraryName}: OverviewTopBarProps) {
 									librarySwitcher.setOpen(false);
 									createLibraryDialog.open();
 								}}
-								className="hover:bg-app-selected text-ink flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
+								className="hover:bg-app-selected text-ink flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
 							>
 								<Plus size={16} weight="bold" />
 								<span>New Library</span>
 							</button>
 							<button
 								onClick={() => librarySwitcher.setOpen(false)}
-								className="hover:bg-app-selected text-ink flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
+								className="hover:bg-app-selected text-ink flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
 							>
 								<GearSix size={16} weight="bold" />
 								<span>Library Settings</span>

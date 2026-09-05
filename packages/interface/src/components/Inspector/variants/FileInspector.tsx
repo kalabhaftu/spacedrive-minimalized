@@ -1,9 +1,9 @@
 import {
 	ArrowsClockwise,
 	Calendar,
-	Cube,
 	DotsThree,
 	Eye,
+	FileText,
 	FilmStrip,
 	Fingerprint,
 	HardDrive,
@@ -13,11 +13,8 @@ import {
 	Info,
 	MagnifyingGlass,
 	MapPin,
-	Microphone,
 	ShareNetwork,
-	Sparkle,
 	Tag as TagIcon,
-	TextAa,
 	Timer,
 	Trash,
 	VideoCamera
@@ -158,10 +155,7 @@ function FileQuickActions({file}: {file: File}) {
 		setIsFavorite(isTaggedFavorite || false);
 	}, [file.id, isTaggedFavorite]);
 
-	// AI Processing mutations
-	const extractText = useLibraryMutation('media.ocr.extract');
-	const transcribeAudio = useLibraryMutation('media.speech.transcribe');
-	const generateSplat = useLibraryMutation('media.splat.generate');
+	// Media Processing mutations
 	const regenerateThumbnail = useLibraryMutation('media.thumbnail.regenerate');
 	const generateThumbstrip = useLibraryMutation('media.thumbstrip.generate');
 	const generateProxy = useLibraryMutation('media.proxy.generate');
@@ -169,8 +163,7 @@ function FileQuickActions({file}: {file: File}) {
 	// Check content kind for available actions
 	const isImage = getContentKind(file) === 'image';
 	const isVideo = getContentKind(file) === 'video';
-	const isAudio = getContentKind(file) === 'audio';
-	const showJobsButton = isImage || isVideo || isAudio;
+	const showJobsButton = isImage || isVideo;
 
 	// Get physical path for sharing
 	const getPhysicalPath = (): string | null => {
@@ -211,45 +204,21 @@ function FileQuickActions({file}: {file: File}) {
 		}
 	};
 
-	// Jobs context menu
+	// Media utilities context menu
 	const jobsMenu = useContextMenu({
 		items: [
-			// Image actions
+			// Common thumbnail regeneration
 			{
-				icon: TextAa,
-				label: 'Extract Text (OCR)',
+				icon: ArrowsClockwise,
+				label: 'Regenerate Thumbnails',
 				onClick: () => {
-					extractText.mutate({
+					regenerateThumbnail.mutate({
 						entry_uuid: file.id,
-						languages: ['eng'],
-						force: false
+						variants: ['grid@1x', 'grid@2x', 'detail@1x'],
+						force: true
 					});
 				},
-				condition: () => isImage
-			},
-			{
-				icon: Cube,
-				label: 'Generate 3D Splat',
-				onClick: () => {
-					generateSplat.mutate({
-						entry_uuid: file.id,
-						model_path: null
-					});
-				},
-				condition: () => isImage
-			},
-			// Video/Audio actions
-			{
-				icon: Microphone,
-				label: 'Generate Subtitles',
-				onClick: () => {
-					transcribeAudio.mutate({
-						entry_uuid: file.id,
-						model: 'base',
-						language: null
-					});
-				},
-				condition: () => isVideo || isAudio
+				condition: () => isImage || isVideo
 			},
 			// Video-only actions
 			{
@@ -276,20 +245,6 @@ function FileQuickActions({file}: {file: File}) {
 					});
 				},
 				condition: () => isVideo
-			},
-			{type: 'separator' as const},
-			// Common actions
-			{
-				icon: ArrowsClockwise,
-				label: 'Regenerate Thumbnails',
-				onClick: () => {
-					regenerateThumbnail.mutate({
-						entry_uuid: file.id,
-						variants: ['grid@1x', 'grid@2x', 'detail@1x'],
-						force: true
-					});
-				},
-				condition: () => isImage || isVideo
 			}
 		]
 	});
@@ -335,15 +290,15 @@ function FileQuickActions({file}: {file: File}) {
 				</button>
 			)}
 
-			{/* Jobs Button */}
+			{/* Media Actions Button */}
 			{showJobsButton && (
 				<button
 					type="button"
 					onClick={(e) => jobsMenu.show(e)}
 					className="border-sidebar-line/30 bg-sidebar-box/20 text-sidebar-inkDull hover:bg-sidebar-box/30 hover:text-sidebar-ink flex size-7 items-center justify-center rounded-full border transition-all active:scale-95"
-					title="Processing Jobs"
+					title="Media Actions"
 				>
-					<Sparkle size={14} weight="bold" />
+					<ArrowsClockwise size={14} weight="bold" />
 				</button>
 			)}
 		</div>
@@ -651,23 +606,12 @@ function OverviewTab({file}: {file: File}) {
 	const applyTag = useLibraryMutation('tags.apply', { onSuccess: refetchTagQueries });
 	const unapplyTag = useLibraryMutation('tags.unapply', { onSuccess: refetchTagQueries });
 
-	// AI Processing mutations
-	const extractText = useLibraryMutation('media.ocr.extract');
-	const transcribeAudio = useLibraryMutation('media.speech.transcribe');
-	const generateSplat = useLibraryMutation('media.splat.generate');
+	// Media Processing mutations
 	const regenerateThumbnail = useLibraryMutation(
 		'media.thumbnail.regenerate'
 	);
 	const generateThumbstrip = useLibraryMutation('media.thumbstrip.generate');
 	const generateProxy = useLibraryMutation('media.proxy.generate');
-
-	// Job tracking for long-running operations
-	const {jobs} = useJobsContext();
-	const isSpeechJobRunning = jobs.some(
-		(job) =>
-			job.name === 'speech_to_text' &&
-			(job.status === 'running' || job.status === 'queued')
-	);
 
 	// Check content kind for available actions
 	const isImage = getContentKind(file) === 'image';
@@ -980,179 +924,10 @@ function OverviewTab({file}: {file: File}) {
 				)}
 			</Section>
 
-			{/* AI Processing */}
-			{(isImage || isVideo || isAudio) && (
-				<Section title="AI Processing" icon={Sparkle}>
+			{/* Media Processing */}
+			{(isImage || isVideo) && (
+				<Section title="Media Processing" icon={FilmStrip}>
 					<div className="flex flex-col gap-2">
-						{/* OCR for images */}
-						{isImage && (
-							<button
-								onClick={() => {
-									console.log(
-										'Extract text clicked for file:',
-										file.id
-									);
-									extractText.mutate(
-										{
-											entry_uuid: file.id,
-											languages: ['eng'],
-											force: false
-										},
-										{
-											onSuccess: (data) => {
-												console.log(
-													'OCR success:',
-													data
-												);
-											},
-											onError: (error) => {
-												console.error(
-													'OCR error:',
-													error
-												);
-											}
-										}
-									);
-								}}
-								disabled={extractText.isPending}
-								className={clsx(
-									'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-									'bg-app-box hover:bg-app-hover border-app-line border',
-									extractText.isPending &&
-										'cursor-not-allowed opacity-50'
-								)}
-							>
-								<TextAa size={4} weight="bold" />
-								<span>
-									{extractText.isPending
-										? 'Extracting...'
-										: 'Extract Text (OCR)'}
-								</span>
-							</button>
-						)}
-
-						{/* Gaussian Splat for images */}
-						{isImage && (
-							<button
-								onClick={() => {
-									console.log(
-										'Generate splat clicked for file:',
-										file.id
-									);
-									generateSplat.mutate(
-										{
-											entry_uuid: file.id,
-											model_path: null
-										},
-										{
-											onSuccess: (data) => {
-												console.log(
-													'Splat generation success:',
-													data
-												);
-											},
-											onError: (error) => {
-												console.error(
-													'Splat generation error:',
-													error
-												);
-											}
-										}
-									);
-								}}
-								disabled={generateSplat.isPending}
-								className={clsx(
-									'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-									'bg-app-box hover:bg-app-hover border-app-line border',
-									generateSplat.isPending &&
-										'cursor-not-allowed opacity-50'
-								)}
-							>
-								<Cube size={4} weight="bold" />
-								<span>
-									{generateSplat.isPending
-										? 'Generating...'
-										: 'Generate 3D Splat'}
-								</span>
-							</button>
-						)}
-
-						{/* Speech-to-text for audio/video */}
-						{(isVideo || isAudio) && (
-							<button
-								onClick={() => {
-									console.log(
-										'Transcribe clicked for file:',
-										file.id
-									);
-									transcribeAudio.mutate(
-										{
-											entry_uuid: file.id,
-											model: 'base',
-											language: null
-										},
-										{
-											onSuccess: (data) => {
-												console.log(
-													'Transcription success:',
-													data
-												);
-											},
-											onError: (error) => {
-												console.error(
-													'Transcription error:',
-													error
-												);
-
-												// Check if it's a feature-disabled error
-												const errorMessage =
-													error instanceof Error
-														? error.message
-														: String(error);
-												if (
-													errorMessage.includes(
-														'feature is not enabled'
-													) ||
-													errorMessage.includes(
-														'--features ffmpeg'
-													)
-												) {
-													toast.error({
-														title: 'Feature Not Available',
-														body: 'Speech-to-text requires FFmpeg. Please rebuild the daemon with --features ffmpeg,heif or use `cargo daemon`'
-													});
-												} else {
-													toast.error({
-														title: 'Transcription Failed',
-														body: errorMessage
-													});
-												}
-											}
-										}
-									);
-								}}
-								disabled={
-									transcribeAudio.isPending ||
-									isSpeechJobRunning
-								}
-								className={clsx(
-									'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-									'bg-app-box hover:bg-app-hover border-app-line border',
-									(transcribeAudio.isPending ||
-										isSpeechJobRunning) &&
-										'cursor-not-allowed opacity-50'
-								)}
-							>
-								<Microphone size={4} weight="bold" />
-								<span>
-									{transcribeAudio.isPending ||
-									isSpeechJobRunning
-										? 'Transcribing...'
-										: 'Generate Subtitles'}
-								</span>
-							</button>
-						)}
-
 						{/* Regenerate thumbnails */}
 						{(isImage || isVideo) && (
 							<button
@@ -1356,7 +1131,7 @@ function OverviewTab({file}: {file: File}) {
 							<div className="bg-app-box/40 border-app-line/50 mt-2 rounded-lg border p-3">
 								<div className="mb-2 flex items-center gap-2">
 									<span className="text-accent">
-										<TextAa size={16} weight="bold" />
+										<FileText size={16} weight="bold" />
 									</span>
 									<span className="text-sidebar-ink text-xs font-medium">
 										Extracted Text

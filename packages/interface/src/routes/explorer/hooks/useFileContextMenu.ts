@@ -13,7 +13,6 @@ import {
 	Pencil,
 	Scissors,
 	ShareNetwork,
-	Sparkle,
 	Stack,
 	Tag as TagIconComponent,
 	Trash,
@@ -370,7 +369,7 @@ export function useFileContextMenu({
 				condition: () => !!file && getContentKind(file) === 'image',
 				submenu: [
 					{
-						icon: Sparkle,
+						icon: Eye,
 						label: 'Generate Blurhash',
 						onClick: async () => {
 							const targets = getTargetFiles();
@@ -425,7 +424,7 @@ export function useFileContextMenu({
 							!file.sidecars?.some((s) => s.kind === 'thumbstrip')
 					},
 					{
-						icon: Sparkle,
+						icon: Eye,
 						label: 'Generate Blurhash',
 						onClick: async () => {
 							const targets = getTargetFiles();
@@ -518,7 +517,7 @@ export function useFileContextMenu({
 						}
 					},
 					{
-						icon: Sparkle,
+						icon: Eye,
 						label: 'Generate Blurhashes',
 						onClick: async () => {
 							await forEachTarget(selectedFiles, (f) =>

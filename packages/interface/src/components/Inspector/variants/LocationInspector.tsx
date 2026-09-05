@@ -5,7 +5,6 @@ import {
 	ClockCounterClockwise,
 	HardDrive,
 	DotsThree,
-	Sparkle,
 	Image,
 	MagnifyingGlass,
 	Trash,
@@ -108,7 +107,7 @@ function OverviewTab({ location }: { location: Location }) {
 				},
 			},
 			{
-				icon: Sparkle,
+				icon: ArrowsClockwise,
 				label: "Full Reindex",
 				onClick: () => {
 					rescanLocation.mutate({
@@ -354,8 +353,6 @@ function JobsTab({ location }: { location: Location }) {
 	const thumbnails = location.job_policies?.thumbnail?.enabled ?? true;
 	const thumbstrips = location.job_policies?.thumbstrip?.enabled ?? true;
 	const proxies = location.job_policies?.proxy?.enabled ?? false;
-	const ocr = location.job_policies?.ocr?.enabled ?? false;
-	const speech = location.job_policies?.speech_to_text?.enabled ?? false;
 
 	return (
 		<div className="no-scrollbar mask-fade-out flex flex-col space-y-5 overflow-x-hidden overflow-y-scroll pb-10 px-2 pt-2">
@@ -435,59 +432,6 @@ function JobsTab({ location }: { location: Location }) {
 						}
 						isTriggering={triggerJob.isPending}
 						icon={VideoCamera}
-					/>
-				</div>
-			</Section>
-
-			<Section title="AI Processing" icon={Sparkle}>
-				<div className="space-y-2.5">
-					<JobConfigRow
-						label="Extract Text (OCR)"
-						description="Scan images for text content"
-						enabled={ocr}
-						onToggle={(enabled) =>
-							updatePolicy({
-								ocr: {
-									languages: ['eng'],
-									min_confidence: 0.5,
-									reprocess: false,
-									...location.job_policies?.ocr,
-									enabled,
-								},
-							})
-						}
-						onTrigger={() =>
-							triggerJob.mutate({
-								location_id: location.id,
-								job_type: "ocr",
-								force: false,
-							})
-						}
-						isTriggering={triggerJob.isPending}
-					/>
-					<JobConfigRow
-						label="Speech to Text"
-						description="Transcribe audio and video files"
-						enabled={speech}
-						onToggle={(enabled) =>
-							updatePolicy({
-								speech_to_text: {
-									language: null,
-									model: 'base',
-									reprocess: false,
-									...location.job_policies?.speech_to_text,
-									enabled,
-								},
-							})
-						}
-						onTrigger={() =>
-							triggerJob.mutate({
-								location_id: location.id,
-								job_type: "speech_to_text",
-								force: false,
-							})
-						}
-						isTriggering={triggerJob.isPending}
 					/>
 				</div>
 			</Section>

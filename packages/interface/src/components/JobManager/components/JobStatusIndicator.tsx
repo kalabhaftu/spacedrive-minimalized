@@ -4,7 +4,7 @@ import {
   Files,
   FolderOpen,
   Database,
-  Sparkle,
+  Fingerprint,
   CheckCircle,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,7 +18,7 @@ interface JobStatusIndicatorProps {
 const INDEXER_PHASES = [
   { name: "Discovery", icon: MagnifyingGlass },
   { name: "Processing", icon: Files },
-  { name: "Content Identification", icon: Sparkle },
+  { name: "Content Identification", icon: Fingerprint },
   { name: "Finalizing", icon: CheckCircle },
 ];
 

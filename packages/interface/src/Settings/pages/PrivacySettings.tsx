@@ -49,17 +49,10 @@ export function PrivacySettings() {
 
           <div className="pt-2 border-t border-app-line">
             <p className="text-xs text-ink-dull">
-              We collect anonymous usage statistics to understand how Spacedrive is used
-              and to prioritize features. No personal data or file contents are ever collected.
+              Spacedrive is local-first. Your files, metadata, and database stay completely on your device.
+              If telemetry is enabled, only anonymous, non-identifying operational metrics are collected to help fix crashes.
+              No personal data, file paths, or file contents are ever transmitted.
             </p>
-            <a
-              href="https://spacedrive.com/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-accent hover:underline mt-2 inline-block"
-            >
-              Read our Privacy Policy
-            </a>
           </div>
         </div>
 

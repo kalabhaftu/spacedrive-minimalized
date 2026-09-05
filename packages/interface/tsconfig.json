@@ -10,11 +10,7 @@
 		"resolveJsonModule": true,
 		"baseUrl": ".",
 		"paths": {
-			"~/*": ["./src/*"],
-			"@spacebot/api-client": [
-				"../../../spacebot/packages/api-client/src/index.ts"
-			],
-			"@spacebot/api-client/*": ["../../../spacebot/packages/api-client/src/*"]
+			"~/*": ["./src/*"]
 		},
 		"types": ["@react-three/fiber"]
 	},
