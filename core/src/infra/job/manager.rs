@@ -1473,7 +1473,7 @@ impl JobManager {
 							})?;
 
 						// Get services from context
-										let volume_manager = Some(self.context.volume_manager.clone());
+						let volume_manager = Some(self.context.volume_manager.clone());
 
 						// Create handle
 						let job_name = job_record.name.clone();
@@ -1979,7 +1979,7 @@ impl JobManager {
 				})?;
 
 			// Get services from context
-				let volume_manager = Some(self.context.volume_manager.clone());
+			let volume_manager = Some(self.context.volume_manager.clone());
 
 			// Create handle
 			let handle = JobHandle {

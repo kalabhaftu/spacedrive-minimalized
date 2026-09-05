@@ -158,7 +158,6 @@ impl Library {
 		Ok(())
 	}
 
-
 	/// Get a copy of the current configuration
 	pub async fn config(&self) -> LibraryConfig {
 		self.config.read().await.clone()

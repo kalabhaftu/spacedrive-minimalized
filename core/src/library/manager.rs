@@ -555,11 +555,16 @@ impl LibraryManager {
 		}
 
 		// Ensure default locations exist if library has none
-		if let Ok(count) = entities::location::Entity::find().count(library.db().conn()).await {
+		if let Ok(count) = entities::location::Entity::find()
+			.count(library.db().conn())
+			.await
+		{
 			if count == 0 {
-				self.create_default_locations(context.clone(), library.clone()).await;
+				self.create_default_locations(context.clone(), library.clone())
+					.await;
 			} else {
-				self.upgrade_and_index_unindexed_locations(context.clone(), library.clone()).await;
+				self.upgrade_and_index_unindexed_locations(context.clone(), library.clone())
+					.await;
 			}
 		}
 
@@ -1531,7 +1536,11 @@ impl LibraryManager {
 	}
 
 	/// Upgrade existing locations that have index_mode == "none" to "deep" and start indexing them
-	async fn upgrade_and_index_unindexed_locations(&self, _context: Arc<CoreContext>, library: Arc<Library>) {
+	async fn upgrade_and_index_unindexed_locations(
+		&self,
+		_context: Arc<CoreContext>,
+		library: Arc<Library>,
+	) {
 		use crate::domain::location::IndexMode;
 		use crate::ops::indexing::job::IndexerJob;
 		use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
@@ -1550,19 +1559,31 @@ impl LibraryManager {
 		};
 
 		for loc in unindexed {
-			info!("Upgrading unindexed location '{}' to Deep indexing", loc.uuid);
+			info!(
+				"Upgrading unindexed location '{}' to Deep indexing",
+				loc.uuid
+			);
 			let mut active: entities::location::ActiveModel = loc.clone().into();
 			active.index_mode = Set("deep".to_string());
 			active.updated_at = Set(chrono::Utc::now());
 			if let Err(e) = active.update(db).await {
-				warn!("Failed to update location index mode for {}: {}", loc.uuid, e);
+				warn!(
+					"Failed to update location index mode for {}: {}",
+					loc.uuid, e
+				);
 				continue;
 			}
 
 			// Get location path and dispatch background indexing
 			if let Some(entry_id) = loc.entry_id {
-				if let Ok(Some(dir_path)) = entities::directory_paths::Entity::find_by_id(entry_id).one(db).await {
-					if let Ok(Some(device)) = entities::device::Entity::find_by_id(loc.device_id).one(db).await {
+				if let Ok(Some(dir_path)) = entities::directory_paths::Entity::find_by_id(entry_id)
+					.one(db)
+					.await
+				{
+					if let Ok(Some(device)) = entities::device::Entity::find_by_id(loc.device_id)
+						.one(db)
+						.await
+					{
 						let raw_path = dir_path.path.clone();
 						let sd_path = crate::domain::addressing::SdPath::Physical {
 							device_slug: device.slug,
@@ -1582,9 +1603,21 @@ impl LibraryManager {
 								"location_id": loc.uuid.to_string(),
 							}),
 						};
-						match library.jobs().dispatch_with_priority(job, crate::infra::job::types::JobPriority::NORMAL, Some(action_ctx)).await {
+						match library
+							.jobs()
+							.dispatch_with_priority(
+								job,
+								crate::infra::job::types::JobPriority::NORMAL,
+								Some(action_ctx),
+							)
+							.await
+						{
 							Ok(handle) => {
-								info!("Dispatched background indexer job {} for location '{}'", handle.id(), loc.uuid);
+								info!(
+									"Dispatched background indexer job {} for location '{}'",
+									handle.id(),
+									loc.uuid
+								);
 							}
 							Err(e) => {
 								warn!("Failed to dispatch indexer job for {}: {}", loc.uuid, e);

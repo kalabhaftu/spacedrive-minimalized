@@ -5,6 +5,7 @@ use clap::Subcommand;
 
 use crate::util::prelude::*;
 
+use self::args::*;
 use crate::context::Context;
 use sd_core::ops::libraries::{
 	create::{input::LibraryCreateInput, output::LibraryCreateOutput},
@@ -12,7 +13,6 @@ use sd_core::ops::libraries::{
 	info::{output::LibraryInfoOutput, query::LibraryInfoQuery},
 	list::query::ListLibrariesQuery,
 };
-use self::args::*;
 
 #[derive(Subcommand, Debug)]
 pub enum LibraryCmd {
@@ -183,4 +183,3 @@ pub async fn run(ctx: &Context, cmd: LibraryCmd) -> Result<()> {
 	}
 	Ok(())
 }
-

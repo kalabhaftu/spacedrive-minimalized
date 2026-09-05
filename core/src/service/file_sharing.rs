@@ -348,20 +348,18 @@ impl FileSharingService {
 					Err(SharingError::TransferFailed("Job not found".to_string()))
 				}
 			}
-			TransferId::SpacedropId(_session_id) => {
-				Ok(TransferStatus {
-					id: transfer_id.clone(),
-					state: TransferState::Pending,
-					progress: TransferProgress {
-						bytes_transferred: 0,
-						total_bytes: 0,
-						files_transferred: 0,
-						total_files: 0,
-						estimated_remaining: None,
-					},
-					error: None,
-				})
-			}
+			TransferId::SpacedropId(_session_id) => Ok(TransferStatus {
+				id: transfer_id.clone(),
+				state: TransferState::Pending,
+				progress: TransferProgress {
+					bytes_transferred: 0,
+					total_bytes: 0,
+					files_transferred: 0,
+					total_files: 0,
+					estimated_remaining: None,
+				},
+				error: None,
+			}),
 		}
 	}
 

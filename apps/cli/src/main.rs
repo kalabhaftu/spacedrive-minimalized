@@ -630,7 +630,6 @@ async fn run_client_command(
 					};
 					services_table.add_row(vec!["File Sharing", share_status]);
 					println!("{}", services_table);
-					println!("{}", network_table);
 				}
 				OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&status)?),
 			}

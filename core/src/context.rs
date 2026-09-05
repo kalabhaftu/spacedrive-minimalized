@@ -1,18 +1,11 @@
 //! Shared context providing access to core application components.
 
 use crate::{
-	config::JobLoggingConfig,
-	crypto::key_manager::KeyManager,
-	device::DeviceManager,
-	filetype::FileTypeRegistry,
-	infra::action::manager::ActionManager,
-	infra::event::EventBus,
-	infra::sync::TransactionManager,
-	library::LibraryManager,
-	ops::indexing::ephemeral::EphemeralIndexCache,
-	service::session::SessionStateService,
-	service::sidecar_manager::SidecarManager,
-	service::watcher::FsWatcherService,
+	config::JobLoggingConfig, crypto::key_manager::KeyManager, device::DeviceManager,
+	filetype::FileTypeRegistry, infra::action::manager::ActionManager, infra::event::EventBus,
+	infra::sync::TransactionManager, library::LibraryManager,
+	ops::indexing::ephemeral::EphemeralIndexCache, service::session::SessionStateService,
+	service::sidecar_manager::SidecarManager, service::watcher::FsWatcherService,
 	volume::VolumeManager,
 };
 use std::{path::PathBuf, sync::Arc};

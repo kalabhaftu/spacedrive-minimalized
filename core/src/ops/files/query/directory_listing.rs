@@ -155,7 +155,13 @@ impl LibraryQuery for DirectoryListingQuery {
 					.unwrap_or(false)
 				{
 					return self
-						.query_live_directory(&resolved_path, device_slug, context, library_id, db.conn())
+						.query_live_directory(
+							&resolved_path,
+							device_slug,
+							context,
+							library_id,
+							db.conn(),
+						)
 						.await;
 				}
 

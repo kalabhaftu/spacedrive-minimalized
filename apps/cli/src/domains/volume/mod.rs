@@ -7,7 +7,7 @@ use crate::context::Context;
 
 #[derive(Subcommand, Debug)]
 pub enum VolumeCmd {
-/// List all detected volumes
+	/// List all detected volumes
 	List,
 	/// Scan for volumes and auto-track eligible ones
 	Scan,

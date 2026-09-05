@@ -104,7 +104,6 @@ impl<J: JobHandler> JobExecutor<J> {
 				checkpoint_handler,
 				metrics: Default::default(),
 				output: output_handle,
-				networking,
 				volume_manager,
 				latest_progress: Arc::new(Mutex::new(None)),
 				job_logging_config,

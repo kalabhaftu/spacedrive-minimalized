@@ -9,9 +9,7 @@ use std::path::PathBuf;
 pub mod app_config;
 pub mod migration;
 
-pub use app_config::{
-	AppConfig, JobLoggingConfig, LogStreamConfig, LoggingConfig, ServiceConfig,
-};
+pub use app_config::{AppConfig, JobLoggingConfig, LogStreamConfig, LoggingConfig, ServiceConfig};
 pub use migration::Migrate;
 
 /// Default data directory: `~/.spacedrive` on desktop, platform data dir on mobile.

@@ -499,8 +499,7 @@ impl Default for OcrPolicy {
 
 impl OcrPolicy {
 	/// Local-only build: OCR removed
-	pub fn to_job_config(&self, _location_id: Option<Uuid>) -> () {
-	}
+	pub fn to_job_config(&self, _location_id: Option<Uuid>) -> () {}
 }
 
 /// Speech-to-text transcription policy

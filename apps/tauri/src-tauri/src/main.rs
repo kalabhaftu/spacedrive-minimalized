@@ -1588,19 +1588,19 @@ async fn start_daemon(
 		.spawn()
 		.map_err(|e| format!("Failed to start daemon: {}", e))?;
 
-	// Wait for daemon to be ready
-	for i in 0..30 {
+	// Wait for daemon to be ready (up to 10 seconds)
+	for i in 0..100 {
 		tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 		if is_daemon_running(socket_addr).await {
 			tracing::info!("Daemon ready at {}", socket_addr);
 			return Ok(child);
 		}
-		if i == 10 {
-			tracing::warn!("Daemon taking longer than expected to start...");
+		if i == 30 {
+			tracing::warn!("Daemon taking longer than expected to start (3s elapsed)...");
 		}
 	}
 
-	Err("Daemon failed to start (connection not available after 3 seconds)".to_string())
+	Err("Daemon failed to start (connection not available after 10 seconds)".to_string())
 }
 
 fn setup_menu(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {

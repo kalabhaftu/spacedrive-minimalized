@@ -11,7 +11,6 @@ pub struct DevicesListArgs {
 	/// Include detailed information (capabilities, network addresses, etc.)
 	#[arg(long, default_value_t = false)]
 	pub detailed: bool,
-
 }
 
 impl DevicesListArgs {

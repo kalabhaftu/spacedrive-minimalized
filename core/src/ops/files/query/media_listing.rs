@@ -158,7 +158,9 @@ impl LibraryQuery for MediaListingQuery {
 						.map(|m| m.is_dir())
 						.unwrap_or(false)
 					{
-						return self.query_live_media(&resolved_path, device_slug, context).await;
+						return self
+							.query_live_media(&resolved_path, device_slug, context)
+							.await;
 					}
 				}
 				return Err(e);

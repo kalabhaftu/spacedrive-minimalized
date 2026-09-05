@@ -35,7 +35,6 @@ pub enum SpacedriveWindow {
 	TagAssignment,
 	SearchOverlay,
 
-
 	/// Drag overlay (cursor-tracking preview during drag operations)
 	DragOverlay {
 		session_id: String,
@@ -232,7 +231,6 @@ impl SpacedriveWindow {
 				)
 			}
 
-
 			Self::DragOverlay { session_id } => {
 				let url = format!("/drag-overlay?session={}", session_id);
 				let window = WebviewWindowBuilder::new(app, label, WebviewUrl::App(url.into()))
@@ -380,7 +378,6 @@ pub async fn close_window(app: AppHandle, label: String) -> Result<(), String> {
 	}
 	Ok(())
 }
-
 
 #[tauri::command]
 pub async fn resize_overlay_window(

@@ -139,7 +139,10 @@ impl LibraryQuery for ListLibraryDevicesQuery {
 
 		// Local-only mode: mark current device online, others offline
 		for d in result.iter_mut() {
-			if d.is_current { d.is_online = true; d.is_connected = false; }
+			if d.is_current {
+				d.is_online = true;
+				d.is_connected = false;
+			}
 		}
 
 		Ok(result)

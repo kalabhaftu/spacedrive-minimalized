@@ -7,7 +7,11 @@ use uuid::Uuid;
 /// Kept for API compatibility with tests that reference NetworkTransport.
 #[async_trait::async_trait]
 pub trait NetworkTransport: Send + Sync {
-	async fn send_sync_message(&self, _target_device: Uuid, _message: serde_json::Value) -> Result<()> {
+	async fn send_sync_message(
+		&self,
+		_target_device: Uuid,
+		_message: serde_json::Value,
+	) -> Result<()> {
 		Ok(())
 	}
 

@@ -706,10 +706,16 @@ impl JobHandler for IndexerJob {
 					}
 				}
 				Ok(None) => {
-					ctx.log(format!("Location {} not found when updating scan state", location_id));
+					ctx.log(format!(
+						"Location {} not found when updating scan state",
+						location_id
+					));
 				}
 				Err(e) => {
-					ctx.log(format!("Failed to query location {} for scan state update: {}", location_id, e));
+					ctx.log(format!(
+						"Failed to query location {} for scan state update: {}",
+						location_id, e
+					));
 				}
 			}
 		}

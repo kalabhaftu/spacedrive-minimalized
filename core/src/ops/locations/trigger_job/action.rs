@@ -3,12 +3,15 @@
 use super::output::LocationTriggerJobOutput;
 use crate::{
 	context::CoreContext,
-	infra::action::{
-		context::ActionContextProvider,
-		error::{ActionError, ActionResult},
-		LibraryAction,
-	},
 	infra::db::entities,
+	infra::{
+		action::{
+			context::ActionContextProvider,
+			error::{ActionError, ActionResult},
+			LibraryAction,
+		},
+		job::prelude::JobHandle,
+	},
 };
 use async_trait::async_trait;
 use sea_orm::{
@@ -100,7 +103,7 @@ impl LibraryAction for LocationTriggerJobAction {
 			.unwrap_or_default();
 
 		// Dispatch the appropriate job based on type
-		let job_handle = match self.input.job_type {
+		let job_handle: JobHandle = match self.input.job_type {
 			#[cfg(feature = "ffmpeg")]
 			JobType::Thumbnail => {
 				if !job_policies.thumbnail.enabled && !self.input.force {
@@ -175,8 +178,6 @@ impl LibraryAction for LocationTriggerJobAction {
 					),
 				});
 			}
-
-
 
 			JobType::ObjectDetection => {
 				return Err(ActionError::Validation {

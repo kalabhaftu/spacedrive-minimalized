@@ -151,8 +151,6 @@ impl PathResolver {
 			},
 		);
 
-
-
 		metrics
 	}
 

@@ -264,7 +264,9 @@ impl CopyStrategy for RemoteTransferStrategy {
 		_verify_checksum: bool,
 		_progress_callback: Option<&ProgressCallback<'a>>,
 	) -> Result<u64> {
-		Err(anyhow::anyhow!("Cross-device transfer removed in local-only build"))
+		Err(anyhow::anyhow!(
+			"Cross-device transfer removed in local-only build"
+		))
 	}
 }
 
@@ -557,5 +559,7 @@ async fn stream_file_data<'a>(
 	_ctx: &JobContext<'a>,
 	_progress_callback: Option<&ProgressCallback<'a>>,
 ) -> Result<()> {
-	Err(anyhow::anyhow!("Cross-device transfer removed in local-only build"))
+	Err(anyhow::anyhow!(
+		"Cross-device transfer removed in local-only build"
+	))
 }

@@ -70,11 +70,7 @@ impl FileOpener for WindowsFileOpener {
 		}
 	}
 
-	fn open_with_app(
-		&self,
-		path: &Path,
-		app_id: &str,
-	) -> std::result::Result<OpenResult, String> {
+	fn open_with_app(&self, path: &Path, app_id: &str) -> std::result::Result<OpenResult, String> {
 		ensure_com_initialized();
 
 		let ext = path
