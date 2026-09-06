@@ -3,11 +3,10 @@
 use anyhow::Context;
 use chrono::Utc;
 use sd_core::{
-	config::{AppConfig, JobLoggingConfig, LogStreamConfig, LoggingConfig, Preferences, ServiceConfig},
-	infra::{
-		db::entities,
-		job::JobStatus,
+	config::{
+		AppConfig, JobLoggingConfig, LogStreamConfig, LoggingConfig, Preferences, ServiceConfig,
 	},
+	infra::{db::entities, job::JobStatus},
 	library::Library,
 };
 use sea_orm::{ActiveValue::Set, EntityTrait, PaginatorTrait};
@@ -33,9 +32,10 @@ pub fn init_test_tracing(_test_name: &str, snapshot_dir: &Path) -> anyhow::Resul
 				.with_writer(log_file),
 		)
 		.with(fmt::layer().with_target(true).with_thread_ids(true))
-		.with(EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-			EnvFilter::new("sd_core=debug,helpers=trace")
-		}))
+		.with(
+			EnvFilter::try_from_default_env()
+				.unwrap_or_else(|_| EnvFilter::new("sd_core=debug,helpers=trace")),
+		)
 		.try_init();
 
 	Ok(())
@@ -175,7 +175,8 @@ pub async fn wait_for_indexing(
 			job_seen = true;
 		}
 
-		if job_seen && !completed_jobs.is_empty() && running_jobs.is_empty() && current_entries > 0 {
+		if job_seen && !completed_jobs.is_empty() && running_jobs.is_empty() && current_entries > 0
+		{
 			if current_entries == last_entry_count {
 				stable_iterations += 1;
 				if stable_iterations >= 3 {
