@@ -59,6 +59,9 @@ fn main() {
 				println!("Successfully compiled Spacedrive.icon to Assets.car");
 			}
 		}
+
+		// Ensure macOS finds Swift runtime dylibs in dyld cache (@rpath/libswiftCore.dylib)
+		println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
 	}
 
 	// Create target-suffixed daemon binary for Tauri bundler

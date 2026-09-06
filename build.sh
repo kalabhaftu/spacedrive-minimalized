@@ -110,6 +110,7 @@ do_dev() {
     log_step "Starting Spacedrive in Dev Mode (Desktop App with hot-reload)..."
     log_info "App will auto-launch the Tauri desktop window and connect to sd-daemon."
     echo -e "${DIM}Press Ctrl+C at any time to exit dev mode.${NC}\n"
+    export DYLD_FALLBACK_LIBRARY_PATH="/usr/lib/swift:${DYLD_FALLBACK_LIBRARY_PATH:-}"
     cd apps/tauri
     bun run tauri:dev
 }
