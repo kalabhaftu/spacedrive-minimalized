@@ -34,7 +34,6 @@ import {JobCard} from '../../components/JobManager/components/JobCard';
 import {useJobsContext} from '../../components/JobManager/hooks/JobsContext';
 import {
 	getDeviceIcon,
-	useCoreQuery,
 	useNormalizedQuery
 } from '../../contexts/SpacedriveContext';
 import {VolumeBar} from './VolumeBar';
@@ -111,30 +110,8 @@ export function DevicePanel({onLocationSelect}: DevicePanelProps = {}) {
 	// Get all jobs with real-time updates (local jobs)
 	const {jobs: localJobs} = useJobsContext();
 
-	// Get remote device jobs
-	// TODO: This should have its own hook like useJobs, this will not work reactively
-	const {data: remoteJobsData} = useCoreQuery({
-		type: 'jobs.remote.all_devices',
-		input: {}
-	});
-
-	// Merge local and remote jobs
-	const allJobs = [
-		...localJobs,
-		...(remoteJobsData?.jobs_by_device
-			? Object.values(remoteJobsData.jobs_by_device)
-					.flat()
-					.map((remoteJob) => ({
-						id: remoteJob.job_id,
-						name: remoteJob.job_type,
-						device_id: remoteJob.device_id,
-						status: remoteJob.status,
-						progress: remoteJob.progress || 0,
-						action_type: null,
-						action_context: null
-					}))
-			: [])
-	] as JobListItem[];
+	// All jobs in local-only mode
+	const allJobs = localJobs as JobListItem[];
 
 	// Only block on devices loading (foundation data)
 	// Volumes and locations can load progressively within each device card

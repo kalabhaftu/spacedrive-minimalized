@@ -14,10 +14,6 @@ export type ActiveJobsInput = Record<string, never>;
 
 export type ActiveJobsOutput = { jobs: ActiveJobItem[]; running_count: number; paused_count: number };
 
-export type AdapterConfigField = { key: string; name: string; description: string; field_type: string; required: boolean; secret: boolean; default: string | null };
-
-export type AdapterInfo = { id: string; name: string; description: string; version: string; author: string; data_type: string; icon_svg: string | null; update_available: boolean };
-
 export type AddGroupInput = { space_id: string; name: string; group_type: GroupType };
 
 export type AddGroupOutput = { group: SpaceGroup };
@@ -98,15 +94,7 @@ services: ServiceConfigOutput;
 /**
  * Daemon logging configuration
  */
-logging: LoggingConfigOutput; 
-/**
- * Proxy pairing configuration
- */
-proxy_pairing: ProxyPairingConfigOutput; 
-/**
- * Spacebot companion configuration
- */
-spacebot: SpacebotConfigOutput };
+logging: LoggingConfigOutput };
 
 export type ApplyTagsInput = { 
 /**
@@ -163,15 +151,15 @@ message: string };
 /**
  * Targets for immediately applying a newly created tag
  */
-export type ApplyToTargets =
+export type ApplyToTargets = 
 /**
  * Apply to content identities (all instances)
  */
-{ type: "Content"; ids: string[] } |
+{ type: "Content"; ids: string[] } | 
 /**
  * Apply to specific entries by database ID (internal use)
  */
-{ type: "Entry"; ids: number[] } |
+{ type: "Entry"; ids: number[] } | 
 /**
  * Apply to specific entries by UUID (from frontend File.id)
  */
@@ -186,24 +174,6 @@ export type AudioMediaData = { uuid: string; duration_seconds: number | null; bi
  * Cloud service type identifier
  */
 export type CloudServiceType = "s3" | "gdrive" | "dropbox" | "onedrive" | "gcs" | "azblob" | "b2" | "wasabi" | "spaces" | "cloud";
-
-export type CloudStorageConfig = { type: "S3"; bucket: string; region: string; access_key_id: string; secret_access_key: string; endpoint: string | null } | 
-/**
- * Google Drive with OAuth 2.0 credentials.
- * Requires both access_token and refresh_token for automatic token renewal.
- */
-{ type: "GoogleDrive"; root: string | null; access_token: string; refresh_token: string; client_id: string; client_secret: string } | 
-/**
- * OneDrive with OAuth 2.0 credentials.
- * Requires both access_token and refresh_token for automatic token renewal.
- */
-{ type: "OneDrive"; root: string | null; access_token: string; refresh_token: string; client_id: string; client_secret: string } | 
-/**
- * Dropbox with OAuth 2.0 refresh token for long-term access.
- * OpenDAL automatically obtains and refreshes access tokens as needed.
- * Only refresh_token is required (not access_token).
- */
-{ type: "Dropbox"; root: string | null; refresh_token: string; client_id: string; client_secret: string } | { type: "AzureBlob"; container: string; endpoint: string | null; account_name: string; account_key: string } | { type: "GoogleCloudStorage"; bucket: string; root: string | null; endpoint: string | null; credential: string };
 
 /**
  * Operators for combining tag attributes
@@ -232,7 +202,7 @@ export type CompositionOperator =
 export type CompositionRule = { operator: CompositionOperator; operands: string[]; result_attribute: string };
 
 /**
- * Network connection method for a device
+ * Network connection method for a device (local-only, reserved for future use)
  */
 export type ConnectionMethod = 
 /**
@@ -452,7 +422,7 @@ is_fast_operation: boolean;
  */
 copy_method: CopyMethod };
 
-export type CoreStatus = { version: string; built_at: string; library_count: number; device_info: DeviceInfo; libraries: LibraryInfo[]; services: ServiceStatus; network: NetworkStatus; system: SystemInfo };
+export type CoreStatus = { version: string; built_at: string; library_count: number; device_info: DeviceInfo; libraries: LibraryInfo[]; services: ServiceStatus; system: SystemInfo };
 
 /**
  * Input for creating a new folder
@@ -483,44 +453,6 @@ folder_path: SdPath;
  * Job receipt if items were moved into the folder
  */
 job_receipt?: JobReceipt | null };
-
-/**
- * Input for creating a new archive source
- */
-export type CreateSourceInput = { 
-/**
- * Display name for the source
- */
-name: string; 
-/**
- * Adapter ID (e.g., "gmail", "obsidian", "chrome-bookmarks")
- */
-adapter_id: string; 
-/**
- * Adapter-specific configuration
- */
-config: JsonValue };
-
-/**
- * Output from creating a new archive source
- */
-export type CreateSourceOutput = { 
-/**
- * The ID of the newly created source
- */
-id: string; 
-/**
- * The display name of the source
- */
-name: string; 
-/**
- * The adapter ID used
- */
-adapter_id: string; 
-/**
- * Current status (usually "idle" initially)
- */
-status: string };
 
 export type CreateTagInput = { 
 /**
@@ -574,19 +506,6 @@ namespace: string | null;
  */
 message: string };
 
-export type DeleteTagInput = { tag_id: string };
-
-export type DeleteTagOutput = { deleted: boolean };
-
-export type UnapplyTagsInput = { entry_ids: string[]; tag_ids: string[] };
-
-export type UnapplyTagsOutput = { entries_affected: number; tags_removed: number; warnings: string[] };
-
-/**
- * Data volume metrics snapshot
- */
-export type DataVolumeSnapshot = { entries_synced: { [key in string]: number }; entries_by_device: { [key in string]: DeviceMetricsSnapshot }; bytes_sent: number; bytes_received: number; last_sync_per_peer: { [key in string]: string }; last_sync_per_model: { [key in string]: string } };
-
 /**
  * Time-based fields that can be filtered
  */
@@ -605,19 +524,15 @@ export type DeleteItemInput = { item_id: string };
 
 export type DeleteItemOutput = { success: boolean };
 
-export type DeleteSourceInput = { source_id: string };
+export type DeleteTagInput = { tag_id: string };
 
-export type DeleteSourceOutput = { deleted: boolean };
-
-export type DeleteWhisperModelInput = { model: string };
-
-export type DeleteWhisperModelOutput = { deleted: boolean };
+export type DeleteTagOutput = { deleted: boolean };
 
 /**
  * A device running Spacedrive
  * 
  * This is the canonical device type used throughout the application.
- * It represents both database-registered devices and network-paired devices.
+ * Local-only mode: represents database-registered devices.
  */
 export type Device = { 
 /**
@@ -693,7 +608,7 @@ boot_disk_capacity_bytes: number | null;
  */
 swap_total_bytes: number | null; 
 /**
- * Network addresses for P2P connections
+ * Network addresses (local-only, plain address list, no P2P)
  */
 network_addresses: string[]; 
 /**
@@ -725,19 +640,17 @@ updated_at: string;
  */
 is_current?: boolean; 
 /**
- * Whether this device is paired via network but not in library DB
+ * Whether this device is paired (local-only: always false, reserved)
  */
 is_paired?: boolean; 
 /**
- * Whether this device is currently connected via network
+ * Whether this device is currently connected (local-only: false except current)
  */
 is_connected?: boolean; 
 /**
- * Connection method when connected (Direct, Relay, or Mixed)
+ * Connection method when connected (local-only: always None, reserved)
  */
 connection_method?: ConnectionMethod | null };
-
-export type DeviceDebugInfo = { uuid: string; name: string; sync_enabled: boolean; has_node_id: boolean; node_id: string | null };
 
 /**
  * Device form factor types
@@ -745,49 +658,6 @@ export type DeviceDebugInfo = { uuid: string; name: string; sync_enabled: boolea
 export type DeviceFormFactor = "Desktop" | "Laptop" | "Mobile" | "Tablet" | "Server" | "Other";
 
 export type DeviceInfo = { id: string; name: string; slug: string; os: string; hardware_model: string | null; created_at: string };
-
-/**
- * Device metrics snapshot
- */
-export type DeviceMetricsSnapshot = { device_id: string; device_name: string; entries_received: number; last_seen: string; is_online: boolean };
-
-export type DeviceRevokeInput = { device_id: string; 
-/**
- * Whether to also remove the device from all library databases
- * 
- * If false (default), only unpairs from network but keeps device history in libraries.
- * If true, completely removes device from libraries (deletes all records).
- */
-remove_from_library?: boolean };
-
-export type DeviceRevokeOutput = { revoked: boolean };
-
-/**
- * Device sync state for state machine
- */
-export type DeviceSyncState = 
-/**
- * Not yet synced, no backfill started
- */
-"Uninitialized" | 
-/**
- * Currently backfilling from peer(s)
- * Buffers all live updates during this phase
- */
-{ Backfilling: { peer: string; progress: number } } | 
-/**
- * Backfill complete, processing buffered updates
- * Still buffers new updates while catching up
- */
-{ CatchingUp: { buffered_count: number } } | 
-/**
- * Fully synced, applying live updates immediately
- */
-"Ready" | 
-/**
- * Sync paused (offline or user disabled)
- */
-"Paused";
 
 /**
  * Input for directory listing
@@ -852,33 +722,6 @@ export type DirectorySortBy =
  */
 "type";
 
-export type DiscoverRemoteLibrariesInput = { 
-/**
- * Device ID to query for libraries
- */
-deviceId: string };
-
-/**
- * Output from discovering remote libraries
- */
-export type DiscoverRemoteLibrariesOutput = { 
-/**
- * Remote device ID that was queried
- */
-deviceId: string; 
-/**
- * Remote device name
- */
-deviceName: string; 
-/**
- * List of libraries available on the remote device
- */
-libraries: RemoteLibraryInfo[]; 
-/**
- * Whether the device is currently online
- */
-isOnline: boolean };
-
 /**
  * Disk type classification
  */
@@ -903,18 +746,6 @@ export type DiskType =
  * Unknown type
  */
 "Unknown";
-
-export type DownloadWhisperModelInput = { 
-/**
- * Model size: "tiny", "base", "small", "medium", "large"
- */
-model: string };
-
-export type DownloadWhisperModelOutput = { 
-/**
- * Job ID for tracking download progress
- */
-job_id: string };
 
 export type EnableIndexingInput = { 
 /**
@@ -1063,16 +894,6 @@ idle_seconds: number;
 job_stats: JobStats };
 
 /**
- * Error event for tracking recent errors
- */
-export type ErrorEvent = { timestamp: string; error_type: string; message: string; model_type: string | null; device_id: string | null };
-
-/**
- * Error metrics snapshot
- */
-export type ErrorSnapshot = { total_errors: number; network_errors: number; database_errors: number; apply_errors: number; validation_errors: number; recent_errors: ErrorEvent[]; conflicts_detected: number; conflicts_resolved_by_hlc: number };
-
-/**
  * A central event type that represents all events that can be emitted throughout the system
  */
 export type Event = "CoreStarted" | "CoreShutdown" | { LibraryCreated: { id: string; name: string; path: string; 
@@ -1100,7 +921,7 @@ error_type: string } } | { LibraryStatisticsUpdated: { library_id: string; stati
  * Refresh event - signals that all frontend caches should be invalidated
  * Emitted after major data recalculations (e.g., volume unique_bytes refresh)
  */
-"Refresh" | { ProxyPairingConfirmationRequired: { session_id: string; vouchee_device_name: string; vouchee_device_os: string; voucher_device_name: string; voucher_device_id: string; expires_at: string } } | { ProxyPairingVouchingReady: { session_id: string; vouchee_device_id: string } } | { EntryCreated: { library_id: string; entry_id: string } } | { EntryModified: { library_id: string; entry_id: string } } | { EntryDeleted: { library_id: string; entry_id: string } } | { EntryMoved: { library_id: string; entry_id: string; old_path: string; new_path: string } } | { FsRawChange: { library_id: string; kind: FsRawEventKind } } | { VolumeAdded: Volume } | { VolumeRemoved: { fingerprint: VolumeFingerprint } } | { VolumeUpdated: { fingerprint: VolumeFingerprint; old_info: VolumeInfo; new_info: VolumeInfo } } | { VolumeSpeedTested: { fingerprint: VolumeFingerprint; read_speed_mbps: number; write_speed_mbps: number } } | { VolumeMountChanged: { fingerprint: VolumeFingerprint; is_mounted: boolean } } | { VolumeError: { fingerprint: VolumeFingerprint; error: string } } | { JobQueued: { job_id: string; job_type: string; device_id: string } } | { JobStarted: { job_id: string; job_type: string; device_id: string } } | { JobProgress: { job_id: string; job_type: string; device_id: string; progress: number; message: string | null; generic_progress: GenericProgress | null } } | { JobCompleted: { job_id: string; job_type: string; device_id: string; output: JobOutput } } | { JobFailed: { job_id: string; job_type: string; device_id: string; error: string } } | { JobCancelled: { job_id: string; job_type: string; device_id: string } } | { JobPaused: { job_id: string; device_id: string } } | { JobResumed: { job_id: string; device_id: string } } | { IndexingStarted: { location_id: string } } | { IndexingProgress: { location_id: string; processed: number; total: number | null } } | { IndexingCompleted: { location_id: string; total_files: number; total_dirs: number } } | { IndexingFailed: { location_id: string; error: string } } | { DeviceConnected: { device_id: string; device_name: string } } | { DeviceDisconnected: { device_id: string } } | { SyncStateChanged: { library_id: string; previous_state: string; new_state: string; timestamp: string } } | { SyncActivity: { library_id: string; peer_device_id: string; activity_type: SyncActivityType; model_type: string | null; count: number; timestamp: string } } | { SyncConnectionChanged: { library_id: string; peer_device_id: string; peer_name: string; connected: boolean; timestamp: string } } | { SyncError: { library_id: string; peer_device_id: string | null; error_type: string; message: string; timestamp: string } } | { ResourceChanged: { 
+"Refresh" | { EntryCreated: { library_id: string; entry_id: string } } | { EntryModified: { library_id: string; entry_id: string } } | { EntryDeleted: { library_id: string; entry_id: string } } | { EntryMoved: { library_id: string; entry_id: string; old_path: string; new_path: string } } | { FsRawChange: { library_id: string; kind: FsRawEventKind } } | { VolumeAdded: Volume } | { VolumeRemoved: { fingerprint: VolumeFingerprint } } | { VolumeUpdated: { fingerprint: VolumeFingerprint; old_info: VolumeInfo; new_info: VolumeInfo } } | { VolumeSpeedTested: { fingerprint: VolumeFingerprint; read_speed_mbps: number; write_speed_mbps: number } } | { VolumeMountChanged: { fingerprint: VolumeFingerprint; is_mounted: boolean } } | { VolumeError: { fingerprint: VolumeFingerprint; error: string } } | { JobQueued: { job_id: string; job_type: string; device_id: string } } | { JobStarted: { job_id: string; job_type: string; device_id: string } } | { JobProgress: { job_id: string; job_type: string; device_id: string; progress: number; message: string | null; generic_progress: GenericProgress | null } } | { JobCompleted: { job_id: string; job_type: string; device_id: string; output: JobOutput } } | { JobFailed: { job_id: string; job_type: string; device_id: string; error: string } } | { JobCancelled: { job_id: string; job_type: string; device_id: string } } | { JobPaused: { job_id: string; device_id: string } } | { JobResumed: { job_id: string; device_id: string } } | { IndexingStarted: { location_id: string } } | { IndexingProgress: { location_id: string; processed: number; total: number | null } } | { IndexingCompleted: { location_id: string; total_files: number; total_dirs: number } } | { IndexingFailed: { location_id: string; error: string } } | { DeviceConnected: { device_id: string; device_name: string } } | { DeviceDisconnected: { device_id: string } } | { SyncStateChanged: { library_id: string; previous_state: string; new_state: string; timestamp: string } } | { SyncActivity: { library_id: string; peer_device_id: string; activity_type: SyncActivityType; model_type: string | null; count: number; timestamp: string } } | { SyncConnectionChanged: { library_id: string; peer_device_id: string; peer_name: string; connected: boolean; timestamp: string } } | { SyncError: { library_id: string; peer_device_id: string | null; error_type: string; message: string; timestamp: string } } | { ResourceChanged: { 
 /**
  * Resource type identifier (e.g., "location", "tag", "album")
  */
@@ -1135,27 +956,6 @@ resource_type: string;
  */
 resource_id: string } } | { LocationAdded: { library_id: string; location_id: string; path: string } } | { LocationRemoved: { library_id: string; location_id: string } } | { FilesIndexed: { library_id: string; location_id: string; count: number } } | { ThumbnailsGenerated: { library_id: string; count: number } } | { FileOperationCompleted: { library_id: string; operation: FileOperation; affected_files: number } } | { FilesModified: { library_id: string; paths: string[] } } | { ConfigChanged: { field: string } } | { Custom: { event_type: string } };
 
-/**
- * Event category for grouping related events
- */
-export type EventCategory = 
-/**
- * State machine lifecycle events
- */
-"lifecycle" | 
-/**
- * Data synchronization flow
- */
-"data_flow" | 
-/**
- * Network communication
- */
-"network" | 
-/**
- * Errors and failures
- */
-"error";
-
 export type EventInfo = { 
 /**
  * The event variant name (e.g., "JobProgress", "LibraryCreated")
@@ -1171,50 +971,9 @@ is_noisy: boolean;
 description: string };
 
 /**
- * Event severity level
- */
-export type EventSeverity = 
-/**
- * Debug-level information
- */
-"debug" | 
-/**
- * Informational event
- */
-"info" | 
-/**
- * Warning condition
- */
-"warning" | 
-/**
- * Error condition
- */
-"error";
-
-/**
  * Statistics about what was exported
  */
 export type ExportStats = { entries: number; content_identities: number; user_metadata: number; tags: number; media_data: number };
-
-export type ExtractTextInput = { 
-/**
- * UUID of the entry to extract text from
- */
-entry_uuid: string; 
-/**
- * Languages to use for OCR (e.g., ["eng", "spa"])
- */
-languages: string[] | null; 
-/**
- * Force re-extraction even if text exists
- */
-force: boolean };
-
-export type ExtractTextOutput = { 
-/**
- * Job ID for tracking OCR progress
- */
-job_id: string };
 
 /**
  * Represents a file within the Spacedrive VDFS.
@@ -1522,14 +1281,6 @@ variants: string[];
  */
 encoding_time_secs: number };
 
-export type GenerateSplatInput = { entry_uuid: string; model_path: string | null };
-
-export type GenerateSplatOutput = { 
-/**
- * Job ID for tracking splat generation progress
- */
-job_id: string };
-
 /**
  * Generate thumbstrip for a single video file
  */
@@ -1586,113 +1337,31 @@ completion: ProgressCompletion;
  */
 performance: PerformanceMetrics };
 
-export type GetAdapterConfigInput = { adapter_id: string };
-
 /**
  * Input for getting app configuration
  */
 export type GetAppConfigQueryInput = null;
+
+export type GetFilesByTagInput = { tag_id: string; include_children: boolean; min_confidence: number };
+
+export type GetFilesByTagOutput = { files: File[] };
 
 /**
  * Input for getting library configuration
  */
 export type GetLibraryConfigQueryInput = null;
 
-export type GetSourceInput = { source_id: string };
+export type GetTagAncestorsInput = { tag_id: string };
 
-/**
- * Input for getting sync activity summary
- */
-export type GetSyncActivityInput = Record<string, never>;
+export type GetTagAncestorsOutput = { ancestors: Tag[] };
 
-/**
- * Sync activity summary for the UI
- */
-export type GetSyncActivityOutput = { currentState: DeviceSyncState; peers: PeerActivity[]; errorCount: number };
+export type GetTagByIdInput = { tag_id: string };
 
-export type GetSyncEventLogInput = { 
-/**
- * Time range filter (start)
- */
-start_time?: string | null; 
-/**
- * Time range filter (end)
- */
-end_time?: string | null; 
-/**
- * Filter by event types
- */
-event_types?: SyncEventType[] | null; 
-/**
- * Filter by categories
- */
-categories?: EventCategory[] | null; 
-/**
- * Filter by severity levels
- */
-severities?: EventSeverity[] | null; 
-/**
- * Filter by peer device
- */
-peer_id?: string | null; 
-/**
- * Filter by model type
- */
-model_type?: string | null; 
-/**
- * Filter by correlation ID
- */
-correlation_id?: string | null; 
-/**
- * Maximum number of results
- */
-limit?: number | null; 
-/**
- * Offset for pagination
- */
-offset?: number | null; 
-/**
- * Include events from remote peers
- */
-include_remote_peers?: boolean | null };
+export type GetTagByIdOutput = { tag: Tag | null };
 
-export type GetSyncEventLogOutput = { events: SyncEventLog[] };
+export type GetTagChildrenInput = { tag_id: string };
 
-export type GetSyncMetricsInput = { 
-/**
- * Filter metrics since this time
- */
-since: string | null; 
-/**
- * Filter metrics for specific peer device
- */
-peer_id: string | null; 
-/**
- * Filter metrics for specific model type
- */
-model_type: string | null; 
-/**
- * Show only state metrics
- */
-state_only: boolean | null; 
-/**
- * Show only operation metrics
- */
-operations_only: boolean | null; 
-/**
- * Show only error metrics
- */
-errors_only: boolean | null };
-
-export type GetSyncMetricsOutput = { 
-/**
- * The metrics snapshot
- */
-metrics: SyncMetricsSnapshot };
-
-export type GetSyncPartnersInput = Record<string, never>;
-
-export type GetSyncPartnersOutput = { partners: SyncPartnerInfo[]; debug_info: SyncPartnersDebugInfo };
+export type GetTagChildrenOutput = { children: Tag[] };
 
 /**
  * Types of groups that can appear in a space
@@ -2279,16 +1948,11 @@ export type JobStatus =
 "cancelled";
 
 /**
- * Type of job to trigger for a location
+ * Type of job to trigger for a location (local-only: thumbnail/thumbstrip)
  */
-export type JobType = "thumbnail" | "thumbstrip" | "ocr" | "speech_to_text" | "object_detection";
+export type JobType = "thumbnail" | "thumbstrip";
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key in string]: JsonValue };
-
-/**
- * Latency metrics snapshot
- */
-export type LatencySnapshot = { count: number; avg_ms: number; min_ms: number; max_ms: number };
 
 /**
  * A Spacedrive library - the canonical domain model
@@ -2435,27 +2099,6 @@ name: string;
  * Path where the library is located
  */
 path: string };
-
-/**
- * Library-wide redundancy totals
- */
-export type LibraryRedundancyTotals = { 
-/**
- * Total unique content bytes across the entire library (deduplicated)
- */
-total_unique_content_bytes: number; 
-/**
- * Content bytes that exist on only one volume
- */
-total_at_risk_bytes: number; 
-/**
- * Content bytes that exist on two or more volumes
- */
-total_redundant_bytes: number; 
-/**
- * Ratio of redundant to total content (0.0 = nothing replicated, 1.0 = everything replicated)
- */
-replication_score: number };
 
 export type LibraryRenameInput = { library_id: string; new_name: string };
 
@@ -2608,82 +2251,6 @@ last_indexed: string | null;
  */
 updated_at: string };
 
-/**
- * Action to take when setting up library sync
- */
-export type LibrarySyncAction = 
-/**
- * Share local library to remote device (creates same library with same UUID on remote)
- * This is the primary way to create a shared library
- */
-{ type: "shareLocalLibrary"; libraryName: string } | 
-/**
- * Join an existing remote library (creates same library with same UUID locally)
- * Use this when the other device has already shared their library
- */
-{ type: "joinRemoteLibrary"; remoteLibraryId: string; remoteLibraryName: string } | 
-/**
- * Future: Merge two different libraries into one (combines data from both)
- * Not yet implemented - requires full sync system
- */
-{ type: "mergeLibraries"; localLibraryId: string; remoteLibraryId: string; mergedName: string };
-
-/**
- * Input for setting up library sync between paired devices
- */
-export type LibrarySyncSetupInput = { 
-/**
- * Local device ID (should be current device)
- */
-localDeviceId: string; 
-/**
- * Remote paired device ID
- */
-remoteDeviceId: string; 
-/**
- * Local library to set up sync for
- */
-localLibraryId: string; 
-/**
- * Remote library to sync with (optional for RegisterOnly)
- */
-remoteLibraryId: string | null; 
-/**
- * Sync action to perform
- */
-action: LibrarySyncAction; 
-/**
- * DEPRICATED: Which device should be the sync leader (for future sync implementation)
- */
-leaderDeviceId: string };
-
-/**
- * Result of library sync setup operation
- */
-export type LibrarySyncSetupOutput = { 
-/**
- * Whether setup was successful
- */
-success: boolean; 
-/**
- * Local library ID that was configured
- */
-localLibraryId: string; 
-/**
- * Remote library ID that was linked (if applicable)
- */
-remoteLibraryId: string | null; 
-/**
- * Whether devices were successfully registered in each other's libraries
- */
-devicesRegistered: boolean; 
-/**
- * Message describing the result
- */
-message: string };
-
-export type ListAdaptersInput = Record<string, never>;
-
 export type ListEventsInput = Record<string, never>;
 
 export type ListEventsOutput = { 
@@ -2717,46 +2284,7 @@ include_offline: boolean;
 /**
  * Whether to include detailed capabilities and sync leadership info (default: false)
  */
-include_details: boolean; 
-/**
- * Whether to also include paired network devices (default: false)
- */
-show_paired?: boolean };
-
-export type ListPairedDevicesInput = { 
-/**
- * Whether to include only connected devices
- */
-connectedOnly?: boolean };
-
-/**
- * Output from listing paired devices
- */
-export type ListPairedDevicesOutput = { 
-/**
- * List of paired devices
- */
-devices: PairedDeviceInfo[]; 
-/**
- * Total number of paired devices
- */
-total: number; 
-/**
- * Number of currently connected devices
- */
-connected: number };
-
-export type ListSourceItemsInput = { source_id: string; limit: number; offset: number };
-
-export type ListSourcesInput = { 
-/**
- * Filter by data type
- */
-data_type: string | null };
-
-export type ListWhisperModelsInput = Record<string, never>;
-
-export type ListWhisperModelsOutput = { models: ModelInfo[]; total_downloaded_size: number };
+include_details: boolean };
 
 /**
  * An indexed directory that Spacedrive monitors
@@ -3018,73 +2546,6 @@ export type MediaSortBy =
 export type MemoryBreakdownStats = { arena: number; cache: number; registry: number; path_index_overhead: number; path_index_entries: number; entry_uuids_overhead: number; entry_uuids_entries: number; content_kinds_overhead: number; content_kinds_entries: number };
 
 /**
- * Information about a model
- */
-export type ModelInfo = { 
-/**
- * Unique model identifier
- */
-id: string; 
-/**
- * Human-readable name
- */
-name: string; 
-/**
- * Model type
- */
-model_type: ModelType; 
-/**
- * File size in bytes
- */
-size_bytes: number; 
-/**
- * Where to download from
- */
-provider: ModelProvider; 
-/**
- * Filename on disk
- */
-filename: string; 
-/**
- * Whether this model is currently downloaded
- */
-downloaded: boolean; 
-/**
- * Optional description
- */
-description: string | null };
-
-/**
- * Model provider
- */
-export type ModelProvider = 
-/**
- * Hugging Face
- */
-{ HuggingFace: { repo: string } } | 
-/**
- * GitHub Release
- */
-{ GitHub: { owner: string; repo: string } } | 
-/**
- * Direct URL
- */
-{ Direct: { url: string } };
-
-/**
- * Type of model
- */
-export type ModelType = 
-/**
- * Whisper speech-to-text model
- */
-"Whisper" | 
-/**
- * Tesseract OCR language data
- */
-"Tesseract";
-
-/**
  * Mount type classification
  */
 export type MountType = 
@@ -3104,18 +2565,6 @@ export type MountType =
  * User mount
  */
 "User";
-
-export type NetworkStartInput = Record<string, never>;
-
-export type NetworkStartOutput = { started: boolean };
-
-export type NetworkStatus = { running: boolean; node_id: string | null; addresses: string[]; paired_devices: number; connected_devices: number; version: string; relay_url: string | null };
-
-export type NetworkStatusQueryInput = null;
-
-export type NetworkStopInput = Record<string, never>;
-
-export type NetworkStopOutput = { stopped: boolean };
 
 /**
  * Object detection policy (for future AI features)
@@ -3165,11 +2614,6 @@ reprocess: boolean };
 export type OperatingSystem = "MacOS" | "Windows" | "Linux" | "IOs" | "Android" | "Other";
 
 /**
- * Operation metrics snapshot
- */
-export type OperationSnapshot = { broadcasts_sent: number; state_changes_broadcast: number; shared_changes_broadcast: number; broadcast_batches_sent: number; failed_broadcasts: number; changes_received: number; changes_applied: number; changes_rejected: number; buffer_queue_depth: number; active_backfill_sessions: number; backfill_sessions_completed: number; backfill_pagination_rounds: number; retry_queue_depth: number; retry_attempts: number; retry_successes: number };
-
-/**
  * Pagination information
  */
 export type PaginationInfo = { current_page: number; total_pages: number; has_next: boolean; has_previous: boolean; limit: number; offset: number };
@@ -3179,86 +2623,10 @@ export type PaginationInfo = { current_page: number; total_pages: number; has_ne
  */
 export type PaginationOptions = { limit: number; offset: number };
 
-export type PairCancelInput = { session_id: string };
-
-export type PairCancelOutput = { cancelled: boolean };
-
-export type PairConfirmProxyInput = { session_id: string; accepted: boolean };
-
-export type PairConfirmProxyOutput = { success: boolean; error: string | null };
-
-export type PairGenerateInput = Record<string, never>;
-
-export type PairGenerateOutput = { code: string; session_id: string; expires_at: string; 
-/**
- * QR code JSON format (includes NodeId for remote pairing)
- */
-qr_json: string; 
-/**
- * Node ID for relay-based pairing (share this for cross-network pairing)
- */
-node_id: string | null };
-
-export type PairJoinInput = { code: string; 
-/**
- * Optional node ID for relay-based pairing (enables cross-network connections)
- */
-node_id: string | null };
-
-export type PairJoinOutput = { paired_device_id: string; device_name: string };
-
-export type PairStatusOutput = { sessions: PairingSessionSummary[] };
-
-export type PairStatusQueryInput = null;
-
-export type PairVouchInput = { session_id: string; target_device_ids: string[] };
-
-export type PairVouchOutput = { success: boolean; pending_count: number };
-
-/**
- * Information about a paired device
- */
-export type PairedDeviceInfo = { 
-/**
- * Device ID
- */
-id: string; 
-/**
- * Device name
- */
-name: string; 
-/**
- * Device type
- */
-deviceType: string; 
-/**
- * OS version
- */
-osVersion: string; 
-/**
- * App version
- */
-appVersion: string; 
-/**
- * Whether the device is currently connected
- */
-isConnected: boolean; 
-/**
- * When the device was last seen
- */
-lastSeen: string };
-
-export type PairingSessionSummary = { id: string; state: SerializablePairingState; remote_device_id: string | null; expires_at: string | null };
-
 /**
  * Path mapping for resolving virtual paths to actual storage locations
  */
 export type PathMapping = { virtual_path: string; actual_path: string };
-
-/**
- * Per-peer activity information
- */
-export type PeerActivity = { deviceId: string; deviceName: string; isOnline: boolean; lastSeen: string; entriesReceived: number; bytesReceived: number; bytesSent: number; watermarkLagMs: number | null };
 
 /**
  * Performance and timing metrics
@@ -3284,15 +2652,6 @@ error_count: number;
  * Number of warnings
  */
 warning_count: number };
-
-/**
- * Performance metrics snapshot
- */
-export type PerformanceSnapshot = { broadcast_latency: LatencySnapshot; apply_latency: LatencySnapshot; backfill_request_latency: LatencySnapshot; state_watermark: string; shared_watermark: string; watermark_lag_ms: { [key in string]: number }; hlc_physical_drift_ms: number; hlc_counter_max: number; db_query_duration: LatencySnapshot; db_query_count: number };
-
-export type PingInput = { message: string; count?: number | null };
-
-export type PingOutput = { echo: string; count: number; extension_works: boolean };
 
 /**
  * User preferences output
@@ -3338,11 +2697,6 @@ bytes_completed: number | null;
 total_bytes: number | null };
 
 /**
- * Proxy pairing configuration output
- */
-export type ProxyPairingConfigOutput = { auto_accept_vouched: boolean; auto_vouch_to_all: boolean; vouch_signature_max_age: number; vouch_response_timeout: number; vouch_queue_retry_limit: number };
-
-/**
  * Proxy/sidecar generation policy (video scrubbing)
  */
 export type ProxyPolicy = { 
@@ -3355,95 +2709,21 @@ enabled: boolean;
  */
 regenerate: boolean };
 
-/**
- * Input for the redundancy summary query
- */
-export type RedundancySummaryInput = {
-/**
- * Optional: restrict summary to specific volumes. None = all volumes.
- */
-volume_uuids?: string[] | null };
-
-/**
- * Complete redundancy summary for the library
- */
-export type RedundancySummaryOutput = {
-/**
- * Per-volume redundancy breakdown
- */
-volumes: VolumeRedundancySummary[];
-/**
- * Library-wide totals
- */
-library_totals: LibraryRedundancyTotals };
-
-export type RegenerateThumbnailInput = {
+export type RegenerateThumbnailInput = { 
 /**
  * UUID of the entry to regenerate thumbnails for
  */
-entry_uuid: string;
+entry_uuid: string; 
 /**
  * Optional variant names (defaults to grid@1x, grid@2x, detail@1x)
  */
-variants: string[] | null;
+variants: string[] | null; 
 /**
  * Force regeneration even if thumbnails exist
  */
 force: boolean };
 
-export type RegenerateThumbnailOutput = { 
-/**
- * Number of thumbnails generated
- */
-generated_count: number; 
-/**
- * Variant names that were generated
- */
-variants: string[] };
-
-/**
- * State of a job running on a remote device
- */
-export type RemoteJobState = { job_id: string; job_type: string; library_id: string; device_id: string; device_name: string; status: JobStatus; progress: number | null; message: string | null; generic_progress: GenericProgress | null; started_at: string | null; completed_at: string | null; error: string | null };
-
-/**
- * Query for all remote jobs across all devices
- */
-export type RemoteJobsAllDevicesInput = Record<string, never>;
-
-export type RemoteJobsAllDevicesOutput = { jobs_by_device: { [key in string]: RemoteJobState[] } };
-
-/**
- * Query for remote jobs on a specific device
- */
-export type RemoteJobsForDeviceInput = { device_id: string };
-
-export type RemoteJobsForDeviceOutput = { jobs: RemoteJobState[] };
-
-/**
- * Information about a library discovered on a remote device
- */
-export type RemoteLibraryInfo = { 
-/**
- * Library ID
- */
-id: string; 
-/**
- * Library name
- */
-name: string; 
-/**
- * Library description (if any)
- */
-description: string | null; 
-/**
- * When the library was created
- */
-createdAt: string; 
-/**
- * Statistics about the library
- */
-statistics: LibraryStatistics };
+export type RegenerateThumbnailOutput = { generated_count: number; variants: string[] };
 
 export type ReorderGroupsInput = { space_id: string; group_ids: string[] };
 
@@ -3728,16 +3008,14 @@ query: string;
  */
 filters: TagSearchFilters };
 
-export type SerializablePairingState = "Idle" | "GeneratingCode" | "Broadcasting" | "Scanning" | "WaitingForConnection" | "Connecting" | "Authenticating" | "ExchangingKeys" | "AwaitingConfirmation" | "EstablishingSession" | "ChallengeReceived" | "ResponsePending" | "ResponseSent" | "Completed" | { Failed: { reason: string } };
-
 /**
  * Service configuration output
  */
-export type ServiceConfigOutput = { networking_enabled: boolean; volume_monitoring_enabled: boolean; fs_watcher_enabled: boolean; statistics_listener_enabled: boolean };
+export type ServiceConfigOutput = { volume_monitoring_enabled: boolean; fs_watcher_enabled: boolean; statistics_listener_enabled: boolean };
 
 export type ServiceState = { running: boolean; details: string | null };
 
-export type ServiceStatus = { location_watcher: ServiceState; networking: ServiceState; volume_monitor: ServiceState; file_sharing: ServiceState };
+export type ServiceStatus = { location_watcher: ServiceState; volume_monitor: ServiceState; file_sharing: ServiceState };
 
 /**
  * Domain representation of a sidecar
@@ -3786,41 +3064,6 @@ export type SortField = "Relevance" | "Name" | "Size" | "ModifiedAt" | "CreatedA
  * Sorting options for search results
  */
 export type SortOptions = { field: SortField; direction: SortDirection };
-
-/**
- * Information about a source
- */
-export type SourceInfo = { 
-/**
- * Source ID
- */
-id: string; 
-/**
- * Display name
- */
-name: string; 
-/**
- * Data type (e.g., "email", "bookmark", "note")
- */
-data_type: string; 
-/**
- * Adapter ID
- */
-adapter_id: string; 
-/**
- * Number of items
- */
-item_count: number; 
-/**
- * Last sync timestamp
- */
-last_synced: string | null; 
-/**
- * Current status
- */
-status: string };
-
-export type SourceItem = { id: string; external_id: string; title: string; preview: string | null; subtitle: string | null };
 
 /**
  * A Space defines a sidebar layout and filtering context
@@ -3969,15 +3212,6 @@ export type SpaceUpdateInput = { space_id: string; name: string | null; icon: st
 
 export type SpaceUpdateOutput = { space: Space };
 
-/**
- * Spacebot companion configuration output
- */
-export type SpacebotConfigOutput = { enabled: boolean; base_url: string; auth_token: string | null; default_agent_id: string; default_sender_name: string };
-
-export type SpacedropSendInput = { device_id: string; paths: SdPath[]; sender: string | null };
-
-export type SpacedropSendOutput = { job_id: string | null; session_id: string | null };
-
 export type SpacesListOutput = { spaces: Space[] };
 
 export type SpacesListQueryInput = null;
@@ -4003,11 +3237,6 @@ model: string;
  */
 reprocess: boolean };
 
-/**
- * State transition event
- */
-export type StateTransition = { from: DeviceSyncState; to: DeviceSyncState; timestamp: string; reason: string | null };
-
 export type SuggestedLocation = { name: string; path: string; sd_path: SdPath };
 
 export type SuggestedLocationsOutput = { locations: SuggestedLocation[] };
@@ -4018,108 +3247,6 @@ export type SuggestedLocationsQueryInput = null;
  * Sync activity types for detailed sync monitoring
  */
 export type SyncActivityType = { type: "BroadcastSent"; data: { changes: number } } | { type: "ChangesReceived"; data: { changes: number } } | { type: "ChangesApplied"; data: { changes: number } } | { type: "BackfillStarted" } | { type: "BackfillCompleted"; data: { records: number } } | { type: "CatchUpStarted" } | { type: "CatchUpCompleted" };
-
-/**
- * A logged sync event
- */
-export type SyncEventLog = { id: number | null; timestamp: string; device_id: string; event_type: SyncEventType; category: EventCategory; severity: EventSeverity; summary: string; details?: JsonValue | null; correlation_id?: string | null; peer_device_id?: string | null; model_types?: string[] | null; record_count?: number | null; duration_ms?: number | null };
-
-/**
- * High-level sync event types
- */
-export type SyncEventType = 
-/**
- * State machine transition (Uninitialized → Backfilling → CatchingUp → Ready ⇄ Paused)
- */
-"state_transition" | 
-/**
- * Backfill session started
- */
-"backfill_session_started" | 
-/**
- * Backfill session completed successfully
- */
-"backfill_session_completed" | 
-/**
- * Backfill session failed
- */
-"backfill_session_failed" | 
-/**
- * Catch-up session started (incremental sync)
- */
-"catch_up_session_started" | 
-/**
- * Catch-up session completed
- */
-"catch_up_session_completed" | 
-/**
- * Batch of records ingested (aggregated, not per-record)
- */
-"batch_ingestion" | 
-/**
- * Sent backfill request to peer
- */
-"backfill_request_sent" | 
-/**
- * Received backfill request from peer
- */
-"backfill_request_received" | 
-/**
- * Sent backfill response to peer
- */
-"backfill_response_sent" | 
-/**
- * Peer device connected
- */
-"peer_connected" | 
-/**
- * Peer device disconnected
- */
-"peer_disconnected" | 
-/**
- * Sync error occurred
- */
-"sync_error";
-
-/**
- * Point-in-time snapshot of all sync metrics
- */
-export type SyncMetricsSnapshot = { 
-/**
- * When this snapshot was taken
- */
-timestamp: string; 
-/**
- * State metrics
- */
-state: SyncStateSnapshot; 
-/**
- * Operation metrics
- */
-operations: OperationSnapshot; 
-/**
- * Data volume metrics
- */
-data_volume: DataVolumeSnapshot; 
-/**
- * Performance metrics
- */
-performance: PerformanceSnapshot; 
-/**
- * Error metrics
- */
-errors: ErrorSnapshot };
-
-export type SyncPartnerInfo = { device_uuid: string; device_name: string; is_paired: boolean };
-
-export type SyncPartnersDebugInfo = { total_devices: number; sync_enabled_devices: number; paired_devices: number; final_sync_partners: number; device_details: DeviceDebugInfo[] };
-
-export type SyncSourceInput = { source_id: string };
-
-/**
- * State metrics snapshot
- */
-export type SyncStateSnapshot = { current_state: DeviceSyncState; state_entered_at: string; uptime_seconds: number; state_history: StateTransition[]; total_time_in_state: ([DeviceSyncState, number])[]; transition_count: ([[DeviceSyncState, DeviceSyncState], number])[] };
 
 export type SystemInfo = { uptime: number | null; data_directory: string; instance_name: string | null; current_library: string | null };
 
@@ -4222,13 +3349,13 @@ export type TagTargets =
  * Tag by content identity (applies to ALL instances of this content across devices)
  * This is the preferred/default approach
  */
-{ type: "Content"; ids: string[] } |
+{ type: "Content"; ids: string[] } | 
 /**
- * Tag by entry database ID (internal use)
+ * Tag by entry database ID (internal use only)
  */
-{ type: "Entry"; ids: number[] } |
+{ type: "Entry"; ids: number[] } | 
 /**
- * Tag by entry UUID (from frontend File.id)
+ * Tag by entry UUID (use from frontend — File.id is a UUID)
  */
 { type: "EntryUuid"; ids: string[] };
 
@@ -4294,13 +3421,20 @@ enabled: boolean;
  */
 regenerate: boolean };
 
-export type TranscribeAudioInput = { entry_uuid: string; model: string | null; language: string | null };
-
-export type TranscribeAudioOutput = { 
 /**
- * Job ID for tracking transcription progress
+ * What to untag — uses entry UUIDs (matching the File.id exposed to frontend)
  */
-job_id: string };
+export type UnapplyTagsInput = { 
+/**
+ * Entry UUIDs (File.id) to remove tags from
+ */
+entry_ids: string[]; 
+/**
+ * Tag UUIDs to remove
+ */
+tag_ids: string[] };
+
+export type UnapplyTagsOutput = { entries_affected: number; tags_removed: number; warnings: string[] };
 
 /**
  * Statistics for the unified ephemeral index
@@ -4381,10 +3515,6 @@ total_count: number;
  */
 total_size: number };
 
-export type UpdateAdapterInput = { adapter_id: string };
-
-export type UpdateAdapterOutput = { adapter_id: string; old_version: string; new_version: string; schema_changed: boolean };
-
 /**
  * Input for updating app configuration
  * All fields are optional for partial updates
@@ -4407,10 +3537,6 @@ theme?: string | null;
  */
 language?: string | null; 
 /**
- * Whether networking is enabled
- */
-networking_enabled?: boolean | null; 
-/**
  * Whether volume monitoring is enabled
  */
 volume_monitoring_enabled?: boolean | null; 
@@ -4429,47 +3555,7 @@ job_logging_enabled?: boolean | null;
 /**
  * Whether to include debug logs in job logs
  */
-job_logging_include_debug?: boolean | null; 
-/**
- * Automatically accept vouches from trusted devices
- */
-proxy_pairing_auto_accept_vouched?: boolean | null; 
-/**
- * Automatically vouch new devices to all paired devices
- */
-proxy_pairing_auto_vouch_to_all?: boolean | null; 
-/**
- * Maximum age of vouch signatures in seconds
- */
-proxy_pairing_vouch_signature_max_age?: number | null; 
-/**
- * Timeout for proxy confirmation in seconds
- */
-proxy_pairing_vouch_response_timeout?: number | null; 
-/**
- * Maximum retries for queued vouches
- */
-proxy_pairing_vouch_queue_retry_limit?: number | null; 
-/**
- * Whether Spacebot features are enabled in the UI
- */
-spacebot_enabled?: boolean | null; 
-/**
- * Spacebot API base URL
- */
-spacebot_base_url?: string | null; 
-/**
- * Optional Spacebot bearer token
- */
-spacebot_auth_token?: string | null; 
-/**
- * Default Spacebot agent ID for embedded chat
- */
-spacebot_default_agent_id?: string | null; 
-/**
- * Default sender name for embedded chat
- */
-spacebot_default_sender_name?: string | null };
+job_logging_include_debug?: boolean | null };
 
 /**
  * Output for update app configuration action
@@ -4762,10 +3848,6 @@ error_message: string | null;
  */
 supports_block_cloning?: boolean };
 
-export type VolumeAddCloudInput = { service: CloudServiceType; display_name: string; config: CloudStorageConfig };
-
-export type VolumeAddCloudOutput = { fingerprint: VolumeFingerprint; volume_name: string; service: CloudServiceType };
-
 /**
  * Input for ejecting a volume
  */
@@ -4829,43 +3911,6 @@ export type VolumeListQueryInput = {
  */
 filter?: VolumeFilter };
 
-/**
- * Redundancy breakdown for a single volume
- */
-export type VolumeRedundancySummary = { 
-/**
- * Volume UUID
- */
-volume_uuid: string; 
-/**
- * Display name of the volume
- */
-display_name: string | null; 
-/**
- * Total bytes of file content on this volume (deduplicated within volume)
- */
-total_bytes: number; 
-/**
- * Bytes of content unique to this volume (at risk if volume is lost)
- */
-at_risk_bytes: number; 
-/**
- * Number of files whose content only exists on this volume
- */
-at_risk_file_count: number; 
-/**
- * Bytes of content that also exists on at least one other volume
- */
-redundant_bytes: number; 
-/**
- * Number of files whose content exists on other volumes too
- */
-redundant_file_count: number; 
-/**
- * Total number of files on this volume
- */
-total_file_count: number };
-
 export type VolumeRefreshInput = { 
 /**
  * Optional: Set to true to force recalculation even if recently calculated
@@ -4881,10 +3926,6 @@ volumes_refreshed: number;
  * Number of volumes that failed to refresh
  */
 volumes_failed: number };
-
-export type VolumeRemoveCloudInput = { fingerprint: VolumeFingerprint };
-
-export type VolumeRemoveCloudOutput = { fingerprint: VolumeFingerprint };
 
 export type VolumeSpeedTestInput = { fingerprint: VolumeFingerprint };
 
@@ -4989,18 +4030,6 @@ volume_id: string;
  * Whether the operation was successful
  */
 success: boolean };
-
-export type VouchState = { device_id: string; device_name: string; status: VouchStatus; updated_at: string; reason: string | null };
-
-export type VouchStatus = "Selected" | "Queued" | "Waiting" | "Accepted" | "Rejected" | "Unreachable";
-
-export type VouchingSession = { id: string; vouchee_device_id: string; vouchee_device_name: string; voucher_device_id: string; created_at: string; state: VouchingSessionState; vouches: VouchState[] };
-
-export type VouchingSessionInput = { session_id: string };
-
-export type VouchingSessionOutput = { session: VouchingSession | null };
-
-export type VouchingSessionState = "Pending" | "InProgress" | "Completed";
 // ===== API Type Unions =====
 
 export type CoreAction =
@@ -5011,23 +4040,10 @@ export type CoreAction =
   |  { type: 'libraries.create'; input: LibraryCreateInput; output: LibraryCreateOutput }
   |  { type: 'libraries.delete'; input: LibraryDeleteInput; output: LibraryDeleteOutput }
   |  { type: 'libraries.open'; input: LibraryOpenInput; output: LibraryOpenOutput }
-  |  { type: 'models.whisper.delete'; input: DeleteWhisperModelInput; output: DeleteWhisperModelOutput }
-  |  { type: 'models.whisper.download'; input: DownloadWhisperModelInput; output: DownloadWhisperModelOutput }
-  |  { type: 'network.device.revoke'; input: DeviceRevokeInput; output: DeviceRevokeOutput }
-  |  { type: 'network.pair.cancel'; input: PairCancelInput; output: PairCancelOutput }
-  |  { type: 'network.pair.confirmProxy'; input: PairConfirmProxyInput; output: PairConfirmProxyOutput }
-  |  { type: 'network.pair.generate'; input: PairGenerateInput; output: PairGenerateOutput }
-  |  { type: 'network.pair.join'; input: PairJoinInput; output: PairJoinOutput }
-  |  { type: 'network.pair.vouch'; input: PairVouchInput; output: PairVouchOutput }
-  |  { type: 'network.spacedrop.send'; input: SpacedropSendInput; output: SpacedropSendOutput }
-  |  { type: 'network.start'; input: NetworkStartInput; output: NetworkStartOutput }
-  |  { type: 'network.stop'; input: NetworkStopInput; output: NetworkStopOutput }
-  |  { type: 'network.sync_setup'; input: LibrarySyncSetupInput; output: LibrarySyncSetupOutput }
 ;
 
 export type LibraryAction =
-     { type: 'adapters.update'; input: UpdateAdapterInput; output: UpdateAdapterOutput }
-  |  { type: 'config.library.update'; input: UpdateLibraryConfigInput; output: UpdateLibraryConfigOutput }
+     { type: 'config.library.update'; input: UpdateLibraryConfigInput; output: UpdateLibraryConfigOutput }
   |  { type: 'files.copy'; input: FileCopyInput; output: JobReceipt }
   |  { type: 'files.createFolder'; input: CreateFolderInput; output: CreateFolderOutput }
   |  { type: 'files.delete'; input: FileDeleteInput; output: JobReceipt }
@@ -5047,16 +4063,10 @@ export type LibraryAction =
   |  { type: 'locations.rescan'; input: LocationRescanInput; output: LocationRescanOutput }
   |  { type: 'locations.triggerJob'; input: LocationTriggerJobInput; output: LocationTriggerJobOutput }
   |  { type: 'locations.update'; input: LocationUpdateInput; output: LocationUpdateOutput }
-  |  { type: 'media.ocr.extract'; input: ExtractTextInput; output: ExtractTextOutput }
   |  { type: 'media.proxy.generate'; input: GenerateProxyInput; output: GenerateProxyOutput }
-  |  { type: 'media.speech.transcribe'; input: TranscribeAudioInput; output: TranscribeAudioOutput }
-  |  { type: 'media.splat.generate'; input: GenerateSplatInput; output: GenerateSplatOutput }
   |  { type: 'media.thumbnail'; input: ThumbnailInput; output: JobReceipt }
   |  { type: 'media.thumbnail.regenerate'; input: RegenerateThumbnailInput; output: RegenerateThumbnailOutput }
   |  { type: 'media.thumbstrip.generate'; input: GenerateThumbstripInput; output: GenerateThumbstripOutput }
-  |  { type: 'sources.create'; input: CreateSourceInput; output: CreateSourceOutput }
-  |  { type: 'sources.delete'; input: DeleteSourceInput; output: DeleteSourceOutput }
-  |  { type: 'sources.sync'; input: SyncSourceInput; output: JobReceipt }
   |  { type: 'spaces.add_group'; input: AddGroupInput; output: AddGroupOutput }
   |  { type: 'spaces.add_item'; input: AddItemInput; output: AddItemOutput }
   |  { type: 'spaces.create'; input: SpaceCreateInput; output: SpaceCreateOutput }
@@ -5071,11 +4081,9 @@ export type LibraryAction =
   |  { type: 'tags.create'; input: CreateTagInput; output: CreateTagOutput }
   |  { type: 'tags.delete'; input: DeleteTagInput; output: DeleteTagOutput }
   |  { type: 'tags.unapply'; input: UnapplyTagsInput; output: UnapplyTagsOutput }
-  |  { type: 'volumes.add_cloud'; input: VolumeAddCloudInput; output: VolumeAddCloudOutput }
   |  { type: 'volumes.eject'; input: VolumeEjectInput; output: VolumeEjectOutput }
   |  { type: 'volumes.index'; input: IndexVolumeInput; output: IndexVolumeOutput }
   |  { type: 'volumes.refresh'; input: VolumeRefreshInput; output: VolumeRefreshOutput }
-  |  { type: 'volumes.remove_cloud'; input: VolumeRemoveCloudInput; output: VolumeRemoveCloudOutput }
   |  { type: 'volumes.speed_test'; input: VolumeSpeedTestInput; output: VolumeSpeedTestOutput }
   |  { type: 'volumes.track'; input: VolumeTrackInput; output: VolumeTrackOutput }
   |  { type: 'volumes.untrack'; input: VolumeUntrackInput; output: VolumeUntrackOutput }
@@ -5086,25 +4094,16 @@ export type CoreQuery =
   |  { type: 'core.ephemeral_status'; input: EphemeralCacheStatusInput; output: EphemeralCacheStatus }
   |  { type: 'core.events.list'; input: ListEventsInput; output: ListEventsOutput }
   |  { type: 'core.status'; input: Empty; output: CoreStatus }
-  |  { type: 'jobs.remote.all_devices'; input: RemoteJobsAllDevicesInput; output: RemoteJobsAllDevicesOutput }
-  |  { type: 'jobs.remote.for_device'; input: RemoteJobsForDeviceInput; output: RemoteJobsForDeviceOutput }
   |  { type: 'libraries.list'; input: ListLibrariesInput; output: [LibraryInfo] }
-  |  { type: 'models.whisper.list'; input: ListWhisperModelsInput; output: ListWhisperModelsOutput }
-  |  { type: 'network.devices.list'; input: ListPairedDevicesInput; output: ListPairedDevicesOutput }
-  |  { type: 'network.pair.status'; input: PairStatusQueryInput; output: PairStatusOutput }
-  |  { type: 'network.pair.vouching_session'; input: VouchingSessionInput; output: VouchingSessionOutput }
-  |  { type: 'network.status'; input: NetworkStatusQueryInput; output: NetworkStatus }
-  |  { type: 'network.sync_setup.discover'; input: DiscoverRemoteLibrariesInput; output: DiscoverRemoteLibrariesOutput }
 ;
 
 export type LibraryQuery =
-     { type: 'adapters.config'; input: GetAdapterConfigInput; output: [AdapterConfigField] }
-  |  { type: 'adapters.list'; input: ListAdaptersInput; output: [AdapterInfo] }
-  |  { type: 'config.library.get'; input: GetLibraryConfigQueryInput; output: LibrarySettingsOutput }
+     { type: 'config.library.get'; input: GetLibraryConfigQueryInput; output: LibrarySettingsOutput }
   |  { type: 'devices.list'; input: ListLibraryDevicesInput; output: [Device] }
   |  { type: 'files.alternate_instances'; input: AlternateInstancesInput; output: AlternateInstancesOutput }
   |  { type: 'files.by_id'; input: FileByIdQuery; output: File }
   |  { type: 'files.by_path'; input: FileByPathQuery; output: File }
+  |  { type: 'files.by_tag'; input: GetFilesByTagInput; output: GetFilesByTagOutput }
   |  { type: 'files.content_kind_stats'; input: ContentKindStatsInput; output: ContentKindStatsOutput }
   |  { type: 'files.directory_listing'; input: DirectoryListingInput; output: DirectoryListingOutput }
   |  { type: 'files.media_listing'; input: MediaListingInput; output: MediaListingOutput }
@@ -5117,20 +4116,14 @@ export type LibraryQuery =
   |  { type: 'locations.list'; input: LocationsListQueryInput; output: LocationsListOutput }
   |  { type: 'locations.suggested'; input: SuggestedLocationsQueryInput; output: SuggestedLocationsOutput }
   |  { type: 'locations.validate_path'; input: ValidateLocationPathInput; output: ValidateLocationPathOutput }
-  |  { type: 'redundancy.summary'; input: RedundancySummaryInput; output: RedundancySummaryOutput }
   |  { type: 'search.files'; input: FileSearchInput; output: FileSearchOutput }
-  |  { type: 'sources.get'; input: GetSourceInput; output: SourceInfo }
-  |  { type: 'sources.list'; input: ListSourcesInput; output: [SourceInfo] }
-  |  { type: 'sources.list_items'; input: ListSourceItemsInput; output: [SourceItem] }
   |  { type: 'spaces.get'; input: SpaceGetQueryInput; output: SpaceGetOutput }
   |  { type: 'spaces.get_layout'; input: SpaceLayoutQueryInput; output: SpaceLayout }
   |  { type: 'spaces.list'; input: SpacesListQueryInput; output: SpacesListOutput }
-  |  { type: 'sync.activity'; input: GetSyncActivityInput; output: GetSyncActivityOutput }
-  |  { type: 'sync.eventLog'; input: GetSyncEventLogInput; output: GetSyncEventLogOutput }
-  |  { type: 'sync.metrics'; input: GetSyncMetricsInput; output: GetSyncMetricsOutput }
-  |  { type: 'sync.partners'; input: GetSyncPartnersInput; output: GetSyncPartnersOutput }
+  |  { type: 'tags.ancestors'; input: GetTagAncestorsInput; output: GetTagAncestorsOutput }
+  |  { type: 'tags.by_id'; input: GetTagByIdInput; output: GetTagByIdOutput }
+  |  { type: 'tags.children'; input: GetTagChildrenInput; output: GetTagChildrenOutput }
   |  { type: 'tags.search'; input: SearchTagsInput; output: SearchTagsOutput }
-  |  { type: 'test.ping'; input: PingInput; output: PingOutput }
   |  { type: 'volumes.list'; input: VolumeListQueryInput; output: VolumeListOutput }
 ;
 
@@ -5145,22 +4138,9 @@ export const WIRE_METHODS = {
     'libraries.create': 'action:libraries.create.input',
     'libraries.delete': 'action:libraries.delete.input',
     'libraries.open': 'action:libraries.open.input',
-    'models.whisper.delete': 'action:models.whisper.delete.input',
-    'models.whisper.download': 'action:models.whisper.download.input',
-    'network.device.revoke': 'action:network.device.revoke.input',
-    'network.pair.cancel': 'action:network.pair.cancel.input',
-    'network.pair.confirmProxy': 'action:network.pair.confirmProxy.input',
-    'network.pair.generate': 'action:network.pair.generate.input',
-    'network.pair.join': 'action:network.pair.join.input',
-    'network.pair.vouch': 'action:network.pair.vouch.input',
-    'network.spacedrop.send': 'action:network.spacedrop.send.input',
-    'network.start': 'action:network.start.input',
-    'network.stop': 'action:network.stop.input',
-    'network.sync_setup': 'action:network.sync_setup.input',
   },
 
   libraryActions: {
-    'adapters.update': 'action:adapters.update.input',
     'config.library.update': 'action:config.library.update.input',
     'files.copy': 'action:files.copy.input',
     'files.createFolder': 'action:files.createFolder.input',
@@ -5181,16 +4161,10 @@ export const WIRE_METHODS = {
     'locations.rescan': 'action:locations.rescan.input',
     'locations.triggerJob': 'action:locations.triggerJob.input',
     'locations.update': 'action:locations.update.input',
-    'media.ocr.extract': 'action:media.ocr.extract.input',
     'media.proxy.generate': 'action:media.proxy.generate.input',
-    'media.speech.transcribe': 'action:media.speech.transcribe.input',
-    'media.splat.generate': 'action:media.splat.generate.input',
     'media.thumbnail': 'action:media.thumbnail.input',
     'media.thumbnail.regenerate': 'action:media.thumbnail.regenerate.input',
     'media.thumbstrip.generate': 'action:media.thumbstrip.generate.input',
-    'sources.create': 'action:sources.create.input',
-    'sources.delete': 'action:sources.delete.input',
-    'sources.sync': 'action:sources.sync.input',
     'spaces.add_group': 'action:spaces.add_group.input',
     'spaces.add_item': 'action:spaces.add_item.input',
     'spaces.create': 'action:spaces.create.input',
@@ -5205,11 +4179,9 @@ export const WIRE_METHODS = {
     'tags.create': 'action:tags.create.input',
     'tags.delete': 'action:tags.delete.input',
     'tags.unapply': 'action:tags.unapply.input',
-    'volumes.add_cloud': 'action:volumes.add_cloud.input',
     'volumes.eject': 'action:volumes.eject.input',
     'volumes.index': 'action:volumes.index.input',
     'volumes.refresh': 'action:volumes.refresh.input',
-    'volumes.remove_cloud': 'action:volumes.remove_cloud.input',
     'volumes.speed_test': 'action:volumes.speed_test.input',
     'volumes.track': 'action:volumes.track.input',
     'volumes.untrack': 'action:volumes.untrack.input',
@@ -5220,25 +4192,16 @@ export const WIRE_METHODS = {
     'core.ephemeral_status': 'query:core.ephemeral_status',
     'core.events.list': 'query:core.events.list',
     'core.status': 'query:core.status',
-    'jobs.remote.all_devices': 'query:jobs.remote.all_devices',
-    'jobs.remote.for_device': 'query:jobs.remote.for_device',
     'libraries.list': 'query:libraries.list',
-    'models.whisper.list': 'query:models.whisper.list',
-    'network.devices.list': 'query:network.devices.list',
-    'network.pair.status': 'query:network.pair.status',
-    'network.pair.vouching_session': 'query:network.pair.vouching_session',
-    'network.status': 'query:network.status',
-    'network.sync_setup.discover': 'query:network.sync_setup.discover',
   },
 
   libraryQueries: {
-    'adapters.config': 'query:adapters.config',
-    'adapters.list': 'query:adapters.list',
     'config.library.get': 'query:config.library.get',
     'devices.list': 'query:devices.list',
     'files.alternate_instances': 'query:files.alternate_instances',
     'files.by_id': 'query:files.by_id',
     'files.by_path': 'query:files.by_path',
+    'files.by_tag': 'query:files.by_tag',
     'files.content_kind_stats': 'query:files.content_kind_stats',
     'files.directory_listing': 'query:files.directory_listing',
     'files.media_listing': 'query:files.media_listing',
@@ -5251,20 +4214,14 @@ export const WIRE_METHODS = {
     'locations.list': 'query:locations.list',
     'locations.suggested': 'query:locations.suggested',
     'locations.validate_path': 'query:locations.validate_path',
-    'redundancy.summary': 'query:redundancy.summary',
     'search.files': 'query:search.files',
-    'sources.get': 'query:sources.get',
-    'sources.list': 'query:sources.list',
-    'sources.list_items': 'query:sources.list_items',
     'spaces.get': 'query:spaces.get',
     'spaces.get_layout': 'query:spaces.get_layout',
     'spaces.list': 'query:spaces.list',
-    'sync.activity': 'query:sync.activity',
-    'sync.eventLog': 'query:sync.eventLog',
-    'sync.metrics': 'query:sync.metrics',
-    'sync.partners': 'query:sync.partners',
+    'tags.ancestors': 'query:tags.ancestors',
+    'tags.by_id': 'query:tags.by_id',
+    'tags.children': 'query:tags.children',
     'tags.search': 'query:tags.search',
-    'test.ping': 'query:test.ping',
     'volumes.list': 'query:volumes.list',
   },
 
