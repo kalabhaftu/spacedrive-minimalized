@@ -2,7 +2,6 @@
 //!
 //! This module contains jobs for processing media files including:
 //! - Thumbnail generation
-//! - Gaussian splat generation (3D view synthesis from images)
 //! - Video transcoding
 //! - Audio metadata extraction
 //! - Image optimization
@@ -11,7 +10,6 @@
 pub mod blurhash;
 pub mod metadata_extractor;
 pub mod proxy;
-pub mod splat;
 
 pub mod thumbnail;
 pub mod thumbstrip;
@@ -23,7 +21,6 @@ pub use metadata_extractor::{
 	extract_audio_metadata, extract_video_metadata, extract_video_metadata_with_blurhash,
 };
 pub use proxy::{ProxyJob, ProxyProcessor};
-pub use splat::{GaussianSplatJob, GaussianSplatProcessor};
 #[cfg(feature = "ffmpeg")]
 pub use thumbnail::ThumbnailJob;
 #[cfg(feature = "ffmpeg")]

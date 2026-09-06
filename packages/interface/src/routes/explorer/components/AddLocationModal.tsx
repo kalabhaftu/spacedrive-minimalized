@@ -83,20 +83,6 @@ const jobOptions: JobOption[] = [
     presets: [], // Disabled by default
     order: 3,
   },
-  {
-    id: "ocr",
-    label: "Extract Text (OCR)",
-    description: "OCR and text extraction from images/PDFs",
-    presets: [],
-    order: 4,
-  },
-  {
-    id: "speech_to_text",
-    label: "Speech to Text",
-    description: "Transcribe audio and video files",
-    presets: [],
-    order: 5,
-  },
 ];
 
 export function useAddLocationDialog(

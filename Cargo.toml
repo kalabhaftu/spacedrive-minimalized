@@ -1,7 +1,4 @@
 [workspace]
-exclude = [
-	"extensions/*"
-]
 members = [
 	"apps/cli",
 	"apps/tauri/sd-tauri-core",
@@ -20,9 +17,7 @@ default-members = [
 	"crates/fs-watcher",
 	"crates/images",
 	"crates/job-derive",
-	"crates/sd-client",
 	"crates/task-system",
-	"crates/utils",
 	"xtask"
 ]
 resolver = "2"

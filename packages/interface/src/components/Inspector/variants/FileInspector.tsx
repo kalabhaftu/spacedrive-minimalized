@@ -25,7 +25,6 @@ import {toast} from '@spacedrive/primitives';
 import clsx from 'clsx';
 import {LocationMap} from '../LocationMap';
 import {useEffect, useState} from 'react';
-import {useJobsContext} from '../../../components/JobManager/hooks/JobsContext';
 import {TagSelectorButton} from '../../../components/Tags';
 import {usePlatform} from '../../../contexts/PlatformContext';
 import {useServer} from '../../../contexts/ServerContext';
@@ -616,7 +615,6 @@ function OverviewTab({file}: {file: File}) {
 	// Check content kind for available actions
 	const isImage = getContentKind(file) === 'image';
 	const isVideo = getContentKind(file) === 'video';
-	const isAudio = getContentKind(file) === 'audio';
 	const hasText = file?.content_identity?.text_content;
 	const isEphemeral = !file.content_identity;
 

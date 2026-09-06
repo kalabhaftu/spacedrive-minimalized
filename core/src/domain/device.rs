@@ -286,19 +286,7 @@ fn detect_operating_system() -> OperatingSystem {
 	#[cfg(target_os = "linux")]
 	return OperatingSystem::Linux;
 
-	#[cfg(target_os = "ios")]
-	return OperatingSystem::IOs;
-
-	#[cfg(target_os = "android")]
-	return OperatingSystem::Android;
-
-	#[cfg(not(any(
-		target_os = "macos",
-		target_os = "windows",
-		target_os = "linux",
-		target_os = "ios",
-		target_os = "android"
-	)))]
+	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 	return OperatingSystem::Other;
 }
 
@@ -548,16 +536,9 @@ fn detect_os_version() -> Option<String> {
 		}
 	}
 
-	#[cfg(target_os = "ios")]
+	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 	{
-		// iOS version detection would require iOS-specific APIs
-		// This would typically be done via the iOS SDK
-		return None;
-	}
-
-	#[cfg(target_os = "android")]
-	{
-		// Android version detection would require Android-specific APIs
+		// Mobile version detection would require platform-specific APIs
 		return None;
 	}
 
@@ -770,16 +751,6 @@ fn detect_form_factor() -> Option<DeviceFormFactor> {
 		}
 	}
 
-	#[cfg(target_os = "ios")]
-	{
-		return Some(DeviceFormFactor::Mobile);
-	}
-
-	#[cfg(target_os = "android")]
-	{
-		return Some(DeviceFormFactor::Mobile);
-	}
-
 	None
 }
 
@@ -806,18 +777,6 @@ fn detect_manufacturer() -> Option<String> {
 				return Some(manufacturer);
 			}
 		}
-	}
-
-	#[cfg(target_os = "ios")]
-	{
-		return Some("Apple".to_string());
-	}
-
-	#[cfg(target_os = "android")]
-	{
-		// Android manufacturer detection would require JNI calls
-		// This would be platform-specific implementation
-		return None;
 	}
 
 	None

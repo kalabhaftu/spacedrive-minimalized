@@ -37,6 +37,7 @@ import {SpaceCustomizationPanel} from './SpaceCustomizationPanel';
 import {SpaceGroup} from './SpaceGroup';
 import {SpaceItem} from './SpaceItem';
 import {SpaceSwitcher} from './SpaceSwitcher';
+import {useManageSpacesDialog} from './ManageSpacesModal';
 
 // Wrapper that adds a space-level drop zone before each group and makes it sortable
 function SpaceGroupWithDropZone({
@@ -273,6 +274,7 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 	} = useJobsContext();
 
 	const {currentSpaceId, setCurrentSpace} = useSidebarStore();
+	const manageSpacesDialog = useManageSpacesDialog();
 	const {data: spacesData} = useSpaces();
 	const spaces = (spacesData as any)?.spaces as Space[] | undefined;
 
@@ -358,7 +360,7 @@ export function SpacesSidebar({isPreviewActive = false}: SpacesSidebarProps) {
 						spaces={spaces}
 						currentSpace={currentSpace}
 						onSwitch={setCurrentSpace}
-						onOpenSettings={() => setCustomizePanelOpen(true)}
+						onOpenSettings={() => manageSpacesDialog.open(currentSpace?.id)}
 					/>
 
 					{/* Scrollable Content */}

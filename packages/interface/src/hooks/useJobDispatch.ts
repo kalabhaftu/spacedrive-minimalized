@@ -1,30 +1,25 @@
 import {useLibraryMutation} from "../contexts/SpacedriveContext";
 
 export interface JobConfig {
-	job_type: "thumbnail" | "ocr" | "speech_to_text" | "thumbstrip" | "proxy";
+	job_type: "thumbnail" | "thumbstrip" | "proxy";
 	file_ids: string[];
 	params?: Record<string, any>;
 }
 
 /**
  * Hook for dispatching media processing jobs from the context menu
- * 
- * Provides a simple interface to trigger thumbnail generation, OCR,
- * speech-to-text transcription, thumbstrip generation, and proxy creation.
- * 
+ *
+ * Provides a simple interface to trigger thumbnail generation,
+ * thumbstrip generation, and proxy creation.
+ *
  * @example
  * ```tsx
  * const { runJob, isDispatching } = useJobDispatch();
- * 
+ *
  * // Generate thumbnails with blurhash
  * await runJob("thumbnail", {
  *   file_ids: [file.id],
  *   generate_blurhash: true
- * });
- * 
- * // Run OCR on images
- * await runJob("ocr", {
- *   file_ids: selectedFiles.map(f => f.id)
  * });
  * ```
  */

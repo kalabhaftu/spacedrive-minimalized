@@ -50,13 +50,6 @@ fn get_volume_watch_paths() -> Vec<PathBuf> {
 		// Could potentially use WMI events in the future
 	}
 
-	#[cfg(target_os = "ios")]
-	{
-		// iOS doesn't support filesystem watching for volumes
-		// Volume changes detected via app lifecycle events instead
-		// See VolumeManager::refresh_on_lifecycle_event()
-	}
-
 	// Filter to only existing directories
 	paths.into_iter().filter(|p: &PathBuf| p.exists()).collect()
 }
@@ -1873,37 +1866,6 @@ impl VolumeManager {
 		}
 
 		None
-	}
-
-	/// Refresh volumes on iOS app lifecycle transition
-	///
-	/// iOS doesn't support filesystem watching for volume changes.
-	/// This method should be called from the Swift layer when:
-	/// - applicationDidBecomeActive (app enters foreground)
-	/// - applicationWillResignActive (app enters background)
-	///
-	/// This ensures storage capacity information stays current without
-	/// unnecessary polling that would drain battery.
-	#[cfg(target_os = "ios")]
-	pub async fn refresh_on_lifecycle_event(&self, event: &str) {
-		debug!("iOS lifecycle event: {}, refreshing volumes", event);
-
-		// Re-detect volumes to get updated capacity information
-		match detection::detect_volumes(self.device_id, &self.config).await {
-			Ok(volumes) => {
-				let mut volumes_map = self.volumes.write().await;
-				for volume in volumes {
-					volumes_map.insert(volume.fingerprint.clone(), volume);
-				}
-				debug!(
-					"Successfully refreshed volumes on lifecycle event: {}",
-					event
-				);
-			}
-			Err(e) => {
-				warn!("Failed to refresh volumes on lifecycle event: {}", e);
-			}
-		}
 	}
 }
 

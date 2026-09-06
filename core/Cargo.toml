@@ -43,8 +43,6 @@ int-enum = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# HTTP client (for model downloads)
-reqwest = { version = "0.11", features = ["stream"] }
 specta = { git = "https://github.com/jamiepine/specta", branch = "main", features = [
 	"chrono",
 	"derive",
@@ -54,7 +52,6 @@ specta = { git = "https://github.com/jamiepine/specta", branch = "main", feature
 	"uuid"
 ] }
 specta-serde = { git = "https://github.com/jamiepine/specta", branch = "main" }
-specta-swift = { git = "https://github.com/jamiepine/specta", branch = "main" }
 specta-typescript = { git = "https://github.com/jamiepine/specta", branch = "main" }
 strum = { version = "0.26", features = ["derive"] }
 toml = "0.8"
@@ -76,24 +73,10 @@ hex    = "0.4"  # Hex encoding for volume fingerprints
 notify = "6.1"  # File system watching
 sha2   = "0.10" # SHA-256 hashing for CAS IDs
 
-# Cloud storage integration
-opendal = { version = "0.54", features = [
-	"services-s3",
-	"services-gdrive",
-	"services-onedrive",
-	"services-dropbox",
-	"services-azblob",
-	"services-gcs",
-] }
-
 # Logging
 tracing            = "0.1"
 tracing-appender   = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-
-# WASM Plugin System
-wasmer             = { version = "4.2", optional = true }
-wasmer-middlewares = { version = "4.2", optional = true }
 
 # Indexer rules engine
 futures-concurrency = "7.6"
@@ -121,43 +104,15 @@ sd-media-metadata = { path = "../crates/media-metadata" }
 tokio-rustls     = "0.26"
 webp             = "0.3"
 
-# Speech-to-text dependencies (optional, behind whisper feature)
-whisper-rs = { version = "0.15.1", optional = true }
-hound      = { version = "3.5", optional = true }   # WAV file reading
-rubato     = { version = "0.16", optional = true }  # Audio resampling to 16kHz
+# Local-only build: P2P networking, cloud, and speech-to-text removed
 
-# Networking
-# Iroh P2P networking
-iroh = { version = "0.95.1", features = ["discovery-local-network"] }
-
-# Serialization for protocols
-serde_cbor = "0.11"
-
-# Cryptography for signing (backward compatibility)
-ed25519-dalek = "2.1"
-
-# Cryptography and networking utilities
-aes-gcm      = "0.10"                                           # AES-GCM encryption for secure storage
-argon2       = "0.5"                                            # Password derivation
+# Stream and serialization utilities
 async-stream = "0.3"                                            # File streaming
-backoff      = "0.4"                                            # Retry logic
 bincode      = { version = "2.0.0-rc.3", features = ["serde"] } # Efficient encoding with serde compat
-ring         = "0.16"                                           # Crypto primitives
 tokio-stream = "0.1"                                            # Async streams
 
-# BIP39 wordlist support
-bip39 = "2.0"
-
-# Additional cryptography
-chacha20poly1305 = "0.10" # Authenticated encryption for chunk-level security
-hkdf             = "0.12" # Key derivation function for session keys
-hmac             = "0.12"
-x25519-dalek     = "2.0"
-
-# Network utilities
-if-watch         = "3.0"
-local-ip-address = "0.5"
-# colored already defined above
+# Local key encryption
+chacha20poly1305 = "0.10" # Authenticated encryption for local keystore
 
 # Utils
 chrono    = { version = "0.4", features = ["serde"] }
@@ -214,23 +169,6 @@ trash = "3.3" # Native trash/recycle bin support on desktop platforms
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52", features = ["Win32_Storage_FileSystem", "Win32_Foundation", "Win32_Security", "Win32_System_Ioctl", "Win32_System_IO", "Win32_System_Registry", "Win32_System_Power"] }
-
-[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
-whisper-rs = { version = "0.15.1", features = ["metal"], optional = true }
-
-# iOS-specific dependencies for volume detection via Objective-C FFI
-[target.'cfg(target_os = "ios")'.dependencies]
-objc2 = "0.6"
-objc2-foundation = { version = "0.3", features = [
-	"NSFileManager",
-	"NSURL",
-	"NSString",
-	"NSArray",
-	"NSValue",
-	"NSDictionary",
-	"NSError",
-] }
-objc2-ui-kit = { version = "0.3", features = ["UIDevice"] }
 
 [[bin]]
 name = "spacedrive"

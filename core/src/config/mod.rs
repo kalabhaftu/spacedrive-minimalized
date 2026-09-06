@@ -12,22 +12,11 @@ pub mod migration;
 pub use app_config::{AppConfig, JobLoggingConfig, LogStreamConfig, LoggingConfig, ServiceConfig};
 pub use migration::Migrate;
 
-/// Default data directory: `~/.spacedrive` on desktop, platform data dir on mobile.
+/// Default data directory: `~/.spacedrive` on desktop.
 pub fn default_data_dir() -> Result<PathBuf> {
-	#[cfg(not(any(target_os = "ios", target_os = "android")))]
 	let dir = dirs::home_dir()
 		.ok_or_else(|| anyhow!("Could not determine home directory"))?
 		.join(".spacedrive");
-
-	#[cfg(target_os = "ios")]
-	let dir = dirs::data_dir()
-		.ok_or_else(|| anyhow!("Could not determine data directory"))?
-		.join("spacedrive");
-
-	#[cfg(target_os = "android")]
-	let dir = dirs::data_dir()
-		.ok_or_else(|| anyhow!("Could not determine data directory"))?
-		.join("spacedrive");
 
 	// Create directory if it doesn't exist
 	fs::create_dir_all(&dir)?;

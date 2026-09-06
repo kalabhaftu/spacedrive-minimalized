@@ -504,7 +504,8 @@ impl FileSearchQuery {
 		results: Vec<crate::ops::search::output::FileSearchResult>,
 	) -> Vec<crate::ops::search::output::FileSearchResult> {
 		let mut deduplicated: Vec<crate::ops::search::output::FileSearchResult> = Vec::new();
-		let mut path_map: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+		let mut path_map: std::collections::HashMap<String, usize> =
+			std::collections::HashMap::new();
 
 		for res in results {
 			let path_key = match &res.file.sd_path {
@@ -514,7 +515,8 @@ impl FileSearchQuery {
 
 			if let Some(&existing_idx) = path_map.get(&path_key) {
 				let existing = &deduplicated[existing_idx];
-				let prefer_new = match (&existing.file.content_identity, &res.file.content_identity) {
+				let prefer_new = match (&existing.file.content_identity, &res.file.content_identity)
+				{
 					(None, Some(_)) => true,
 					(Some(_), None) => false,
 					_ => res.score > existing.score,

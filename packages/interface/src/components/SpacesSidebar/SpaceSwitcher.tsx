@@ -3,6 +3,7 @@ import type {Space} from '@sd/ts-client';
 import {DropdownMenu, SelectPill} from '@spacedrive/primitives';
 import clsx from 'clsx';
 import {useCreateSpaceDialog} from './CreateSpaceModal';
+import {useManageSpacesDialog} from './ManageSpacesModal';
 
 interface SpaceSwitcherProps {
 	spaces?: Space[];
@@ -18,6 +19,7 @@ export function SpaceSwitcher({
 	onOpenSettings,
 }: SpaceSwitcherProps) {
 	const createSpaceDialog = useCreateSpaceDialog();
+	const manageSpacesDialog = useManageSpacesDialog();
 
 	return (
 		<DropdownMenu.Root>
@@ -83,7 +85,13 @@ export function SpaceSwitcher({
 					New Space
 				</DropdownMenu.Item>
 				<DropdownMenu.Item
-					onClick={onOpenSettings}
+					onClick={() => {
+						if (onOpenSettings) {
+							onOpenSettings();
+						} else {
+							manageSpacesDialog.open(currentSpace?.id);
+						}
+					}}
 					className="hover:bg-menu-hover text-menu-ink rounded-lg px-2.5 py-1.5 text-sm font-medium cursor-pointer transition-colors"
 				>
 					<GearSix className="mr-2 size-4" weight="bold" />

@@ -462,10 +462,6 @@ fn detect_os() -> String {
 		"Windows".to_string()
 	} else if cfg!(target_os = "linux") {
 		"Linux".to_string()
-	} else if cfg!(target_os = "ios") {
-		"iOS".to_string()
-	} else if cfg!(target_os = "android") {
-		"Android".to_string()
 	} else {
 		"Unknown".to_string()
 	}

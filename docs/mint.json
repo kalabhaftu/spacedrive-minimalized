@@ -57,8 +57,6 @@
       "icon": "compass",
       "pages": [
         "overview/get-started",
-        "overview/self-hosting",
-        "overview/backup-photos-ios",
         "overview/manage-libraries",
         "overview/add-index-locations"
       ]
@@ -99,8 +97,6 @@
         "core/networking",
         "core/pairing",
         "core/proxy-pairing",
-        "core/library-sync",
-        "core/file-sync",
         "core/cloud-integration"
       ]
     },
@@ -113,13 +109,6 @@
       "group": "Extension SDK",
       "icon": "code",
       "pages": [
-        "extensions/introduction",
-        "extensions/getting-started",
-        "extensions/core-concepts",
-        "extensions/data-storage",
-        "extensions/security-and-sync",
-        "extensions/ui-integration",
-        "extensions/examples"
       ]
     },
     {
@@ -128,8 +117,6 @@
       "pages": [
         "cli/overview",
         "cli/linux-deployment",
-        "cli/library-sync-setup",
-        "cli/multi-instance",
         "cli/index-verify"
       ]
     },
