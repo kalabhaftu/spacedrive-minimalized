@@ -1377,8 +1377,7 @@ function InstancesTab({file}: {file: File}) {
 		query: 'devices.list',
 		input: {
 			include_offline: true,
-			include_details: false,
-			show_paired: true
+			include_details: false
 		},
 		resourceType: 'device'
 	});

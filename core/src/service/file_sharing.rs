@@ -1,7 +1,4 @@
 //! File sharing service providing local file transfer operations (local-only)
-//!
-//! P2P networking removed. Cross-device copy dispatches local jobs;
-//! Spacedrop / discovery stubs return unavailable / empty.
 
 use crate::{
 	context::CoreContext,
@@ -53,8 +50,6 @@ pub struct DeviceInfo {
 pub enum TransferId {
 	/// Job system ID for cross-device copies with library ID
 	JobId { job_id: Uuid, library_id: Uuid },
-	/// Spacedrop session ID for ephemeral shares
-	SpacedropId(Uuid),
 }
 
 /// Options for file sharing operations
@@ -137,18 +132,13 @@ impl FileSharingService {
 				// Use cross-device copy for trusted devices
 				self.copy_to_paired_device(files, device_id, options).await
 			}
-			SharingTarget::NearbyDevices => {
-				// Spacedrop removed in local-only mode
-				self.initiate_spacedrop(files, options).await
-			}
+			SharingTarget::NearbyDevices => Err(SharingError::NetworkingUnavailable),
 			SharingTarget::SpecificDevice(device_info) => {
-				// Check if device is paired, choose protocol accordingly
 				if device_info.is_paired {
 					self.copy_to_paired_device(files, device_info.device_id, options)
 						.await
 				} else {
-					self.share_via_spacedrop(files, vec![device_info], options)
-						.await
+					Err(SharingError::NetworkingUnavailable)
 				}
 			}
 		}
@@ -244,25 +234,6 @@ impl FileSharingService {
 		}])
 	}
 
-	/// Share files via Spacedrop (removed in local-only mode)
-	async fn initiate_spacedrop(
-		&self,
-		_files: Vec<PathBuf>,
-		_options: SharingOptions,
-	) -> Result<Vec<TransferId>, SharingError> {
-		Err(SharingError::NetworkingUnavailable)
-	}
-
-	/// Share files via Spacedrop with specific devices (removed in local-only mode)
-	async fn share_via_spacedrop(
-		&self,
-		_files: Vec<PathBuf>,
-		_target_devices: Vec<DeviceInfo>,
-		_options: SharingOptions,
-	) -> Result<Vec<TransferId>, SharingError> {
-		Err(SharingError::NetworkingUnavailable)
-	}
-
 	/// Create file metadata for sharing
 	pub async fn create_file_metadata(
 		&self,
@@ -348,18 +319,6 @@ impl FileSharingService {
 					Err(SharingError::TransferFailed("Job not found".to_string()))
 				}
 			}
-			TransferId::SpacedropId(_session_id) => Ok(TransferStatus {
-				id: transfer_id.clone(),
-				state: TransferState::Pending,
-				progress: TransferProgress {
-					bytes_transferred: 0,
-					total_bytes: 0,
-					files_transferred: 0,
-					total_files: 0,
-					estimated_remaining: None,
-				},
-				error: None,
-			}),
 		}
 	}
 
@@ -385,7 +344,6 @@ impl FileSharingService {
 					Err(SharingError::TransferFailed("Job not found".to_string()))
 				}
 			}
-			TransferId::SpacedropId(_session_id) => Ok(()),
 		}
 	}
 

@@ -19,10 +19,6 @@ pub struct ListLibraryDevicesInput {
 
 	/// Whether to include detailed capabilities and sync leadership info (default: false)
 	pub include_details: bool,
-
-	/// Whether to also include paired network devices (default: false)
-	#[serde(default)]
-	pub show_paired: bool,
 }
 
 /// Query to list all devices from the library database
@@ -38,7 +34,6 @@ impl ListLibraryDevicesQuery {
 			input: ListLibraryDevicesInput {
 				include_offline: true,
 				include_details: false,
-				show_paired: false,
 			},
 		}
 	}
@@ -49,7 +44,6 @@ impl ListLibraryDevicesQuery {
 			input: ListLibraryDevicesInput {
 				include_offline: true,
 				include_details: true,
-				show_paired: false,
 			},
 		}
 	}
@@ -60,7 +54,6 @@ impl ListLibraryDevicesQuery {
 			input: ListLibraryDevicesInput {
 				include_offline: false,
 				include_details: false,
-				show_paired: false,
 			},
 		}
 	}

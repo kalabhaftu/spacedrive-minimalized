@@ -25,7 +25,6 @@ pub mod registry;
 pub mod syncable;
 pub mod time_source;
 pub mod transaction;
-pub mod transport;
 pub mod watermarks;
 
 pub use backfill_context::{in_backfill, is_in_backfill};
@@ -57,5 +56,4 @@ pub use registry::{
 pub use syncable::Syncable;
 pub use time_source::{FakeTimeSource, SystemTimeSource, TimeSource};
 pub use transaction::{BulkOperation, BulkOperationMetadata, TransactionManager, TxError};
-pub use transport::NetworkTransport;
 pub use watermarks::{ResourceWatermarkStore, WatermarkError};

@@ -18,7 +18,6 @@ impl DevicesListArgs {
 		ListLibraryDevicesInput {
 			include_offline: self.include_offline,
 			include_details: self.detailed,
-			show_paired: false,
 		}
 	}
 }

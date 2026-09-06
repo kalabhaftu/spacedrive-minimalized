@@ -114,10 +114,8 @@ impl LibraryAction for CreateFolderAction {
 				})?;
 			}
 			SdPath::Cloud { .. } => {
-				// Cloud folder creation would use CloudBackend
-				// For now, return an error as cloud support needs more infrastructure
 				return Err(ActionError::Internal(
-					"Cloud folder creation not yet implemented".to_string(),
+					"Cloud paths unsupported in local-only build".to_string(),
 				));
 			}
 			_ => {

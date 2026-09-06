@@ -74,7 +74,6 @@ pub struct LibraryPermissions {
 pub struct NetworkPermissions {
 	pub can_start_stop: bool,
 	pub can_pair_devices: bool,
-	pub can_send_spacedrop: bool,
 	pub can_manage_devices: bool,
 }
 
@@ -268,7 +267,6 @@ impl PermissionSet {
 			network: NetworkPermissions {
 				can_start_stop: true,
 				can_pair_devices: true,
-				can_send_spacedrop: true,
 				can_manage_devices: true,
 			},
 			jobs: JobPermissions {
@@ -306,7 +304,6 @@ impl PermissionSet {
 			network: NetworkPermissions {
 				can_start_stop: false,
 				can_pair_devices: false,
-				can_send_spacedrop: false,
 				can_manage_devices: false,
 			},
 			jobs: JobPermissions {

@@ -80,8 +80,6 @@ export function getJobDisplayName(job: JobListItem): string {
         }
         case "media.thumbnail":
           return "Generating Thumbnails";
-        case "media.extract":
-          return "Extracting Media";
         case "volumes.index": {
           const context = job.action_context?.context as Record<string, unknown> | null;
           const volumeName = context?.volume_name;

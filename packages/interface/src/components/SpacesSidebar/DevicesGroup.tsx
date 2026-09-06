@@ -29,7 +29,6 @@ export function DevicesGroup({
 		input: {
 			include_offline: true,
 			include_details: false,
-			show_paired: false,
 		},
 		resourceType: "device",
 	});
