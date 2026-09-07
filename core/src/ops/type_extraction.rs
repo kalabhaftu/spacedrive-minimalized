@@ -677,7 +677,7 @@ mod tests {
 		// Verify basic structure
 		assert!(swift_code.contains("public struct LibrariesAPI"));
 		assert!(swift_code.contains("public struct JobsAPI"));
-		assert!(swift_code.contains("public struct NetworkAPI"));
+		assert!(swift_code.contains("public struct IndexingAPI"));
 
 		// Verify method generation
 		assert!(swift_code.contains("public func create("));

@@ -97,6 +97,22 @@ fn main() {
 			if let Err(e) = std::fs::copy(&daemon_source, &daemon_target) {
 				eprintln!("Warning: Failed to copy daemon: {}", e);
 			}
+		} else if !std::path::Path::new(&daemon_target).exists() {
+			// When running cargo clippy/check directly without pre-building the daemon binary,
+			// provide a placeholder so tauri_build::build() externalBin validation succeeds.
+			// When bundling with tauri:build, beforeBuildCommand builds the real daemon binary first.
+			if let Some(parent) = std::path::Path::new(&daemon_target).parent() {
+				let _ = std::fs::create_dir_all(parent);
+			}
+			let _ = std::fs::write(&daemon_target, b"");
+			#[cfg(unix)]
+			{
+				use std::os::unix::fs::PermissionsExt;
+				let _ = std::fs::set_permissions(
+					&daemon_target,
+					std::fs::Permissions::from_mode(0o755),
+				);
+			}
 		}
 	}
 
