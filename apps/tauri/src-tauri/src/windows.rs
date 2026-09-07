@@ -426,7 +426,10 @@ pub fn apply_macos_styling(app: AppHandle) -> Result<(), String> {
 	}
 
 	#[cfg(not(target_os = "macos"))]
-	Ok(())
+	{
+		let _ = app;
+		Ok(())
+	}
 }
 
 /// Tauri command to list all open windows

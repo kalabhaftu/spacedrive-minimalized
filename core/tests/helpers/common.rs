@@ -106,6 +106,20 @@ pub async fn register_device(
 	device_id: Uuid,
 	device_name: &str,
 ) -> anyhow::Result<()> {
+	use sea_orm::{ActiveModelTrait, ColumnTrait, QueryFilter};
+
+	if let Some(existing) = entities::device::Entity::find()
+		.filter(entities::device::Column::Uuid.eq(device_id))
+		.one(library.db().conn())
+		.await?
+	{
+		let mut active: entities::device::ActiveModel = existing.into();
+		active.name = Set(device_name.to_string());
+		active.slug = Set(device_name.to_lowercase());
+		active.update(library.db().conn()).await?;
+		return Ok(());
+	}
+
 	let device_model = entities::device::ActiveModel {
 		id: sea_orm::ActiveValue::NotSet,
 		uuid: Set(device_id),

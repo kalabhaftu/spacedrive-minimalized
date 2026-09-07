@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: 'Draft release'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTUP_MAX_RETRIES: 10
+  SD_AUTH: disabled
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop-release:
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            bundles: dmg,app
+            os: macos
+            arch: aarch64
+          - host: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            bundles: deb,appimage
+            os: linux
+            arch: x86_64
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+            os: windows
+            arch: x86_64
+    name: Build Desktop - ${{ matrix.settings.os }} (${{ matrix.settings.arch }})
+    runs-on: ${{ matrix.settings.host }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup System Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential curl wget file openssl libssl-dev libgtk-3-dev librsvg2-dev \
+            libwebkit2gtk-4.1-dev libayatana-appindicator3-dev libxdo-dev libdbus-1-dev \
+            pkg-config libavutil-dev libavcodec-dev libavformat-dev libswscale-dev \
+            libavfilter-dev libavdevice-dev libswresample-dev
+
+      - name: Setup NASM (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.settings.target }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - name: Install JavaScript dependencies
+        run: bun install
+
+      - name: Build Tauri Desktop App & Create Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        with:
+          projectPath: apps/tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Spacedrive ${{ github.ref_name }}'
+          releaseBody: 'See the assets to download and install.'
+          releaseDraft: ${{ github.event.inputs.draft == 'true' || false }}
+          prerelease: false
+
+      - name: Build CLI binaries
+        shell: bash
+        run: |
+          cargo build --release --bin sd-cli --bin sd-daemon --target ${{ matrix.settings.target }}
+          mkdir -p dist-cli
+          EXE_SUFFIX=""
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            EXE_SUFFIX=".exe"
+          fi
+          cp target/${{ matrix.settings.target }}/release/sd-cli${EXE_SUFFIX} dist-cli/sd-cli${EXE_SUFFIX}
+          cp target/${{ matrix.settings.target }}/release/sd-daemon${EXE_SUFFIX} dist-cli/sd-daemon${EXE_SUFFIX}
+
+      - name: Archive CLI (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd dist-cli
+          tar -czf ../sd-cli-${{ matrix.settings.os }}-${{ matrix.settings.arch }}.tar.gz sd-cli sd-daemon
+
+      - name: Archive CLI (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cd dist-cli
+          7z a ../sd-cli-${{ matrix.settings.os }}-${{ matrix.settings.arch }}.zip sd-cli.exe sd-daemon.exe
+
+      - name: Upload CLI to Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            sd-cli-*.tar.gz
+            sd-cli-*.zip

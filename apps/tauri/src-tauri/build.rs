@@ -116,5 +116,19 @@ fn main() {
 		}
 	}
 
+	// Ensure frontendDist directory exists for tauri::generate_context!() macro
+	let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+	let dist_dir = std::path::Path::new(&manifest_dir).join("../dist");
+	if !dist_dir.exists() {
+		let _ = std::fs::create_dir_all(&dist_dir);
+		let index_html = dist_dir.join("index.html");
+		if !index_html.exists() {
+			let _ = std::fs::write(
+				&index_html,
+				b"<!DOCTYPE html><html><body>Placeholder</body></html>",
+			);
+		}
+	}
+
 	tauri_build::build()
 }
