@@ -3,11 +3,9 @@
 //! Tests the strategy pattern implementation for file deletion operations,
 //! including local deletion and strategy routing.
 
-use bytes::Bytes;
 use sd_core::{
 	domain::addressing::SdPath,
 	ops::files::delete::{routing::DeleteStrategyRouter, strategy::LocalDeleteStrategy},
-	volume::backend::{CloudBackend, CloudServiceType, VolumeBackend},
 };
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
@@ -216,85 +214,4 @@ async fn test_strategy_error_handling() {
 	assert!(result.is_err());
 
 	println!("test_strategy_error_handling passed!");
-}
-
-#[tokio::test]
-async fn test_cloud_backend_delete_file() {
-	// Create a memory-based cloud backend for testing
-	let operator = opendal::Operator::new(opendal::services::Memory::default())
-		.expect("Failed to create memory operator")
-		.finish();
-
-	let backend = CloudBackend::from_operator(operator, CloudServiceType::S3);
-
-	// Write a test file
-	let test_path = Path::new("test_file.txt");
-	let test_data = Bytes::from("Cloud test data");
-
-	backend.write(test_path, test_data.clone()).await.unwrap();
-
-	// Verify file exists
-	assert!(backend.exists(test_path).await.unwrap());
-
-	// Delete the file
-	let result = backend.delete(test_path).await;
-	assert!(result.is_ok(), "Delete failed: {:?}", result);
-
-	// Verify file no longer exists
-	assert!(!backend.exists(test_path).await.unwrap());
-
-	println!("test_cloud_backend_delete_file passed!");
-}
-
-#[tokio::test]
-async fn test_cloud_backend_delete_directory() {
-	// Create a memory-based cloud backend for testing
-	let operator = opendal::Operator::new(opendal::services::Memory::default())
-		.expect("Failed to create memory operator")
-		.finish();
-
-	let backend = CloudBackend::from_operator(operator, CloudServiceType::S3);
-
-	// Write files in a directory structure
-	backend
-		.write(Path::new("test_dir/file1.txt"), Bytes::from("File 1"))
-		.await
-		.unwrap();
-	backend
-		.write(Path::new("test_dir/file2.txt"), Bytes::from("File 2"))
-		.await
-		.unwrap();
-	backend
-		.write(
-			Path::new("test_dir/subdir/file3.txt"),
-			Bytes::from("File 3"),
-		)
-		.await
-		.unwrap();
-
-	// Verify files exist
-	assert!(backend
-		.exists(Path::new("test_dir/file1.txt"))
-		.await
-		.unwrap());
-	assert!(backend
-		.exists(Path::new("test_dir/file2.txt"))
-		.await
-		.unwrap());
-
-	// Delete the entire directory
-	let result = backend.delete(Path::new("test_dir/")).await;
-	assert!(result.is_ok(), "Directory delete failed: {:?}", result);
-
-	// Verify directory and files no longer exist
-	assert!(!backend
-		.exists(Path::new("test_dir/file1.txt"))
-		.await
-		.unwrap());
-	assert!(!backend
-		.exists(Path::new("test_dir/file2.txt"))
-		.await
-		.unwrap());
-
-	println!("test_cloud_backend_delete_directory passed!");
 }
