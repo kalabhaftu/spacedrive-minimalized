@@ -815,9 +815,6 @@ async fn subscribe_to_events(
 			);
 		}
 
-		// Explicitly shutdown and drop the stream to close the TCP connection
-		drop(writer);
-		drop(reader);
 		tracing::info!(subscription_id = subscription_id, "TCP connection closed");
 	});
 
@@ -985,7 +982,7 @@ async fn check_daemon_installed() -> Result<bool, String> {
 	{
 		// On Windows, check if scheduled task exists
 		let output = std::process::Command::new("schtasks")
-			.args(&["/Query", "/TN", "SpacedriveDaemon", "/FO", "LIST"])
+			.args(["/Query", "/TN", "SpacedriveDaemon", "/FO", "LIST"])
 			.output()
 			.map_err(|e| format!("Failed to query scheduled task: {}", e))?;
 
@@ -1179,7 +1176,7 @@ WantedBy=default.target
 
 		// Enable and start the service
 		let output = std::process::Command::new("systemctl")
-			.args(&["--user", "daemon-reload"])
+			.args(["--user", "daemon-reload"])
 			.output()
 			.map_err(|e| format!("Failed to reload systemd: {}", e))?;
 
@@ -1189,7 +1186,7 @@ WantedBy=default.target
 		}
 
 		let output = std::process::Command::new("systemctl")
-			.args(&["--user", "enable", "spacedrive-daemon.service"])
+			.args(["--user", "enable", "spacedrive-daemon.service"])
 			.output()
 			.map_err(|e| format!("Failed to enable service: {}", e))?;
 
@@ -1199,7 +1196,7 @@ WantedBy=default.target
 		}
 
 		let output = std::process::Command::new("systemctl")
-			.args(&["--user", "start", "spacedrive-daemon.service"])
+			.args(["--user", "start", "spacedrive-daemon.service"])
 			.output()
 			.map_err(|e| format!("Failed to start service: {}", e))?;
 
@@ -1265,7 +1262,7 @@ WantedBy=default.target
 
 		// Delete existing task if it exists
 		let _ = std::process::Command::new("schtasks")
-			.args(&["/Delete", "/TN", "SpacedriveDaemon", "/F"])
+			.args(["/Delete", "/TN", "SpacedriveDaemon", "/F"])
 			.output();
 
 		// Create XML for scheduled task
@@ -1323,7 +1320,7 @@ WantedBy=default.target
 
 		// Create the scheduled task
 		let output = std::process::Command::new("schtasks")
-			.args(&[
+			.args([
 				"/Create",
 				"/TN",
 				"SpacedriveDaemon",
@@ -1344,7 +1341,7 @@ WantedBy=default.target
 
 		// Start the task
 		let output = std::process::Command::new("schtasks")
-			.args(&["/Run", "/TN", "SpacedriveDaemon"])
+			.args(["/Run", "/TN", "SpacedriveDaemon"])
 			.output()
 			.map_err(|e| format!("Failed to start scheduled task: {}", e))?;
 
@@ -1424,18 +1421,18 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 		if service_path.exists() {
 			// Stop and disable the service
 			let _ = std::process::Command::new("systemctl")
-				.args(&["--user", "stop", "spacedrive-daemon.service"])
+				.args(["--user", "stop", "spacedrive-daemon.service"])
 				.output();
 
 			let _ = std::process::Command::new("systemctl")
-				.args(&["--user", "disable", "spacedrive-daemon.service"])
+				.args(["--user", "disable", "spacedrive-daemon.service"])
 				.output();
 
 			std::fs::remove_file(&service_path)
 				.map_err(|e| format!("Failed to remove service file: {}", e))?;
 
 			let _ = std::process::Command::new("systemctl")
-				.args(&["--user", "daemon-reload"])
+				.args(["--user", "daemon-reload"])
 				.output();
 		}
 
@@ -1446,12 +1443,12 @@ async fn uninstall_daemon_service() -> Result<(), String> {
 	{
 		// Stop the task first
 		let _ = std::process::Command::new("schtasks")
-			.args(&["/End", "/TN", "SpacedriveDaemon"])
+			.args(["/End", "/TN", "SpacedriveDaemon"])
 			.output();
 
 		// Delete the scheduled task
 		let output = std::process::Command::new("schtasks")
-			.args(&["/Delete", "/TN", "SpacedriveDaemon", "/F"])
+			.args(["/Delete", "/TN", "SpacedriveDaemon", "/F"])
 			.output()
 			.map_err(|e| format!("Failed to delete scheduled task: {}", e))?;
 

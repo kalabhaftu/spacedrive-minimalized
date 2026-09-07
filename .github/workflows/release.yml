@@ -96,38 +96,4 @@ jobs:
           releaseDraft: ${{ github.event.inputs.draft == 'true' || false }}
           prerelease: false
 
-      - name: Build CLI binaries
-        shell: bash
-        run: |
-          cargo build --release --bin sd-cli --bin sd-daemon --target ${{ matrix.settings.target }}
-          mkdir -p dist-cli
-          EXE_SUFFIX=""
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            EXE_SUFFIX=".exe"
-          fi
-          cp target/${{ matrix.settings.target }}/release/sd-cli${EXE_SUFFIX} dist-cli/sd-cli${EXE_SUFFIX}
-          cp target/${{ matrix.settings.target }}/release/sd-daemon${EXE_SUFFIX} dist-cli/sd-daemon${EXE_SUFFIX}
 
-      - name: Archive CLI (Unix)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          cd dist-cli
-          tar -czf ../sd-cli-${{ matrix.settings.os }}-${{ matrix.settings.arch }}.tar.gz sd-cli sd-daemon
-
-      - name: Archive CLI (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          cd dist-cli
-          7z a ../sd-cli-${{ matrix.settings.os }}-${{ matrix.settings.arch }}.zip sd-cli.exe sd-daemon.exe
-
-      - name: Upload CLI to Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            sd-cli-*.tar.gz
-            sd-cli-*.zip
