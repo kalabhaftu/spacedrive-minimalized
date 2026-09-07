@@ -29,8 +29,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 		println!("   - Data directory: {:?}", app_config.data_dir);
 		println!("   - Log level: {}", app_config.log_level);
 		println!(
-			"   - Networking enabled: {}",
-			app_config.services.networking_enabled
+			"   - Volume monitoring enabled: {}",
+			app_config.services.volume_monitoring_enabled
 		);
 		println!("   - Theme: {}", app_config.preferences.theme);
 	}
