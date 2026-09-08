@@ -96,10 +96,11 @@ impl EventHandler for WindowsHandler {
 				Ok(vec![FsEvent::create(path)])
 			}
 			RawEventKind::Remove => {
-				// Buffer as potential rename source
+				// Buffer as potential rename source, emitting any previously buffered remove
 				let mut pending = self.pending_rename_from.write().await;
+				let prev = pending.take().map(|(p, _)| FsEvent::remove(p));
 				*pending = Some((path, Instant::now()));
-				Ok(vec![])
+				Ok(prev.into_iter().collect())
 			}
 			RawEventKind::Modify => {
 				// Buffer modifications for stabilization
@@ -114,10 +115,16 @@ impl EventHandler for WindowsHandler {
 					let to = event.paths[1].clone();
 					Ok(vec![FsEvent::rename(from, to)])
 				} else {
-					// Incomplete rename, buffer it
-					let mut pending = self.pending_rename_from.write().await;
-					*pending = Some((path, Instant::now()));
-					Ok(vec![])
+					// Check if this matches a pending rename source
+					let pending = self.pending_rename_from.write().await.take();
+					if let Some((from_path, _)) = pending {
+						Ok(vec![FsEvent::rename(from_path, path)])
+					} else {
+						// Incomplete rename (source), buffer it
+						let mut pending = self.pending_rename_from.write().await;
+						*pending = Some((path, Instant::now()));
+						Ok(vec![])
+					}
 				}
 			}
 			RawEventKind::Other(ref kind) => {

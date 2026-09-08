@@ -15,7 +15,7 @@ use crate::ops::indexing::ephemeral::responder;
 use crate::ops::indexing::rules::RuleToggles;
 use crate::service::watcher::FsWatcherService;
 use anyhow::Result;
-use sd_fs_watcher::FsEvent;
+use sd_fs_watcher::{FsEvent, FsEventKind};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
@@ -135,35 +135,119 @@ impl EphemeralEventHandler {
 		event: &FsEvent,
 		rule_toggles: RuleToggles,
 	) -> Result<()> {
-		// Get the parent directory of the event path
-		let Some(parent) = event.path.parent() else {
-			trace!("Event path has no parent: {}", event.path.display());
-			return Ok(());
-		};
-
-		// Check if the parent is being watched (shallow watch = immediate children only)
 		let watched_paths = context.ephemeral_cache().watched_paths();
 
-		// Find if any watched path matches the parent
-		let matching_root = watched_paths.iter().find(|watched| {
-			// For shallow watches, parent must exactly match the watched path
-			parent == watched.as_path()
-		});
+		match &event.kind {
+			FsEventKind::Rename { from, to } => {
+				let from_parent = from.parent();
+				let to_parent = to.parent();
 
-		let Some(root_path) = matching_root else {
-			// Not under any ephemeral watch
-			trace!("Event not under ephemeral watch: {}", event.path.display());
-			return Ok(());
-		};
+				let from_root = from_parent
+					.and_then(|p| watched_paths.iter().find(|w| p == w.as_path()).cloned());
+				let to_root = to_parent
+					.and_then(|p| watched_paths.iter().find(|w| p == w.as_path()).cloned());
 
-		debug!(
-			"Ephemeral event matched: {} (root: {})",
-			event.path.display(),
-			root_path.display()
-		);
+				match (from_root, to_root) {
+					(Some(f_root), Some(t_root)) if f_root == t_root => {
+						// Rename within the same watched directory
+						debug!(
+							"Ephemeral rename matched within {}: {} -> {}",
+							f_root.display(),
+							from.display(),
+							to.display()
+						);
+						responder::apply(context, &f_root, event.clone(), rule_toggles).await
+					}
+					(Some(f_root), Some(t_root)) => {
+						// Moved across different watched directories
+						debug!(
+							"Ephemeral move between watched roots: {} ({}) -> {} ({})",
+							from.display(),
+							f_root.display(),
+							to.display(),
+							t_root.display()
+						);
+						responder::apply(
+							context,
+							&f_root,
+							FsEvent::remove(from.clone()),
+							rule_toggles,
+						)
+						.await?;
+						let create_event = if let Some(is_dir) = event.is_directory {
+							FsEvent::new_with_dir_flag(to.clone(), FsEventKind::Create, is_dir)
+						} else {
+							FsEvent::create(to.clone())
+						};
+						responder::apply(context, &t_root, create_event, rule_toggles).await
+					}
+					(Some(f_root), None) => {
+						// Moved out of watched directory (e.g. to trash) -> Treat as remove
+						debug!(
+							"Ephemeral move out of watched root {}: {} -> {}",
+							f_root.display(),
+							from.display(),
+							to.display()
+						);
+						responder::apply(
+							context,
+							&f_root,
+							FsEvent::remove(from.clone()),
+							rule_toggles,
+						)
+						.await
+					}
+					(None, Some(t_root)) => {
+						// Moved into watched directory from outside (e.g. restored from trash) -> Treat as create
+						debug!(
+							"Ephemeral move into watched root {}: {} -> {}",
+							t_root.display(),
+							from.display(),
+							to.display()
+						);
+						let create_event = if let Some(is_dir) = event.is_directory {
+							FsEvent::new_with_dir_flag(to.clone(), FsEventKind::Create, is_dir)
+						} else {
+							FsEvent::create(to.clone())
+						};
+						responder::apply(context, &t_root, create_event, rule_toggles).await
+					}
+					(None, None) => {
+						trace!(
+							"Rename event not under ephemeral watch: {} -> {}",
+							from.display(),
+							to.display()
+						);
+						Ok(())
+					}
+				}
+			}
+			_ => {
+				// Get the parent directory of the event path
+				let Some(parent) = event.path.parent() else {
+					trace!("Event path has no parent: {}", event.path.display());
+					return Ok(());
+				};
 
-		// Pass FsEvent directly to responder
-		responder::apply(context, root_path, event.clone(), rule_toggles).await
+				// Check if the parent is being watched (shallow watch = immediate children only)
+				let matching_root = watched_paths
+					.iter()
+					.find(|watched| parent == watched.as_path());
+
+				let Some(root_path) = matching_root else {
+					trace!("Event not under ephemeral watch: {}", event.path.display());
+					return Ok(());
+				};
+
+				debug!(
+					"Ephemeral event matched: {} (root: {})",
+					event.path.display(),
+					root_path.display()
+				);
+
+				responder::apply(context, root_path, event.clone(), rule_toggles).await
+			}
+		}
 	}
 }
 
