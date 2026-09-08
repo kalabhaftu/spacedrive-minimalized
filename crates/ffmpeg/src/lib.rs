@@ -1,12 +1,10 @@
 #![warn(
 	clippy::all,
-	clippy::pedantic,
 	clippy::correctness,
 	clippy::perf,
 	clippy::style,
 	clippy::suspicious,
 	clippy::complexity,
-	clippy::nursery,
 	clippy::unwrap_used,
 	unused_qualifications,
 	rust_2018_idioms,
@@ -14,18 +12,28 @@
 	trivial_numeric_casts,
 	unused_allocation,
 	clippy::unnecessary_cast,
-	clippy::cast_lossless,
-	clippy::cast_possible_truncation,
-	clippy::cast_possible_wrap,
-	clippy::cast_precision_loss,
-	clippy::cast_sign_loss,
 	clippy::dbg_macro,
 	clippy::deprecated_cfg_attr,
 	clippy::separated_literal_suffix,
 	deprecated
 )]
 #![forbid(deprecated_in_future)]
-#![allow(clippy::missing_errors_doc, clippy::module_name_repetitions)]
+#![allow(
+	clippy::missing_errors_doc,
+	clippy::module_name_repetitions,
+	clippy::cast_possible_truncation,
+	clippy::cast_precision_loss,
+	clippy::cast_sign_loss,
+	clippy::cast_possible_wrap,
+	clippy::cast_lossless,
+	clippy::cast_ptr_alignment,
+	clippy::unnecessary_wraps,
+	clippy::manual_div_ceil,
+	clippy::comparison_chain,
+	clippy::suboptimal_flops,
+	clippy::missing_const_for_fn,
+	clippy::unreadable_literal
+)]
 
 use crate::{format_ctx::FFmpegFormatContext, utils::from_path};
 

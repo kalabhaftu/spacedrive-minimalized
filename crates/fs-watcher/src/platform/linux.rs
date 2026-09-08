@@ -19,6 +19,8 @@ const STABILIZATION_TIMEOUT_MS: u64 = 100;
 pub struct LinuxHandler {
 	/// Files pending stabilization
 	pending_updates: RwLock<HashMap<PathBuf, Instant>>,
+	/// Pending rename source path
+	pending_rename_from: RwLock<Option<(PathBuf, Instant)>>,
 }
 
 impl LinuxHandler {
@@ -26,6 +28,7 @@ impl LinuxHandler {
 	pub fn new() -> Self {
 		Self {
 			pending_updates: RwLock::new(HashMap::new()),
+			pending_rename_from: RwLock::new(None),
 		}
 	}
 
@@ -45,6 +48,15 @@ impl LinuxHandler {
 
 		for path in to_remove {
 			updates.remove(&path);
+		}
+
+		let mut pending_rename = self.pending_rename_from.write().await;
+		if let Some((path, timestamp)) = pending_rename.as_ref() {
+			if timestamp.elapsed() > timeout {
+				events.push(FsEvent::remove(path.clone()));
+				trace!("Evicting pending rename as remove: {}", path.display());
+				*pending_rename = None;
+			}
 		}
 
 		events
@@ -80,10 +92,20 @@ impl EventHandler for LinuxHandler {
 					let to = event.paths[1].clone();
 					Ok(vec![FsEvent::rename(from, to)])
 				} else {
-					// Incomplete rename, treat as modify
-					let mut updates = self.pending_updates.write().await;
-					updates.insert(path, Instant::now());
-					Ok(vec![])
+					// Check if this matches a pending rename source
+					let pending = self.pending_rename_from.write().await.take();
+					if let Some((from_path, _)) = pending {
+						Ok(vec![FsEvent::rename(from_path, path)])
+					} else if !path.exists() {
+						// Incomplete rename source (e.g. moved out of watched dir or rename start)
+						let mut pending = self.pending_rename_from.write().await;
+						let prev = pending.take().map(|(p, _)| FsEvent::remove(p));
+						*pending = Some((path, Instant::now()));
+						Ok(prev.into_iter().collect())
+					} else {
+						// Destination without source (e.g. moved into watched dir from outside)
+						Ok(vec![FsEvent::create(path)])
+					}
 				}
 			}
 			RawEventKind::Other(ref kind) => {
@@ -100,6 +122,7 @@ impl EventHandler for LinuxHandler {
 
 	async fn reset(&self) {
 		self.pending_updates.write().await.clear();
+		*self.pending_rename_from.write().await = None;
 	}
 }
 

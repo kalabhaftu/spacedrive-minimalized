@@ -488,8 +488,34 @@ impl Event {
 						return false;
 					}
 
-					// Direct children mode: match files whose parent is the scope directory
-					file_path == scope_path || file_path.parent().map_or(false, |p| p == scope_path)
+					// Direct match: the scope directory itself was affected
+					if file_path == scope_path {
+						return true;
+					}
+
+					// Check if file_path is a direct child of scope_path
+					if file_path.parent().map_or(false, |p| p == scope_path) {
+						// If file_path is a directory containing deeper paths in this event,
+						// then the actual changes are inside this subdirectory, not direct children of scope.
+						let has_deeper_paths = paths.iter().any(|other| {
+							if let SdPath::Physical {
+								device_slug: other_device,
+								path: other_path,
+							} = other
+							{
+								other_device == file_device
+									&& other_path != file_path && other_path.starts_with(file_path)
+							} else {
+								false
+							}
+						});
+
+						if !has_deeper_paths {
+							return true;
+						}
+					}
+
+					false
 				} else {
 					false
 				}
