@@ -661,8 +661,10 @@ impl JobHandler for IndexerJob {
 				false
 			};
 
-			// If snapshot not loaded, create new index for indexing
-			if !snapshot_loaded {
+			// If snapshot loaded or path already indexed in cache, use the global index
+			if snapshot_loaded {
+				self.ephemeral_index = Some(cache.get_global_index());
+			} else {
 				let index = EphemeralIndex::new().map_err(|e| {
 					JobError::Other(format!("Failed to create ephemeral index: {}", e))
 				})?;

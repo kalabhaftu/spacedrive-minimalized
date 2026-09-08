@@ -91,21 +91,20 @@ impl EventHandler for LinuxHandler {
 					let from = event.paths[0].clone();
 					let to = event.paths[1].clone();
 					Ok(vec![FsEvent::rename(from, to)])
-				} else {
-					// Check if this matches a pending rename source
+				} else if path.exists() {
+					// Destination path: matches pending rename source if available, else treated as create
 					let pending = self.pending_rename_from.write().await.take();
 					if let Some((from_path, _)) = pending {
 						Ok(vec![FsEvent::rename(from_path, path)])
-					} else if !path.exists() {
-						// Incomplete rename source (e.g. moved out of watched dir or rename start)
-						let mut pending = self.pending_rename_from.write().await;
-						let prev = pending.take().map(|(p, _)| FsEvent::remove(p));
-						*pending = Some((path, Instant::now()));
-						Ok(prev.into_iter().collect())
 					} else {
-						// Destination without source (e.g. moved into watched dir from outside)
 						Ok(vec![FsEvent::create(path)])
 					}
+				} else {
+					// Source path (does not exist): buffer as pending rename source, emitting any previously buffered source as remove
+					let mut pending = self.pending_rename_from.write().await;
+					let prev = pending.take().map(|(p, _)| FsEvent::remove(p));
+					*pending = Some((path, Instant::now()));
+					Ok(prev.into_iter().collect())
 				}
 			}
 			RawEventKind::Other(ref kind) => {
