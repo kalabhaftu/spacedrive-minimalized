@@ -506,9 +506,11 @@ pub async fn handle_rename<H: ChangeHandler>(
 		tracing::debug!("Moved entry {} -> {}", from.display(), to.display());
 	} else {
 		tracing::debug!(
-			"Entry not found for old path {}, skipping rename",
-			from.display()
+			"Entry not found for old path {}, treating rename as create for new path {}",
+			from.display(),
+			to.display()
 		);
+		handle_create(handler, to, config).await?;
 	}
 
 	Ok(())

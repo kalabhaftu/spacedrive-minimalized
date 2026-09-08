@@ -251,16 +251,20 @@ impl ChangeHandler for MemoryAdapter {
 			return Ok(());
 		};
 
-		let content_kind = {
+		let (current_path, content_kind) = {
 			let index = self.index.read().await;
-			index.get_content_kind(&entry.path)
+			let path = index
+				.get_path_by_uuid(uuid)
+				.unwrap_or_else(|| entry.path.clone());
+			let kind = index.get_content_kind(&path);
+			(path, kind)
 		};
 
-		let metadata = build_dir_entry(&entry.path, None).await.ok();
+		let metadata = build_dir_entry(&current_path, None).await.ok();
 
 		if let Some(meta) = metadata {
 			let entry_metadata = EntryMetadata::from(meta);
-			self.emit_resource_changed(uuid, &entry.path, &entry_metadata, content_kind)
+			self.emit_resource_changed(uuid, &current_path, &entry_metadata, content_kind)
 				.await;
 		}
 

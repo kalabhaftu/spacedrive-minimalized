@@ -350,7 +350,17 @@ impl LibraryManager {
 		drop(db_conn);
 
 		// Now open the library (which will call ensure_device_registered for current device)
-		let library = self.open_library(&library_path, context).await?;
+		let library = match self.open_library(&library_path, context).await {
+			Ok(lib) => lib,
+			Err(LibraryError::AlreadyOpen(id)) => self
+				.libraries
+				.read()
+				.await
+				.get(&id)
+				.cloned()
+				.ok_or(LibraryError::AlreadyOpen(id))?,
+			Err(e) => return Err(e),
+		};
 
 		// Create default space with Quick Access group
 		self.create_default_space(&library).await?;
@@ -415,7 +425,17 @@ impl LibraryManager {
 			.await?;
 
 		// Open the newly created library
-		let library = self.open_library(&library_path, context.clone()).await?;
+		let library = match self.open_library(&library_path, context.clone()).await {
+			Ok(lib) => lib,
+			Err(LibraryError::AlreadyOpen(id)) => self
+				.libraries
+				.read()
+				.await
+				.get(&id)
+				.cloned()
+				.ok_or(LibraryError::AlreadyOpen(id))?,
+			Err(e) => return Err(e),
+		};
 
 		// Create default space with Quick Access group
 		self.create_default_space(&library).await?;
@@ -445,11 +465,59 @@ impl LibraryManager {
 			return Err(LibraryError::NotALibrary(path.to_path_buf()));
 		}
 
+		let config_path = path.join("library.json");
+
+		// If library config is already present and already in open libraries list, return it directly
+		if config_path.exists() {
+			if let Ok(config) = LibraryConfig::load(&config_path).await {
+				if let Some(lib) = self.libraries.read().await.get(&config.id) {
+					debug!("Library {} already open in this process", config.id);
+					return Ok(lib.clone());
+				}
+			}
+		}
+
 		// Acquire lock
-		let lock = LibraryLock::acquire(path)?;
+		let lock = match LibraryLock::acquire(path) {
+			Ok(lock) => lock,
+			Err(LibraryError::AlreadyInUse) => {
+				let mut is_same_process = false;
+				if let Ok(Some(info)) = LibraryLock::read_lock_info(path) {
+					if info.process_id == std::process::id() {
+						is_same_process = true;
+					}
+				}
+
+				if is_same_process {
+					debug!("Library locked by current process, waiting for open to complete");
+					let mut acquired_lock = None;
+					for _ in 0..40 {
+						tokio::time::sleep(Duration::from_millis(50)).await;
+						if config_path.exists() {
+							if let Ok(config) = LibraryConfig::load(&config_path).await {
+								if let Some(lib) = self.libraries.read().await.get(&config.id) {
+									return Ok(lib.clone());
+								}
+							}
+						}
+						if let Ok(lock) = LibraryLock::acquire(path) {
+							acquired_lock = Some(lock);
+							break;
+						}
+					}
+					if let Some(lock) = acquired_lock {
+						lock
+					} else {
+						return Err(LibraryError::AlreadyInUse);
+					}
+				} else {
+					return Err(LibraryError::AlreadyInUse);
+				}
+			}
+			Err(e) => return Err(e),
+		};
 
 		// Load config
-		let config_path = path.join("library.json");
 		let config = LibraryConfig::load(&config_path).await?;
 
 		// Ensure library ID is set
